@@ -1120,7 +1120,10 @@ function finishTurn() {
   // Dauerbetrieb ist immer aktiv: nach jeder Antwort automatisch weiter zuhören,
   // und für kurze Zeit auch ohne erneutes "Jarvis" reagieren (Rückfragen).
   followUpUntil = Date.now() + 12000;
-  startListening();
+  if (SR) { startListening(); return; }
+  // Geräte ohne Web-Speech-API (z.B. iPad/Safari) haben kein Dauerzuhören —
+  // dort wartet Jarvis auf den nächsten Tipp auf den Orb (Push-to-Talk).
+  setState('idle', 'Tippe auf den Orb, um zu sprechen');
 }
 
 /* ---------- Feedback während längerer Verarbeitung ---------- */
@@ -1274,6 +1277,105 @@ function stopListening() {
   stopMeter();
 }
 
+/* ---------- Push-to-Talk-Fallback für Geräte ohne Web-Speech-API ----------
+   Safari/WebKit (iPhone, iPad, jeder Browser auf iOS) implementiert
+   SpeechRecognition nicht. Statt Dauerzuhören: auf den Orb tippen startet
+   eine Aufnahme, erneutes Tippen beendet sie und schickt sie an Whisper. */
+const canRecordAudio = !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordStream = null;
+
+/* ---------- eigener OpenAI-Schlüssel (nur für den Push-to-Talk-Fallback) ----------
+   Hol dir einen Schlüssel auf platform.openai.com und trag ihn HIER ein,
+   zwischen den Anführungszeichen. Nur nötig, wenn deine Spracherkennung
+   (z.B. auf dem iPad) nicht direkt im Browser läuft. */
+const OPENAI_API_KEY = "DEIN-OPENAI-API-SCHLÜSSEL-HIER";
+
+async function transcribeAudio(blob) {
+  if (!OPENAI_API_KEY || OPENAI_API_KEY === 'DEIN-OPENAI-API-SCHLÜSSEL-HIER') {
+    throw new Error('Kein OpenAI-API-Schlüssel eingetragen. Siehe Kommentar bei OPENAI_API_KEY.');
+  }
+  const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+  const form = new FormData();
+  form.append('file', blob, `aufnahme.${ext}`);
+  form.append('model', 'whisper-1');
+  form.append('language', 'de');
+  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+    body: form
+  });
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`Transkriptions-Fehler ${res.status}: ${errBody.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return (data.text || '').trim();
+}
+
+async function startRecording() {
+  if (!canRecordAudio) { flashError('Sprachaufnahme nicht unterstützt'); return; }
+  try {
+    recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    flashError('Mikrofonzugriff verweigert');
+    return;
+  }
+  recordedChunks = [];
+  const mimeType = ['audio/mp4', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  mediaRecorder = mimeType ? new MediaRecorder(recordStream, { mimeType }) : new MediaRecorder(recordStream);
+  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.start();
+  sfxListenStart();
+  setState('listening', 'Aufnahme läuft — tippe den Orb erneut zum Beenden');
+  startMeter();
+}
+
+function stopRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return Promise.resolve(null);
+  return new Promise(resolve => {
+    mediaRecorder.onstop = () => {
+      stopMeter();
+      if (recordStream) { recordStream.getTracks().forEach(t => t.stop()); recordStream = null; }
+      resolve(new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' }));
+    };
+    mediaRecorder.stop();
+    sfxListenStop();
+  });
+}
+
+async function handlePushToTalkTap() {
+  if (currentState === 'listening') {
+    const blob = await stopRecording();
+    if (!blob || blob.size === 0) { setState('idle', 'Tippe auf den Orb, um zu sprechen'); return; }
+    setState('thinking', 'Transkribiere...');
+    sfxThinking();
+    try {
+      const text = await transcribeAudio(blob);
+      if (!text) {
+        flashError('Nichts verstanden');
+        return;
+      }
+      markActivity();
+      await handleCommand(text);
+    } catch (e) {
+      console.error(e);
+      addLog('system', `Fehlerdetail: ${e?.message || 'unbekannter Fehler'}`);
+      flashError('Transkription fehlgeschlagen');
+    }
+    return;
+  }
+  if (currentState === 'speaking') {
+    speechSynthesis.cancel();
+    setState('idle', 'Tippe auf den Orb, um zu sprechen');
+    return;
+  }
+  if (currentState === 'idle' || currentState === 'error' || currentState === 'ambient') {
+    await startRecording();
+  }
+}
+
 /* ---------- Aktivierung: einziger Klick startet alles ---------- */
 let activated = false;
 async function activate() {
@@ -1291,7 +1393,7 @@ async function activate() {
     await proactiveMorningGreeting();
   } else {
     stopBootTheme(0.9);
-    startListening();
+    if (SR) { startListening(); } else { setState('idle', 'Tippe auf den Orb, um zu sprechen'); }
   }
 }
 
@@ -1316,6 +1418,7 @@ async function proactiveMorningGreeting() {
 }
 orbWrap.addEventListener('click', () => {
   if (!activated) { activate(); return; }
+  if (!SR) { handlePushToTalkTap(); return; }
   if (currentState === 'speaking') { speechSynthesis.cancel(); stopListening(); startListening(); return; }
   if (currentState === 'idle' || currentState === 'error' || currentState === 'ambient') startListening();
 });
