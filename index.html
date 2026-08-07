@@ -122,11 +122,33 @@ html,body{
   position:relative; width:min(38vh, 300px); height:min(38vh, 300px);
   display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none;
 }
-.orb-ring{ position:absolute; border-radius:50%; border:1.5px solid var(--cyan-dim); transition: border-color .4s, box-shadow .4s, opacity .4s; }
+.orb-ring{
+  position:absolute; border-radius:50%; border:1.5px solid currentColor; color:var(--cyan-dim);
+  transition: color .4s, box-shadow .4s, opacity .4s;
+  filter: drop-shadow(0 0 2px currentColor);
+}
 #ringOuter{inset:0%; animation: spin 18s linear infinite;}
 #ringMid{inset:12%; animation: spin 11s linear infinite reverse;}
 #ringInner{inset:24%; animation: spin 7s linear infinite;}
 .orb-ring.dashed{border-style:dashed;}
+
+/* HUD-Skala: feine Tick-Marken auf dem äußeren Ring wie ein Messinstrument */
+#ringOuter::after{
+  content:''; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+  background: repeating-conic-gradient(from 0deg, currentColor 0deg 1deg, transparent 1deg 14deg);
+  -webkit-mask: radial-gradient(circle, transparent 90%, #000 92%, #000 100%);
+          mask: radial-gradient(circle, transparent 90%, #000 92%, #000 100%);
+  opacity:0.7;
+}
+
+/* Tracking-Knoten auf dem mittleren Ring, wie Satelliten-Marker */
+#ringMid::after{
+  content:''; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+  background: repeating-conic-gradient(from 0deg, currentColor 0deg 4deg, transparent 4deg 118deg);
+  -webkit-mask: radial-gradient(circle, transparent 88%, #000 92%, #000 100%);
+          mask: radial-gradient(circle, transparent 88%, #000 92%, #000 100%);
+  filter: drop-shadow(0 0 3px currentColor);
+}
 
 /* segmentierter Turbinen-Bezel — Arc-Reactor-Zähne zwischen Ringen und Kern */
 #orbTurbine{
@@ -164,14 +186,14 @@ html,body{
 #orbWrap.state-idle #orbCore{ animation: breathe 3.6s ease-in-out infinite, flicker 5s ease-in-out infinite; }
 @keyframes breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 
-#orbWrap.state-listening #ringOuter, #orbWrap.state-listening #ringMid, #orbWrap.state-listening #ringInner{ border-color: var(--cyan); }
+#orbWrap.state-listening #ringOuter, #orbWrap.state-listening #ringMid, #orbWrap.state-listening #ringInner{ color: var(--cyan); }
 #orbWrap.state-listening #orbCore{ box-shadow: 0 0 46px 14px var(--cyan-glow), inset 0 0 24px rgba(255,255,255,0.4); }
 #orbWrap.state-listening #waveform .bar{ opacity:0.9; background:var(--cyan); }
 
 #orbWrap.state-thinking #ringOuter{ animation-duration:2.4s; }
 #orbWrap.state-thinking #ringMid{ animation-duration:1.6s; }
 #orbWrap.state-thinking #ringInner{ animation-duration:0.9s; }
-#orbWrap.state-thinking #ringOuter, #orbWrap.state-thinking #ringMid, #orbWrap.state-thinking #ringInner{ border-color: var(--orange); }
+#orbWrap.state-thinking #ringOuter, #orbWrap.state-thinking #ringMid, #orbWrap.state-thinking #ringInner{ color: var(--orange); }
 #orbWrap.state-thinking #orbCore{
   background: radial-gradient(circle at 35% 30%, #ffd9c2, var(--orange) 40%, #4a2a0b 100%);
   box-shadow:
@@ -187,11 +209,11 @@ html,body{
   animation-duration: 5s;
 }
 
-#orbWrap.state-speaking #ringOuter, #orbWrap.state-speaking #ringMid, #orbWrap.state-speaking #ringInner{ border-color: var(--cyan); }
+#orbWrap.state-speaking #ringOuter, #orbWrap.state-speaking #ringMid, #orbWrap.state-speaking #ringInner{ color: var(--cyan); }
 #orbWrap.state-speaking #orbCore{ box-shadow: 0 0 40px 10px var(--cyan-glow), inset 0 0 24px rgba(255,255,255,0.4); }
 #orbWrap.state-speaking #waveform .bar{ opacity:1; background:var(--ink); }
 
-#orbWrap.state-error #ringOuter, #orbWrap.state-error #ringMid, #orbWrap.state-error #ringInner{ border-color: var(--red); }
+#orbWrap.state-error #ringOuter, #orbWrap.state-error #ringMid, #orbWrap.state-error #ringInner{ color: var(--red); }
 #orbWrap.state-error #orbCore{
   background: radial-gradient(circle at 35% 30%, #ffd0d5, var(--red) 40%, #4a0b0f 100%);
   box-shadow:
