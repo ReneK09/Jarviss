@@ -128,17 +128,40 @@ html,body{
 #ringInner{inset:24%; animation: spin 7s linear infinite;}
 .orb-ring.dashed{border-style:dashed;}
 
+/* segmentierter Turbinen-Bezel — Arc-Reactor-Zähne zwischen Ringen und Kern */
+#orbTurbine{
+  position:absolute; inset:29%; border-radius:50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--cyan) 65%, black) 0deg 4deg, transparent 4deg 15deg);
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 64%, #000 100%);
+          mask: radial-gradient(circle, transparent 60%, #000 64%, #000 100%);
+  filter: drop-shadow(0 0 4px var(--cyan-glow));
+  animation: spin 16s linear infinite;
+  transition: filter .4s;
+}
+
 #orbCore{
   position:absolute; inset:34%; border-radius:50%;
   background: radial-gradient(circle at 35% 30%, rgba(160,235,255,0.9), var(--cyan) 40%, #0b3a4a 100%);
-  box-shadow: 0 0 30px 6px var(--cyan-glow), inset 0 0 20px rgba(255,255,255,0.3);
+  box-shadow:
+    0 0 30px 6px var(--cyan-glow),
+    inset 0 0 20px rgba(255,255,255,0.3),
+    inset 0 0 0 3px rgba(255,255,255,0.1),
+    inset 0 0 0 6px rgba(0,0,0,0.4),
+    inset 0 0 0 8px rgba(255,255,255,0.06);
   transition: box-shadow .4s, background .4s, transform .15s ease-out;
+  animation: flicker 5s ease-in-out infinite;
+}
+@keyframes flicker{
+  0%,41%,48%,75%,100%{ filter:brightness(1); }
+  43%{ filter:brightness(0.85); }
+  45%{ filter:brightness(1.1); }
+  77%{ filter:brightness(0.92); }
 }
 
 #waveform{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:4px; pointer-events:none; }
 #waveform .bar{ width:3px; height:6px; background:var(--cyan); border-radius:2px; opacity:0; transform-origin:center; }
 
-#orbWrap.state-idle #orbCore{ animation: breathe 3.6s ease-in-out infinite; }
+#orbWrap.state-idle #orbCore{ animation: breathe 3.6s ease-in-out infinite, flicker 5s ease-in-out infinite; }
 @keyframes breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 
 #orbWrap.state-listening #ringOuter, #orbWrap.state-listening #ringMid, #orbWrap.state-listening #ringInner{ border-color: var(--cyan); }
@@ -151,7 +174,17 @@ html,body{
 #orbWrap.state-thinking #ringOuter, #orbWrap.state-thinking #ringMid, #orbWrap.state-thinking #ringInner{ border-color: var(--orange); }
 #orbWrap.state-thinking #orbCore{
   background: radial-gradient(circle at 35% 30%, #ffd9c2, var(--orange) 40%, #4a2a0b 100%);
-  box-shadow: 0 0 34px 8px var(--orange-glow), inset 0 0 20px rgba(255,255,255,0.3);
+  box-shadow:
+    0 0 34px 8px var(--orange-glow),
+    inset 0 0 20px rgba(255,255,255,0.3),
+    inset 0 0 0 3px rgba(255,255,255,0.1),
+    inset 0 0 0 6px rgba(0,0,0,0.4),
+    inset 0 0 0 8px rgba(255,255,255,0.06);
+}
+#orbWrap.state-thinking #orbTurbine{
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--orange) 65%, black) 0deg 4deg, transparent 4deg 15deg);
+  filter: drop-shadow(0 0 4px var(--orange-glow));
+  animation-duration: 5s;
 }
 
 #orbWrap.state-speaking #ringOuter, #orbWrap.state-speaking #ringMid, #orbWrap.state-speaking #ringInner{ border-color: var(--cyan); }
@@ -161,20 +194,30 @@ html,body{
 #orbWrap.state-error #ringOuter, #orbWrap.state-error #ringMid, #orbWrap.state-error #ringInner{ border-color: var(--red); }
 #orbWrap.state-error #orbCore{
   background: radial-gradient(circle at 35% 30%, #ffd0d5, var(--red) 40%, #4a0b0f 100%);
-  box-shadow: 0 0 34px 8px rgba(255,77,94,0.5), inset 0 0 20px rgba(255,255,255,0.3);
+  box-shadow:
+    0 0 34px 8px rgba(255,77,94,0.5),
+    inset 0 0 20px rgba(255,255,255,0.3),
+    inset 0 0 0 3px rgba(255,255,255,0.1),
+    inset 0 0 0 6px rgba(0,0,0,0.4),
+    inset 0 0 0 8px rgba(255,255,255,0.06);
   animation: errorShake 0.4s ease-in-out;
 }
 @keyframes errorShake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
 #orbStatus.error-text{ color:var(--red); text-shadow:0 0 10px rgba(255,77,94,0.55); }
+#orbWrap.state-error #orbTurbine{
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--red) 65%, black) 0deg 4deg, transparent 4deg 15deg);
+  filter: drop-shadow(0 0 4px rgba(255,77,94,0.5));
+}
 
 #orbWrap.state-ambient #orbCore{
-  animation: ambientBreathe 6s ease-in-out infinite;
+  animation: ambientBreathe 6s ease-in-out infinite, flicker 8s ease-in-out infinite;
   box-shadow: 0 0 16px 2px rgba(79,216,255,0.25), inset 0 0 14px rgba(255,255,255,0.15);
 }
 @keyframes ambientBreathe{ 0%,100%{transform:scale(0.94); opacity:0.65;} 50%{transform:scale(1); opacity:0.85;} }
 #orbWrap.state-ambient #ringOuter{ animation-duration:60s; opacity:0.4; }
 #orbWrap.state-ambient #ringMid{ animation-duration:44s; opacity:0.3; }
 #orbWrap.state-ambient #ringInner{ animation-duration:30s; opacity:0.25; }
+#orbWrap.state-ambient #orbTurbine{ opacity:0.3; animation-duration:50s; }
 #orbWrap.state-ambient #orbStatus{ color:var(--ink-dim); text-shadow:none; opacity:0.7; }
 
 #orbStatus{
@@ -298,6 +341,7 @@ html,body{
         <div class="orb-ring dashed" id="ringOuter"></div>
         <div class="orb-ring" id="ringMid"></div>
         <div class="orb-ring dashed" id="ringInner"></div>
+        <div id="orbTurbine"></div>
         <div id="orbCore"></div>
         <div id="waveform"></div>
         <video id="camPreview" autoplay muted playsinline></video>
