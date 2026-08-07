@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root{
+  --bg:#04070c;
+  --bg-2:#070c14;
+  --cyan:#4fd8ff;
+  --cyan-dim:#1c5f77;
+  --cyan-glow:rgba(79,216,255,0.55);
+  --orange:#ff7a3d;
+  --orange-glow:rgba(255,122,61,0.55);
+  --green:#4dffb0;
+  --red:#ff4d5e;
+  --ink:#eaf6ff;
+  --ink-dim:#7fa0b3;
+  --panel:rgba(79,216,255,0.04);
+  --panel-border:rgba(79,216,255,0.22);
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+html,body{
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'JetBrains Mono', monospace;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+#bgcanvas{ position:fixed; inset:0; z-index:0; opacity:0.55; }
+
+#app{
+  position:relative; z-index:2;
+  width:100vw; height:100vh;
+  display:grid;
+  grid-template-rows: 60px 1fr 190px;
+  grid-template-columns: 300px 1fr 320px;
+  grid-template-areas:
+    "top top top"
+    "left center right"
+    "log log log";
+  gap:14px;
+  padding:14px;
+}
+
+@media (max-width: 980px){
+  #app{
+    grid-template-rows: 52px auto 1fr 170px;
+    grid-template-columns: 1fr;
+    grid-template-areas: "top" "left" "center" "log";
+  }
+  #right{display:none;}
+}
+
+/* ---------- top bar ---------- */
+#topbar{
+  grid-area: top;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px;
+  border:1px solid var(--panel-border);
+  border-radius:10px;
+  background:var(--panel);
+  backdrop-filter: blur(6px);
+}
+#topbar .brand{
+  font-family:'Orbitron', sans-serif; font-weight:700; letter-spacing:4px; font-size:15px;
+  color:var(--cyan); text-shadow:0 0 12px var(--cyan-glow);
+}
+#topbar .brand span{color:var(--ink-dim); font-weight:400; letter-spacing:2px; font-size:11px; margin-left:10px;}
+#topbar .mid{ font-size:12px; color:var(--ink-dim); letter-spacing:1px; display:flex; gap:22px; align-items:center; }
+#topbar .status-dot{
+  width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green);
+  display:inline-block; margin-right:6px; animation: blink 2.4s infinite ease-in-out;
+}
+@keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+#clock{font-size:13px; letter-spacing:1px; color:var(--ink);}
+#greeting{font-size:11px; color:var(--ink-dim);}
+
+/* ---------- panels ---------- */
+.panel{
+  border:1px solid var(--panel-border); border-radius:10px; background:var(--panel);
+  backdrop-filter: blur(6px); padding:14px 16px; display:flex; flex-direction:column;
+  min-height:0; position:relative; overflow:hidden;
+}
+.panel::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--cyan), transparent); opacity:0.6;
+}
+.panel h3{
+  font-family:'Orbitron', sans-serif; font-size:11px; letter-spacing:3px; color:var(--cyan);
+  font-weight:600; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;
+}
+.panel h3 small{ color:var(--ink-dim); font-family:'JetBrains Mono',monospace; letter-spacing:0.5px; font-weight:400; font-size:9px; }
+
+/* ---------- left: globe ---------- */
+#left{grid-area:left;}
+#globeWrap{ position:relative; flex:1; display:flex; align-items:center; justify-content:center; min-height:0; }
+#globeCanvas{ width:100%; height:100%; max-width:280px; max-height:280px; }
+@keyframes spin{ to{ transform:rotate(360deg);} }
+#radarCaption{ text-align:center; font-size:10px; color:var(--ink-dim); letter-spacing:1.5px; margin-top:8px; }
+
+/* ---------- markets ---------- */
+#marketList{ display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+.mkt-row{ display:flex; align-items:center; justify-content:space-between; font-size:10.5px; gap:8px; }
+.mkt-row .mkt-name{ color:var(--ink-dim); min-width:64px; letter-spacing:0.5px; }
+.mkt-row canvas{ flex:1; height:24px; }
+.mkt-row .mkt-val{ min-width:48px; text-align:right; font-weight:600; }
+.mkt-val.up{ color:var(--green); }
+.mkt-val.down{ color:var(--red); }
+
+/* ---------- center: orb ---------- */
+#center{grid-area:center; align-items:center; justify-content:center;}
+#orbStage{ flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+#orbWrap{
+  position:relative; width:min(38vh, 300px); height:min(38vh, 300px);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none;
+}
+.orb-ring{ position:absolute; border-radius:50%; border:1.5px solid var(--cyan-dim); transition: border-color .4s, box-shadow .4s, opacity .4s; }
+#ringOuter{inset:0%; animation: spin 18s linear infinite;}
+#ringMid{inset:12%; animation: spin 11s linear infinite reverse;}
+#ringInner{inset:24%; animation: spin 7s linear infinite;}
+.orb-ring.dashed{border-style:dashed;}
+
+#orbCore{
+  position:absolute; inset:34%; border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, rgba(160,235,255,0.9), var(--cyan) 40%, #0b3a4a 100%);
+  box-shadow: 0 0 30px 6px var(--cyan-glow), inset 0 0 20px rgba(255,255,255,0.3);
+  transition: box-shadow .4s, background .4s, transform .15s ease-out;
+}
+
+#waveform{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:4px; pointer-events:none; }
+#waveform .bar{ width:3px; height:6px; background:var(--cyan); border-radius:2px; opacity:0; transform-origin:center; }
+
+#orbWrap.state-idle #orbCore{ animation: breathe 3.6s ease-in-out infinite; }
+@keyframes breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+
+#orbWrap.state-listening #ringOuter, #orbWrap.state-listening #ringMid, #orbWrap.state-listening #ringInner{ border-color: var(--cyan); }
+#orbWrap.state-listening #orbCore{ box-shadow: 0 0 46px 14px var(--cyan-glow), inset 0 0 24px rgba(255,255,255,0.4); }
+#orbWrap.state-listening #waveform .bar{ opacity:0.9; background:var(--cyan); }
+
+#orbWrap.state-thinking #ringOuter{ animation-duration:2.4s; }
+#orbWrap.state-thinking #ringMid{ animation-duration:1.6s; }
+#orbWrap.state-thinking #ringInner{ animation-duration:0.9s; }
+#orbWrap.state-thinking #ringOuter, #orbWrap.state-thinking #ringMid, #orbWrap.state-thinking #ringInner{ border-color: var(--orange); }
+#orbWrap.state-thinking #orbCore{
+  background: radial-gradient(circle at 35% 30%, #ffd9c2, var(--orange) 40%, #4a2a0b 100%);
+  box-shadow: 0 0 34px 8px var(--orange-glow), inset 0 0 20px rgba(255,255,255,0.3);
+}
+
+#orbWrap.state-speaking #ringOuter, #orbWrap.state-speaking #ringMid, #orbWrap.state-speaking #ringInner{ border-color: var(--cyan); }
+#orbWrap.state-speaking #orbCore{ box-shadow: 0 0 40px 10px var(--cyan-glow), inset 0 0 24px rgba(255,255,255,0.4); }
+#orbWrap.state-speaking #waveform .bar{ opacity:1; background:var(--ink); }
+
+#orbWrap.state-error #ringOuter, #orbWrap.state-error #ringMid, #orbWrap.state-error #ringInner{ border-color: var(--red); }
+#orbWrap.state-error #orbCore{
+  background: radial-gradient(circle at 35% 30%, #ffd0d5, var(--red) 40%, #4a0b0f 100%);
+  box-shadow: 0 0 34px 8px rgba(255,77,94,0.5), inset 0 0 20px rgba(255,255,255,0.3);
+  animation: errorShake 0.4s ease-in-out;
+}
+@keyframes errorShake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+#orbStatus.error-text{ color:var(--red); text-shadow:0 0 10px rgba(255,77,94,0.55); }
+
+#orbWrap.state-ambient #orbCore{
+  animation: ambientBreathe 6s ease-in-out infinite;
+  box-shadow: 0 0 16px 2px rgba(79,216,255,0.25), inset 0 0 14px rgba(255,255,255,0.15);
+}
+@keyframes ambientBreathe{ 0%,100%{transform:scale(0.94); opacity:0.65;} 50%{transform:scale(1); opacity:0.85;} }
+#orbWrap.state-ambient #ringOuter{ animation-duration:60s; opacity:0.4; }
+#orbWrap.state-ambient #ringMid{ animation-duration:44s; opacity:0.3; }
+#orbWrap.state-ambient #ringInner{ animation-duration:30s; opacity:0.25; }
+#orbWrap.state-ambient #orbStatus{ color:var(--ink-dim); text-shadow:none; opacity:0.7; }
+
+#orbStatus{
+  font-family:'Orbitron', sans-serif; font-size:13px; letter-spacing:4px; color:var(--cyan);
+  text-shadow:0 0 10px var(--cyan-glow); text-transform:uppercase; min-height:16px;
+}
+#orbSub{ font-size:11px; color:var(--ink-dim); letter-spacing:1px; text-align:center; max-width:420px; min-height:14px; }
+
+#textInputRow{ display:flex; gap:8px; width:100%; max-width:480px; opacity:0.7; }
+#textInput{
+  flex:1; background:rgba(255,255,255,0.03); border:1px solid var(--panel-border); border-radius:20px;
+  padding:8px 16px; color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:11px; outline:none;
+}
+#textInput:focus{ border-color:var(--cyan); }
+
+/* ---------- right: briefing ---------- */
+#right{grid-area:right; gap:6px;}
+#briefingBody{ flex:1; overflow-y:auto; font-size:11.5px; line-height:1.6; color:var(--ink-dim); padding-right:4px; }
+#briefingBody .item{ border-left:2px solid var(--orange); padding-left:8px; margin-bottom:10px; }
+#taskList{list-style:none; margin-top:8px; font-size:11px; max-height:100px; overflow-y:auto;}
+#taskList li{padding:4px 0; color:var(--ink-dim); border-bottom:1px dashed rgba(79,216,255,0.12);}
+#taskList li::before{content:'▸ '; color:var(--orange);}
+
+/* ---------- bottom: log ---------- */
+#log{grid-area:log;}
+#logBody{ flex:1; overflow-y:auto; font-size:11.5px; line-height:1.55; padding-right:6px; }
+.entry{margin-bottom:7px; display:flex; gap:8px;}
+.entry .tag{ font-family:'Orbitron', sans-serif; font-size:9px; letter-spacing:1px; min-width:52px; padding-top:2px; }
+.entry.user .tag{color:var(--orange);}
+.entry.jarvis .tag{color:var(--cyan);}
+.entry .txt{color:var(--ink); flex:1;}
+.entry .ts{color:var(--ink-dim); font-size:9px; margin-left:6px;}
+.entry.system .txt{color:var(--ink-dim); font-style:italic;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--panel-border); border-radius:4px;}
+.hint{font-size:9.5px; color:var(--ink-dim); letter-spacing:0.5px;}
+
+/* ---------- boot overlay ---------- */
+#bootOverlay{
+  position:fixed; inset:0; z-index:60; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  transition:opacity .6s ease;
+}
+#bootOverlay.hidden{ opacity:0; pointer-events:none; }
+#bootLogo{
+  font-family:'Orbitron', sans-serif; font-weight:900; letter-spacing:8px; font-size:clamp(22px,5vw,40px);
+  color:var(--cyan); text-shadow:0 0 20px var(--cyan-glow); opacity:0; animation: bootFade 1s ease forwards 0.2s;
+}
+@keyframes bootFade{ to{opacity:1;} }
+#bootLines{ font-size:11px; color:var(--ink-dim); letter-spacing:1px; text-align:center; min-height:60px; max-width:80vw; }
+#bootLines div{ opacity:0; animation: bootFade 0.4s ease forwards; }
+#bootBar{ width:220px; height:2px; background:rgba(79,216,255,0.15); border-radius:2px; overflow:hidden; }
+#bootBarFill{ height:100%; width:0%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); transition:width .3s linear; }
+
+/* ---------- camera ---------- */
+#camPreview{
+  position:absolute; bottom:8px; right:8px; width:120px; height:90px; border-radius:8px;
+  border:1px solid var(--panel-border); object-fit:cover; box-shadow:0 0 16px rgba(79,216,255,0.25);
+  display:none; z-index:5;
+}
+#camPreview.active{ display:block; }
+#camDot{
+  position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%;
+  background:var(--red); box-shadow:0 0 6px var(--red); animation: blink 1.4s infinite; display:none; z-index:6;
+}
+#camDot.active{ display:block; }
+
+/* ---------- weather ---------- */
+#weatherBody{ display:flex; align-items:center; gap:12px; margin-top:4px; }
+#weatherIcon{ font-size:30px; line-height:1; color:var(--cyan); text-shadow:0 0 10px var(--cyan-glow); }
+#weatherTemp{ font-family:'Orbitron', sans-serif; font-size:20px; color:var(--ink); }
+#weatherDesc{ font-size:10px; color:var(--ink-dim); letter-spacing:0.5px; }
+#weatherWind{ font-size:9px; color:var(--ink-dim); margin-top:2px; }
+
+/* ---------- mobile bottom sheet ---------- */
+#rightToggle{ display:none; }
+@media (max-width: 980px){
+  #right{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:40;
+    height:60vh; border-radius:16px 16px 0 0; transform:translateY(calc(100% - 42px));
+    transition:transform .3s ease;
+  }
+  #right.expanded{ transform:translateY(0); }
+  #right h3:first-child{ cursor:pointer; }
+  #rightToggle{ display:block; position:fixed; right:14px; bottom:14px; z-index:41;
+    font-family:'Orbitron', sans-serif; font-size:10px; letter-spacing:2px; color:var(--cyan);
+    background:rgba(79,216,255,0.12); border:1px solid var(--panel-border); border-radius:20px; padding:8px 16px;
+  }
+}
+</style>
+</head>
+<body>
+<div id="bootOverlay">
+  <div id="bootLogo">J.A.R.V.I.S.</div>
+  <div id="bootLines"></div>
+  <div id="bootBar"><div id="bootBarFill"></div></div>
+</div>
+
+<canvas id="bgcanvas"></canvas>
+<div id="app">
+
+  <div id="topbar">
+    <div class="brand">J.A.R.V.I.S.<span>PERSONAL INTERFACE</span></div>
+    <div class="mid">
+      <span id="greeting"></span>
+      <span id="clock"></span>
+      <span><span class="status-dot"></span>ONLINE</span>
+    </div>
+  </div>
+
+  <div class="panel" id="left">
+    <h3>Global Monitoring <small id="homeCityLabel">FRANKFURT</small></h3>
+    <div id="globeWrap"><canvas id="globeCanvas"></canvas></div>
+    <div id="radarCaption">5 KNOTEN AKTIV</div>
+  </div>
+
+  <div class="panel" id="center">
+    <div id="orbStage">
+      <div id="orbWrap" class="state-idle">
+        <div class="orb-ring dashed" id="ringOuter"></div>
+        <div class="orb-ring" id="ringMid"></div>
+        <div class="orb-ring dashed" id="ringInner"></div>
+        <div id="orbCore"></div>
+        <div id="waveform"></div>
+        <video id="camPreview" autoplay muted playsinline></video>
+        <div id="camDot"></div>
+      </div>
+      <div>
+        <div id="orbStatus">BEREIT</div>
+        <div id="orbSub">Klicke, um J.A.R.V.I.S. zu aktivieren</div>
+      </div>
+      <div id="textInputRow">
+        <input id="textInput" type="text" placeholder="...oder tippen" />
+      </div>
+    </div>
+    <canvas id="camCapture" style="display:none;"></canvas>
+  </div>
+
+  <div class="panel" id="right">
+    <h3>Live Intel <small id="briefingTime">—</small></h3>
+    <div id="briefingBody"><div class="hint">Wird geladen...</div></div>
+
+    <h3 style="margin-top:14px;">Wetter <small id="weatherTime">—</small></h3>
+    <div id="weatherBody"><div class="hint">Wird geladen...</div></div>
+    <div id="weatherWind"></div>
+
+    <h3 style="margin-top:14px;">Märkte <small id="marketTime">—</small></h3>
+    <div id="marketList"><div class="hint">Wird geladen...</div></div>
+
+    <h3 style="margin-top:14px;">Aufgaben</h3>
+    <ul id="taskList"></ul>
+  </div>
+
+  <div class="panel" id="log">
+    <h3>Transkript <small>Sprich mit J.A.R.V.I.S. — Deutsch</small></h3>
+    <div id="logBody"></div>
+  </div>
+
+  <button id="rightToggle">Intel ▲</button>
+
+</div>
+<script>
+/* =========================================================
+   J.A.R.V.I.S. — Personal Interface (persönliche Konfiguration,
+   keine Einstellungs-UI — alles per Sprache steuerbar)
+   ========================================================= */
+
+/* window.storage ist keine Standard-Browser-API — im eigenständigen
+   Betrieb (außerhalb einer Host-Umgebung, die sie bereitstellt) auf
+   localStorage abbilden, damit Gedächtnis/Transkript/Aufgaben zwischen
+   Sitzungen erhalten bleiben. */
+window.storage = window.storage || {
+  async get(key) {
+    const v = localStorage.getItem(key);
+    return v === null ? null : { value: v };
+  },
+  async set(key, value) {
+    localStorage.setItem(key, value);
+  }
+};
+
+/* ---------- feste persönliche Konfiguration ---------- */
+let userName = "Chef"; // per Sprache änderbar: "Jarvis, nenn mich ..."
+const FIXED_THEME = 'cyan';
+
+/* ---------- Langzeitgedächtnis ---------- */
+let memoryStore = [];
+async function addMemoryFact(fact) {
+  const clean = fact.trim();
+  if (!clean) return;
+  const exists = memoryStore.some(f => f.toLowerCase() === clean.toLowerCase());
+  if (exists) return;
+  memoryStore.push(clean);
+  if (memoryStore.length > 40) memoryStore = memoryStore.slice(-40);
+  try { await window.storage?.set('jarvis:memory', JSON.stringify(memoryStore)); } catch (e) {}
+}
+async function loadMemory() {
+  try {
+    const m = await window.storage?.get('jarvis:memory');
+    if (m?.value) memoryStore = JSON.parse(m.value);
+  } catch (e) {}
+}
+
+const SYSTEM_PROMPT = () => `Du bist J.A.R.V.I.S., ein hochentwickelter, ruhiger und äußerst kompetenter KI-Assistent im Stil eines britischen Butlers (inspiriert von Tony Starks Assistenzsystem).
+Sprich ausschließlich Deutsch. Rede den Nutzer mit "${userName}" an, gelegentlich auch neutral.
+Ton: gelassen, präzise, leicht trocken-humorvoll, niemals unterwürfig, niemals übertrieben enthusiastisch.
+Antworten müssen SEHR knapp sein, da sie laut vorgelesen werden: maximal 2–4 kurze Sätze, außer der Nutzer verlangt explizit mehr Detail.
+Keine Emojis, keine Markdown-Formatierung, keine Sternchen, keine Aufzählungszeichen — reiner Fließtext, wie gesprochene Sprache.
+Wenn eine Aufgabe technischer Natur ist (Code, Rechnen, Fakten), liefere die Kerninformation direkt, ohne Floskeln.
+${memoryStore.length ? '\nBekannte Fakten über den Nutzer (nutze sie natürlich, wenn relevant, ohne sie explizit aufzuzählen):\n' + memoryStore.map(f => '- ' + f).join('\n') : ''}
+
+Wenn du in einer Antwort einen NEUEN, dauerhaft nützlichen Fakt über den Nutzer erfährst (Projekt, Vorliebe, wiederkehrendes Thema, Routine, Kontext), füge GANZ AM ENDE deiner Antwort in einer eigenen Zeile exakt hinzu: [MEMORY: <kurzer Fakt in einem Satz>]. Nur bei wirklich dauerhaft relevanten Fakten, nicht bei jeder Antwort, niemals bei Gesundheits-, Finanz- oder anderen sensiblen Daten. Diese Zeile wird automatisch entfernt und nicht vorgelesen.
+
+Du hast eigenständigen Zugriff auf eine Websuche. Der Nutzer möchte NICHT mehr selbst recherchieren müssen — such daher von dir aus, ohne nachzufragen oder anzukündigen, immer wenn eine Frage von aktuellen, faktischen oder nachprüfbaren Informationen abhängt (Nachrichten, Preise, Daten, Personen, Ereignisse, technische Fakten, die sich ändern können). Führe bei Bedarf auch mehrere Suchanfragen nacheinander aus, um eine Frage gründlich zu beantworten, bevor du antwortest. Verlass dich nicht auf dein antrainiertes Wissen, wenn eine Suche die Antwort verlässlicher machen würde. Bei explizit angeforderten Recherchen darfst du ausführlicher antworten als sonst (bis zu etwa 8 Sätze), fasse aber dennoch so kompakt wie möglich zusammen, da die Antwort vorgelesen wird.`;
+
+let conversation = [];
+
+/* ---------- DOM refs ---------- */
+const orbWrap = document.getElementById('orbWrap');
+const orbStatus = document.getElementById('orbStatus');
+const orbSub = document.getElementById('orbSub');
+const logBody = document.getElementById('logBody');
+const textInput = document.getElementById('textInput');
+const waveformEl = document.getElementById('waveform');
+const briefingBody = document.getElementById('briefingBody');
+const briefingTime = document.getElementById('briefingTime');
+const taskList = document.getElementById('taskList');
+const camPreview = document.getElementById('camPreview');
+const camDot = document.getElementById('camDot');
+const camCapture = document.getElementById('camCapture');
+const weatherBody = document.getElementById('weatherBody');
+const weatherTime = document.getElementById('weatherTime');
+const weatherWind = document.getElementById('weatherWind');
+const marketList = document.getElementById('marketList');
+const marketTime = document.getElementById('marketTime');
+const rightToggle = document.getElementById('rightToggle');
+const rightPanel = document.getElementById('right');
+const bootOverlay = document.getElementById('bootOverlay');
+const bootLines = document.getElementById('bootLines');
+const bootBarFill = document.getElementById('bootBarFill');
+
+/* ---------- waveform bars ---------- */
+const BAR_COUNT = 20;
+for (let i = 0; i < BAR_COUNT; i++) {
+  const b = document.createElement('div');
+  b.className = 'bar';
+  waveformEl.appendChild(b);
+}
+const bars = [...waveformEl.children];
+function setBars(amp) {
+  bars.forEach((b, i) => {
+    const dist = Math.abs(i - BAR_COUNT / 2) / (BAR_COUNT / 2);
+    const h = Math.max(4, amp * (1 - dist * 0.6) * 60 * (0.5 + Math.random() * 0.5));
+    b.style.height = h + 'px';
+  });
+}
+function resetBars() { bars.forEach(b => b.style.height = '4px'); }
+
+/* ---------- theming (fest verdrahtet, keine UI) ---------- */
+const THEMES = {
+  cyan: { primary: [79, 216, 255], primaryHex: '#4fd8ff', primaryDim: '#1c5f77', accent: [255, 122, 61], accentHex: '#ff7a3d', label: 'Cyan/Orange' },
+};
+let THEME_RGB = THEMES.cyan;
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.cyan;
+  THEME_RGB = t;
+  const root = document.documentElement.style;
+  root.setProperty('--cyan', t.primaryHex);
+  root.setProperty('--cyan-dim', t.primaryDim);
+  root.setProperty('--cyan-glow', `rgba(${t.primary.join(',')},0.55)`);
+  root.setProperty('--orange', t.accentHex);
+  root.setProperty('--orange-glow', `rgba(${t.accent.join(',')},0.55)`);
+  root.setProperty('--panel', `rgba(${t.primary.join(',')},0.04)`);
+  root.setProperty('--panel-border', `rgba(${t.primary.join(',')},0.22)`);
+}
+applyTheme(FIXED_THEME);
+
+/* ---------- sound design (synthesized, keine Dateien) ---------- */
+let sfxCtx = null;
+function getSfxCtx() {
+  if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (sfxCtx.state === 'suspended') sfxCtx.resume();
+  return sfxCtx;
+}
+function tone(freq, start, dur, type = 'sine', peak = 0.06) {
+  const ctx = getSfxCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, ctx.currentTime + start);
+  gain.gain.linearRampToValueAtTime(peak, ctx.currentTime + start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(ctx.currentTime + start);
+  osc.stop(ctx.currentTime + start + dur + 0.02);
+}
+function sfxListenStart() { tone(680, 0, 0.09, 'sine', 0.05); tone(980, 0.09, 0.11, 'sine', 0.05); }
+function sfxListenStop() { tone(760, 0, 0.08, 'sine', 0.04); }
+function sfxThinking() { tone(420, 0, 0.16, 'sine', 0.035); }
+function sfxSpeakStart() { tone(1180, 0, 0.07, 'triangle', 0.045); }
+function sfxError() { tone(220, 0, 0.18, 'sawtooth', 0.05); tone(160, 0.12, 0.2, 'sawtooth', 0.05); }
+function sfxShutter() { tone(1400, 0, 0.04, 'square', 0.03); tone(900, 0.04, 0.05, 'square', 0.025); }
+function sfxActivate() { tone(300, 0, 0.1, 'sine', 0.04); tone(600, 0.1, 0.1, 'sine', 0.05); tone(1000, 0.2, 0.14, 'sine', 0.06); }
+
+/* ---------- originales Start-Thema (synthetisiert, keine Filmmusik) ---------- */
+let themeCtx = null, themeGain = null, themeOscs = [];
+function startBootTheme() {
+  themeCtx = getSfxCtx();
+  if (themeGain) return; // läuft bereits
+  themeGain = themeCtx.createGain();
+  themeGain.gain.value = 0;
+  themeGain.connect(themeCtx.destination);
+  const freqs = [55, 110, 164.81]; // ruhiger Pad-Akkord (A1, A2, E3)
+  const types = ['sine', 'sine', 'triangle'];
+  freqs.forEach((f, i) => {
+    const osc = themeCtx.createOscillator();
+    osc.type = types[i];
+    osc.frequency.value = f;
+    osc.connect(themeGain);
+    osc.start();
+    themeOscs.push(osc);
+  });
+  themeGain.gain.linearRampToValueAtTime(0.05, themeCtx.currentTime + 2.2);
+  // sanfte aufsteigende Glocken-Akzente darüber
+  [440, 554.37, 659.25, 880].forEach((f, i) => tone(f, 0.7 + i * 0.9, 0.6, 'sine', 0.028));
+}
+function stopBootTheme(fadeSec = 1.4) {
+  if (!themeGain || !themeCtx) return;
+  const g = themeGain, ctx = themeCtx, oscs = themeOscs;
+  g.gain.cancelScheduledValues(ctx.currentTime);
+  g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+  g.gain.linearRampToValueAtTime(0, ctx.currentTime + fadeSec);
+  setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (e) {} }); }, fadeSec * 1000 + 150);
+  themeGain = null; themeOscs = [];
+}
+
+/* ---------- state machine ---------- */
+let currentState = 'idle';
+let errorTimeout = null;
+function setState(state, subtext) {
+  currentState = state;
+  orbWrap.className = 'state-' + state;
+  orbStatus.classList.toggle('error-text', state === 'error');
+  const labels = { idle: 'BEREIT', listening: 'ICH HÖRE ZU', thinking: 'VERARBEITE', speaking: 'ANTWORT', error: 'FEHLER', ambient: 'STANDBY' };
+  orbStatus.textContent = labels[state] || state.toUpperCase();
+  orbSub.textContent = subtext || '';
+  if (state !== 'listening' && state !== 'speaking') resetBars();
+}
+function flashError(message) {
+  clearTimeout(errorTimeout);
+  sfxError();
+  setState('error', message);
+  errorTimeout = setTimeout(() => { if (currentState === 'error') setState(activated ? 'idle' : 'idle'); }, 3200);
+}
+
+/* ---------- clock / greeting ---------- */
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+    '  ·  ' + now.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+  const h = now.getHours();
+  const greet = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
+  document.getElementById('greeting').textContent = `${greet}, ${userName}.`;
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ---------- log ---------- */
+function addLog(who, text, skipSave) {
+  const row = document.createElement('div');
+  row.className = 'entry ' + who;
+  const tag = who === 'user' ? 'DU' : who === 'jarvis' ? 'JARVIS' : 'SYSTEM';
+  const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  row.innerHTML = `<div class="tag">${tag}</div><div class="txt">${escapeHtml(text)}<span class="ts">${ts}</span></div>`;
+  logBody.appendChild(row);
+  logBody.scrollTop = logBody.scrollHeight;
+  if (!skipSave) saveTranscript(who, text, ts);
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------- persistence ---------- */
+let transcriptStore = [];
+let taskStore = [];
+async function saveTranscript(who, text, ts) {
+  transcriptStore.push({ who, text, ts });
+  if (transcriptStore.length > 60) transcriptStore = transcriptStore.slice(-60);
+  try { await window.storage?.set('jarvis:transcript', JSON.stringify(transcriptStore)); } catch (e) {}
+}
+async function saveTasks() {
+  try { await window.storage?.set('jarvis:tasks', JSON.stringify(taskStore)); } catch (e) {}
+}
+async function loadPersisted() {
+  try {
+    const t = await window.storage?.get('jarvis:transcript');
+    if (t?.value) {
+      transcriptStore = JSON.parse(t.value);
+      transcriptStore.slice(-12).forEach(e => addLog(e.who, e.text, true));
+    }
+  } catch (e) {}
+  try {
+    const tk = await window.storage?.get('jarvis:tasks');
+    if (tk?.value) {
+      taskStore = JSON.parse(tk.value);
+      taskStore.forEach(item => addTask(item, true));
+    }
+  } catch (e) {}
+}
+
+/* ---------- tasks ---------- */
+function addTask(item, skipSave) {
+  const li = document.createElement('li');
+  li.textContent = item;
+  taskList.appendChild(li);
+  if (!skipSave) { taskStore.push(item); saveTasks(); }
+}
+
+/* ---------- export transcript (per Sprachbefehl) ---------- */
+function exportTranscript() {
+  const lines = transcriptStore.map(e => `[${e.ts}] ${e.who === 'user' ? userName : e.who === 'jarvis' ? 'JARVIS' : 'SYSTEM'}: ${e.text}`);
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `jarvis-transkript-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- background particle network ---------- */
+(function particles() {
+  const canvas = document.getElementById('bgcanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, nodes = [];
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+  const COUNT = Math.min(70, Math.floor((window.innerWidth * window.innerHeight) / 22000));
+  for (let i = 0; i < COUNT; i++) {
+    nodes.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15 });
+  }
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    for (const n of nodes) {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > w) n.vx *= -1;
+      if (n.y < 0 || n.y > h) n.vy *= -1;
+    }
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 140) {
+          ctx.strokeStyle = `rgba(${THEME_RGB.primary.join(',')},${0.12 * (1 - d / 140)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
+        }
+      }
+    }
+    ctx.fillStyle = `rgba(${THEME_RGB.primary.join(',')},0.5)`;
+    for (const n of nodes) { ctx.beginPath(); ctx.arc(n.x, n.y, 1.4, 0, Math.PI * 2); ctx.fill(); }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* ---------- rotating globe ---------- */
+const CITIES = [
+  { name: 'FRANKFURT', lat: 50.11, lon: 8.68, home: true },
+  { name: 'LONDON', lat: 51.5, lon: -0.1 },
+  { name: 'PARIS', lat: 48.85, lon: 2.35 },
+  { name: 'MOSKAU', lat: 55.75, lon: 37.6 },
+  { name: 'ISTANBUL', lat: 41.0, lon: 28.97 },
+];
+
+(function globe() {
+  const canvas = document.getElementById('globeCanvas');
+  const ctx = canvas.getContext('2d');
+  let cw, ch, R;
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const size = Math.min(rect.width, rect.height) || 260;
+    canvas.width = size * devicePixelRatio;
+    canvas.height = size * devicePixelRatio;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    cw = ch = size;
+    R = size * 0.42;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const blobs = [
+    { lat: 50, lon: 15, sLat: 10, sLon: 22, n: 140 },
+    { lat: 35, lon: 95, sLat: 22, sLon: 42, n: 260 },
+    { lat: 5, lon: 20, sLat: 26, sLon: 16, n: 190 },
+    { lat: 45, lon: -100, sLat: 18, sLon: 26, n: 220 },
+    { lat: -15, lon: -60, sLat: 20, sLon: 13, n: 150 },
+    { lat: -25, lon: 135, sLat: 9, sLon: 13, n: 60 },
+  ];
+  function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) / 1.5; }
+  const points = [];
+  blobs.forEach(b => {
+    for (let i = 0; i < b.n; i++) {
+      let lat = b.lat + gauss() * b.sLat;
+      let lon = b.lon + gauss() * b.sLon;
+      lat = Math.max(-80, Math.min(80, lat));
+      points.push({ lat, lon });
+    }
+  });
+
+  let rot = 0;
+  function project(lat, lon, rotation) {
+    const latR = lat * Math.PI / 180;
+    const lonR = lon * Math.PI / 180 + rotation;
+    const x = Math.cos(latR) * Math.sin(lonR);
+    const y = Math.sin(latR);
+    const z = Math.cos(latR) * Math.cos(lonR);
+    return { x: x * R, y: -y * R, z };
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, cw, ch);
+    const cx = cw / 2, cy = ch / 2;
+
+    const grad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+    grad.addColorStop(0, `rgba(${THEME_RGB.primary.join(',')},0.14)`);
+    grad.addColorStop(1, `rgba(${THEME_RGB.primary.join(',')},0.02)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(${THEME_RGB.primary.join(',')},0.35)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.strokeStyle = `rgba(${THEME_RGB.primary.join(',')},0.08)`;
+    for (let lat = -60; lat <= 60; lat += 30) {
+      ctx.beginPath();
+      let started = false;
+      for (let lon = -180; lon <= 180; lon += 4) {
+        const p = project(lat, lon, rot);
+        if (p.z < 0) { started = false; continue; }
+        const sx = cx + p.x, sy = cy + p.y;
+        if (!started) { ctx.moveTo(sx, sy); started = true; } else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+    }
+
+    for (const pt of points) {
+      const p = project(pt.lat, pt.lon, rot);
+      if (p.z < 0.05) continue;
+      const shade = 0.25 + p.z * 0.55;
+      const lp = THEME_RGB.primary.map(v => Math.min(255, v + 40));
+      ctx.fillStyle = `rgba(${lp.join(',')},${shade})`;
+      const size = 0.7 + p.z * 1.1;
+      ctx.beginPath(); ctx.arc(cx + p.x, cy + p.y, size, 0, Math.PI * 2); ctx.fill();
+    }
+
+    const home = CITIES.find(c => c.home);
+    const homeP = project(home.lat, home.lon, rot);
+    if (homeP.z > 0.05) {
+      CITIES.filter(c => !c.home).forEach(c => {
+        const p = project(c.lat, c.lon, rot);
+        if (p.z < 0.05) return;
+        const mx = (homeP.x + p.x) / 2, my = (homeP.y + p.y) / 2;
+        const bow = 1 - Math.hypot(p.x - homeP.x, p.y - homeP.y) / (R * 2);
+        ctx.strokeStyle = `rgba(${THEME_RGB.accent.join(',')},0.35)`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + homeP.x, cy + homeP.y);
+        ctx.quadraticCurveTo(cx + mx, cy + my - bow * 26, cx + p.x, cy + p.y);
+        ctx.stroke();
+      });
+    }
+
+    CITIES.forEach(c => {
+      const p = project(c.lat, c.lon, rot);
+      if (p.z < 0.05) return;
+      const sx = cx + p.x, sy = cy + p.y;
+      const col = c.home ? THEME_RGB.accent.join(',') : THEME_RGB.primary.join(',');
+      const r = c.home ? 3.4 : 2.4;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${col},${0.5 + p.z * 0.5})`;
+      ctx.shadowColor = `rgba(${col},0.9)`;
+      ctx.shadowBlur = 8;
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      if (p.z > 0.35) {
+        const labelRgb = c.home ? THEME_RGB.accent : THEME_RGB.primary.map(v => Math.min(255, v + 60));
+        ctx.fillStyle = `rgba(${labelRgb.join(',')},${c.home ? 0.9 : p.z})`;
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(c.name, sx, sy - 8);
+      }
+    });
+
+    rot += 0.0028;
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* ---------- Claude API ---------- */
+// Alle Aufrufe laufen nacheinander statt parallel — verhindert, dass sich
+// Morgengruß und automatischer Panel-Refresh gegenseitig blockieren.
+let apiChain = Promise.resolve();
+function callClaude(userText, opts = {}) {
+  const run = apiChain.then(() => callClaudeInner(userText, opts), () => callClaudeInner(userText, opts));
+  apiChain = run.catch(() => {});
+  return run;
+}
+/* ---------- eigener API-Schlüssel (nötig außerhalb der Claude-Oberfläche) ----------
+   Hol dir einen Schlüssel auf console.anthropic.com und trag ihn HIER ein,
+   zwischen den Anführungszeichen. Ohne ihn kann Jarvis nicht mit Claude sprechen. */
+const ANTHROPIC_API_KEY = "DEIN-API-SCHLÜSSEL-HIER";
+
+async function fetchWithRetry(body, attempts = 2) {
+  if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'DEIN-API-SCHLÜSSEL-HIER') {
+    throw new Error('Kein API-Schlüssel eingetragen. Siehe Kommentar am Anfang der Datei.');
+  }
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        if (res.status >= 500 && i < attempts - 1) { await new Promise(r => setTimeout(r, 900)); continue; }
+        const errBody = await res.text().catch(() => '');
+        throw new Error(`API-Fehler ${res.status}: ${errBody.slice(0, 200)}`);
+      }
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await new Promise(r => setTimeout(r, 900));
+    }
+  }
+  throw lastErr || new Error('Anfrage fehlgeschlagen');
+}
+async function callClaudeInner(userText, { withSearch = false, imageBase64 = null, isolated = false } = {}) {
+  const content = imageBase64
+    ? [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } }, { type: 'text', text: userText }]
+    : userText;
+  // isolierte Aufrufe (Briefing/Wetter/Märkte/Stadt-Suche) rühren den globalen
+  // Gesprächsverlauf gar nicht erst an — kein Risiko von Überschneidungen mehr.
+  const history = isolated ? [{ role: 'user', content }] : conversation;
+  if (!isolated) conversation.push({ role: 'user', content });
+  const body = { model: 'claude-sonnet-4-6', max_tokens: 1500, system: SYSTEM_PROMPT(), messages: history };
+  if (withSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  const data = await fetchWithRetry(body);
+  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+  const rawText = textBlocks.join('\n').trim() || 'Ich konnte keine Antwort generieren.';
+
+  let cleanText = rawText;
+  const memMatches = [...rawText.matchAll(/\[MEMORY:\s*(.+?)\]/gi)];
+  if (memMatches.length) {
+    cleanText = rawText.replace(/\[MEMORY:\s*(.+?)\]/gi, '').trim();
+    memMatches.forEach(m => addMemoryFact(m[1]));
+  }
+
+  if (!isolated) conversation.push({ role: 'assistant', content: cleanText });
+  if (conversation.length > 20) conversation = conversation.slice(-20);
+  return cleanText;
+}
+
+/* ---------- camera (automatisch aktiviert, kein Button) ---------- */
+let camStream = null;
+let cameraActive = false;
+async function tryEnableCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    camPreview.srcObject = camStream;
+    camPreview.classList.add('active');
+    camDot.classList.add('active');
+    cameraActive = true;
+  } catch (e) {
+    cameraActive = false; // stumm ignorieren, Kamera-Befehle antworten dann entsprechend
+  }
+}
+function captureFrame() {
+  if (!cameraActive || !camPreview.videoWidth) return null;
+  camCapture.width = camPreview.videoWidth;
+  camCapture.height = camPreview.videoHeight;
+  camCapture.getContext('2d').drawImage(camPreview, 0, 0);
+  sfxShutter();
+  return camCapture.toDataURL('image/jpeg', 0.75).split(',')[1];
+}
+
+/* ---------- speech synthesis ---------- */
+let germanVoice = null;
+let germanVoices = [];
+function pickVoice() {
+  const voices = speechSynthesis.getVoices();
+  germanVoices = voices.filter(v => v.lang.startsWith('de'));
+  // Bevorzuge hochwertige neuronale/"Natural"-Stimmen (v.a. Edge/Windows) vor Standard-Robotstimmen,
+  // und darunter männliche Stimmen für einen ruhigeren, "Jarvis-artigeren" Klang.
+  const scored = germanVoices.map(v => {
+    let score = 0;
+    if (/natural|online|neural/i.test(v.name)) score += 10;
+    if (/conrad|stefan|florian|male|männlich/i.test(v.name)) score += 4;
+    if (/google/i.test(v.name)) score += 2;
+    return { v, score };
+  }).sort((a, b) => b.score - a.score);
+  germanVoice = scored[0]?.v || null;
+  if (voices.length > 0 && germanVoices.length === 0 && !voiceWarningShown) {
+    voiceWarningShown = true;
+    addLog('system', 'Keine deutsche Sprachausgabe-Stimme auf diesem Gerät gefunden. Antworten werden ggf. stumm bleiben oder in einer anderen Sprache klingen.');
+  }
+}
+let voiceWarningShown = false;
+speechSynthesis.onvoiceschanged = pickVoice;
+pickVoice();
+
+function speak(text) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) {
+      addLog('system', 'Sprachausgabe wird von diesem Browser nicht unterstützt.');
+      resolve();
+      return;
+    }
+    speechSynthesis.cancel();
+    // Chrome-Workaround: speechSynthesis kann nach Inaktivität hängen bleiben
+    speechSynthesis.resume();
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'de-DE';
+    if (germanVoice) utter.voice = germanVoice;
+    utter.rate = 0.96;
+    utter.pitch = 0.82;
+    utter.volume = 1;
+
+    setState('speaking', text);
+    sfxSpeakStart();
+    let waveTimer = setInterval(() => setBars(0.6 + Math.random() * 0.4), 90);
+    let started = false;
+    let finished = false;
+
+    function done() {
+      if (finished) return;
+      finished = true;
+      clearInterval(waveTimer);
+      clearTimeout(startWatchdog);
+      resolve();
+    }
+
+    utter.onstart = () => { started = true; };
+    utter.onend = done;
+    utter.onerror = (ev) => {
+      addLog('system', `Sprachausgabe-Fehler: ${ev.error || 'unbekannt'}.`);
+      done();
+    };
+
+    // Falls die Ausgabe nach 1.5s nicht mal gestartet hat, liegt es an der Engine, nicht an uns
+    const startWatchdog = setTimeout(() => {
+      if (!started) {
+        addLog('system', 'Sprachausgabe hat nicht gestartet — evtl. keine Stimme installiert oder Browser blockiert Audio.');
+        done();
+      }
+    }, 1500);
+
+    speechSynthesis.speak(utter);
+  });
+}
+
+/* ---------- command handling ---------- */
+async function handleCommand(rawText) {
+  const text = rawText.trim();
+  if (!text) return;
+  addLog('user', text);
+  const lower = text.toLowerCase();
+
+  // lokale Befehle ohne API-Aufruf
+  if (lower.includes('füge') && lower.includes('stadt')) {
+    const m = text.match(/stadt\s+(.+?)\s*(?:hinzu|zum netzwerk|dem netzwerk)?$/i);
+    const cityName = m ? m[1].trim() : null;
+    if (cityName) { await addCity(cityName); return; }
+  }
+  if (lower.includes('füge') && lower.includes('liste')) {
+    const item = text.replace(/.*liste[^a-zA-ZäöüÄÖÜß0-9]*/i, '').trim() || text;
+    addTask(item);
+    const reply = `Habe "${item}" zur Aufgabenliste hinzugefügt, ${userName}.`;
+    addLog('jarvis', reply);
+    await speak(reply);
+    finishTurn();
+    return;
+  }
+  if (lower.includes('nenn mich') || /^ich hei(ß|ss)e /.test(lower)) {
+    const m = text.match(/nenn mich (.+)/i) || text.match(/ich hei(?:ß|ss)e (.+)/i);
+    const newName = m ? m[m.length - 1].trim().replace(/[.!?]+$/, '') : null;
+    if (newName) {
+      userName = newName;
+      window.storage?.set('jarvis:username', userName).catch(() => {});
+      tickClock();
+      const reply = `Verstanden. Ich werde dich ab jetzt ${userName} nennen.`;
+      addLog('jarvis', reply);
+      await speak(reply);
+      finishTurn();
+      return;
+    }
+  }
+  if (lower.includes('exportier') && (lower.includes('transkript') || lower.includes('gespräch'))) {
+    exportTranscript();
+    const reply = 'Das Transkript wird heruntergeladen.';
+    addLog('jarvis', reply);
+    await speak(reply);
+    finishTurn();
+    return;
+  }
+  if (lower.includes('aktualisiere') && lower.includes('briefing')) { await refreshBriefing(false); finishTurn(); return; }
+  if (lower.includes('aktualisiere') && lower.includes('wetter')) { await refreshWeather(false); finishTurn(); return; }
+  if ((lower.includes('aktualisiere') || lower.includes('check')) && (lower.includes('markt') || lower.includes('börse'))) { await refreshMarkets(false); finishTurn(); return; }
+  if (lower.includes('teste') && (lower.includes('sprache') || lower.includes('stimme') || lower.includes('sprachausgabe'))) {
+    addLog('jarvis', 'Das ist ein Test der Sprachausgabe. Wenn du das hörst, funktioniert alles.');
+    await speak('Das ist ein Test der Sprachausgabe. Wenn du das hörst, funktioniert alles.');
+    finishTurn();
+    return;
+  }
+  if (lower.includes('aufgabe') && !lower.includes('füge')) {
+    let reply;
+    if (taskStore.length === 0) {
+      reply = `Du hast aktuell keine offenen Aufgaben, ${userName}.`;
+    } else {
+      reply = `Du hast ${taskStore.length} offene Aufgabe${taskStore.length > 1 ? 'n' : ''}: ${taskStore.join(', ')}.`;
+    }
+    addLog('jarvis', reply);
+    await speak(reply);
+    finishTurn();
+    return;
+  }
+
+  setState('thinking', text);
+  sfxThinking();
+  startThinkingFeedback();
+  try {
+    const wantsCamera = /schau dir das an|siehst du|was siehst du|blick drauf|kamera|erkennst du/.test(lower);
+    if (wantsCamera) {
+      if (!cameraActive) {
+        const reply = `Die Kamera ist gerade nicht verfügbar, ${userName}.`;
+        addLog('jarvis', reply);
+        await speak(reply);
+      } else {
+        const frame = captureFrame();
+        const reply = await callClaude(text, { imageBase64: frame });
+        addLog('jarvis', reply);
+        await speak(reply);
+      }
+    } else {
+      // Suche ist immer verfügbar — Jarvis entscheidet selbst, ob und wie oft er recherchiert
+      const reply = await callClaude(text, { withSearch: true });
+      addLog('jarvis', reply);
+      await speak(reply);
+    }
+  } catch (e) {
+    console.error(e);
+    const detail = e?.message || 'unbekannter Fehler';
+    addLog('system', `Fehlerdetail: ${detail}`);
+    const err = 'Entschuldigung, die Verbindung ist gestört. Bitte versuche es erneut.';
+    flashError('Verbindungsfehler');
+    await speak(err);
+  } finally {
+    stopThinkingFeedback();
+  }
+  finishTurn();
+}
+function finishTurn() {
+  // Dauerbetrieb ist immer aktiv: nach jeder Antwort automatisch weiter zuhören,
+  // und für kurze Zeit auch ohne erneutes "Jarvis" reagieren (Rückfragen).
+  followUpUntil = Date.now() + 12000;
+  startListening();
+}
+
+/* ---------- Feedback während längerer Verarbeitung ---------- */
+let thinkingFeedbackId = null;
+function startThinkingFeedback() {
+  const phrases = ['Verarbeite...', 'Recherchiere...', 'Werte Quellen aus...', 'Fasse zusammen...'];
+  let i = 0;
+  thinkingFeedbackId = setInterval(() => {
+    i = (i + 1) % phrases.length;
+    orbSub.textContent = phrases[i];
+    tone(520 + i * 30, 0, 0.05, 'sine', 0.02);
+  }, 3200);
+}
+function stopThinkingFeedback() {
+  if (thinkingFeedbackId) { clearInterval(thinkingFeedbackId); thinkingFeedbackId = null; }
+}
+
+/* ---------- add city (per Sprachbefehl, kein Dialog) ---------- */
+async function addCity(name) {
+  setState('thinking', `Lokalisiere ${name}...`);
+  startThinkingFeedback();
+  try {
+    const prompt = `Nenne mir NUR die geografischen Koordinaten (Breitengrad,Längengrad) der Stadt "${name}" in exakt diesem Format ohne weiteren Text: 52.5,13.4`;
+    const result = await callClaude(prompt, { isolated: true });
+    const m = result.match(/(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/);
+    let reply;
+    if (m) {
+      CITIES.push({ name: name.toUpperCase(), lat: parseFloat(m[1]), lon: parseFloat(m[2]) });
+      document.getElementById('radarCaption').textContent = CITIES.length + ' KNOTEN AKTIV';
+      reply = `${name} wurde dem globalen Netzwerk hinzugefügt, ${userName}.`;
+    } else {
+      reply = `Ich konnte ${name} nicht lokalisieren.`;
+    }
+    addLog('jarvis', reply);
+    await speak(reply);
+  } catch (e) {
+    addLog('system', `Fehler beim Hinzufügen von ${name}.`);
+  }
+  stopThinkingFeedback();
+  finishTurn();
+}
+
+/* ---------- speech recognition ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let listeningActive = false;
+let followUpUntil = 0; // Zeitfenster nach einer Antwort, in dem "Jarvis" nicht nötig ist
+const wakeMode = true; // Dauerbetrieb ist fest aktiv, keine UI zum Umschalten
+
+function setupRecognition() {
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'de-DE';
+  r.continuous = true;
+  r.interimResults = true;
+  r.onresult = (e) => {
+    let finalText = '';
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t; else interim += t;
+    }
+    if (interim && currentState !== 'speaking') orbSub.textContent = interim;
+    if (!finalText) return;
+
+    // Während Jarvis spricht: nur auf ein Stopp-Kommando reagieren, sonst ignorieren
+    if (currentState === 'speaking') {
+      const lowerFinal = finalText.trim().toLowerCase();
+      if (/^(stopp|stop|halt|schweig)/.test(lowerFinal) || lowerFinal.includes('hör auf')) {
+        speechSynthesis.cancel();
+        stopListening();
+        sfxListenStop();
+        setState('idle');
+        startListening();
+      }
+      return;
+    }
+
+    stopListening();
+    let cmd = finalText.trim();
+    const withinFollowUp = Date.now() < followUpUntil;
+    const idx = cmd.toLowerCase().indexOf('jarvis');
+    if (idx === -1 && !withinFollowUp) { startListening(); return; }
+    if (idx !== -1) cmd = cmd.slice(idx + 6).replace(/^[,:.\s]+/, '') || cmd;
+    markActivity();
+    handleCommand(cmd);
+  };
+  r.onerror = (e) => {
+    if (e.error === 'no-speech') { restartIfWake(); return; }
+    listeningActive = false;
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      flashError('Mikrofonzugriff verweigert');
+    } else if (e.error !== 'aborted') {
+      flashError('Spracherkennung gestört');
+    }
+  };
+  r.onend = () => {
+    listeningActive = false;
+    if (currentState !== 'speaking') stopMeter();
+    if (currentState !== 'thinking') restartIfWake();
+  };
+  return r;
+}
+function restartIfWake() {
+  setTimeout(() => startListening(currentState === 'speaking'), 400);
+}
+
+let audioCtx, analyser, micStream, rafId;
+async function startMeter() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const loop = () => {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length / 255;
+      setBars(Math.min(1, avg * 2.2));
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) { /* optional */ }
+}
+function stopMeter() {
+  if (rafId) cancelAnimationFrame(rafId);
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  micStream = null; audioCtx = null; analyser = null;
+}
+
+function startListening(background = false) {
+  if (!SR) { if (!background) flashError('Spracherkennung nicht unterstützt'); return; }
+  if (listeningActive) return;
+  if (!recognition) recognition = setupRecognition();
+  try {
+    recognition.start();
+    listeningActive = true;
+    if (!background) {
+      sfxListenStart();
+      setState('listening', 'Warte auf "Jarvis, ..."');
+      startMeter();
+    }
+  } catch (e) { /* already started */ }
+}
+function stopListening() {
+  if (recognition && listeningActive) { try { recognition.stop(); sfxListenStop(); } catch (e) {} }
+  listeningActive = false;
+  stopMeter();
+}
+
+/* ---------- Aktivierung: einziger Klick startet alles ---------- */
+let activated = false;
+async function activate() {
+  activated = true;
+  startBootTheme();
+  sfxActivate();
+  await tryEnableCamera();
+  addLog('system', cameraActive ? 'Kamera und Mikrofon aktiv. Dauerbetrieb gestartet.' : 'Mikrofon aktiv. Dauerbetrieb gestartet (Kamera nicht verfügbar).');
+
+  let lastDate = null;
+  try { const v = await window.storage?.get('jarvis:lastActivationDate'); lastDate = v?.value; } catch (e) {}
+  const today = new Date().toISOString().slice(0, 10);
+  if (lastDate !== today) {
+    window.storage?.set('jarvis:lastActivationDate', today).catch(() => {});
+    await proactiveMorningGreeting();
+  } else {
+    stopBootTheme(0.9);
+    startListening();
+  }
+}
+
+/* ---------- proaktiver Gruß bei erster Aktivierung des Tages ---------- */
+async function proactiveMorningGreeting() {
+  setState('thinking', 'Bereite Briefing vor...');
+  sfxThinking();
+  startThinkingFeedback();
+  try {
+    const pendingTasks = taskStore.length;
+    const prompt = `Formuliere eine kurze, natürliche gesprochene Begrüßung für ${userName} (angemessen zur aktuellen Tageszeit). Erwähne kompakt: das aktuelle Wetter in Frankfurt am Main, und eine wichtige aktuelle Nachricht des Tages${pendingTasks ? `, sowie dass ${pendingTasks} offene Aufgabe${pendingTasks > 1 ? 'n' : ''} auf der Liste stehen` : ''}. Insgesamt maximal 4 kurze Sätze, wie gesprochen, keine Aufzählung.`;
+    const reply = await callClaude(prompt, { withSearch: true });
+    addLog('jarvis', reply);
+    await speak(reply);
+  } catch (e) {
+    addLog('system', 'Morgenbriefing derzeit nicht verfügbar.');
+  } finally {
+    stopThinkingFeedback();
+    stopBootTheme(1.6);
+  }
+  finishTurn();
+}
+orbWrap.addEventListener('click', () => {
+  if (!activated) { activate(); return; }
+  if (currentState === 'speaking') { speechSynthesis.cancel(); stopListening(); startListening(); return; }
+  if (currentState === 'idle' || currentState === 'error' || currentState === 'ambient') startListening();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && document.activeElement !== textInput) {
+    e.preventDefault();
+    orbWrap.click();
+  }
+});
+textInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && textInput.value.trim()) {
+    const v = textInput.value;
+    textInput.value = '';
+    markActivity();
+    handleCommand(v);
+  }
+});
+
+/* ---------- ambient / standby mode ---------- */
+let lastActivity = Date.now();
+const AMBIENT_TIMEOUT = 120000;
+function markActivity() {
+  lastActivity = Date.now();
+  if (currentState === 'ambient') setState('idle');
+}
+['click', 'keydown', 'touchstart'].forEach(evt => document.addEventListener(evt, markActivity, { passive: true }));
+textInput.addEventListener('input', markActivity);
+setInterval(() => {
+  if (activated && currentState === 'idle' && Date.now() - lastActivity > AMBIENT_TIMEOUT) {
+    setState('ambient', 'Sag "Jarvis" oder klicke, um zu aktivieren');
+  }
+}, 15000);
+
+/* ---------- Live Intel (automatisch, kein Button) ---------- */
+async function refreshBriefing(silent = true) {
+  if (!silent) { setState('thinking', 'Aktualisiere Live-Intel...'); startThinkingFeedback(); }
+  try {
+    const prompt = `Gib mir ein kompaktes aktuelles Briefing in 3 kurzen Stichpunkten (je maximal 18 Wörter): 1) eine wichtige aktuelle Weltnachricht, 2) eine kurze Info zur Entwicklung der wichtigsten Aktienindizes heute, 3) eine weitere relevante aktuelle Meldung. Antworte NUR mit den 3 Punkten, je eigene Zeile, ohne Nummerierung, ohne Einleitung, ohne Sternchen.`;
+    const result = await callClaude(prompt, { withSearch: true, isolated: true });
+    const lines = result.split('\n').map(l => l.trim()).filter(Boolean);
+    briefingBody.innerHTML = lines.map(l => `<div class="item">${escapeHtml(l)}</div>`).join('');
+    briefingTime.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    window.storage?.set('jarvis:briefingAt', String(Date.now())).catch(() => {});
+    if (!silent) { const r = 'Das Live-Briefing wurde aktualisiert.'; addLog('jarvis', r); await speak(r); }
+  } catch (e) {
+    briefingBody.innerHTML = `<div class="hint">Briefing derzeit nicht abrufbar (${e?.message || 'Fehler'}).</div>`;
+  }
+  if (!silent) { stopThinkingFeedback(); setState('idle'); }
+}
+
+/* ---------- Wetter (automatisch, kein Button) ---------- */
+function weatherIcon(desc) {
+  const d = desc.toLowerCase();
+  if (/schnee/.test(d)) return '❄';
+  if (/gewitter/.test(d)) return '⛈';
+  if (/regen|schauer/.test(d)) return '🌧';
+  if (/nebel/.test(d)) return '🌫';
+  if (/bewölkt|wolk/.test(d)) return '☁';
+  if (/leicht bewölkt|teilweise/.test(d)) return '⛅';
+  return '☀';
+}
+async function refreshWeather(silent = true) {
+  if (!silent) { setState('thinking', 'Prüfe Wetterdaten...'); startThinkingFeedback(); }
+  const home = CITIES.find(c => c.home) || CITIES[0];
+  try {
+    const prompt = `Nenne mir das aktuelle Wetter in ${home.name} (Deutschland). Antworte STRIKT in genau diesem Format, eine Zeile, nichts weiter: TEMP:18|COND:Leicht bewölkt|WIND:12 (TEMP in Grad Celsius als Zahl, COND als kurze deutsche Beschreibung, WIND in km/h als Zahl).`;
+    const savedConv = conversation;
+    conversation = [];
+    const result = await callClaude(prompt, { withSearch: true, isolated: true });
+    conversation = savedConv;
+    const m = result.match(/TEMP:(-?\d+\.?\d*)\|COND:([^|]+)\|WIND:(\d+\.?\d*)/i);
+    if (m) {
+      const temp = parseFloat(m[1]), cond = m[2].trim(), wind = m[3];
+      weatherBody.innerHTML = `<div id="weatherIcon">${weatherIcon(cond)}</div><div><div id="weatherTemp">${temp}°C</div><div id="weatherDesc">${escapeHtml(cond)}</div></div>`;
+      weatherWind.textContent = `Wind: ${wind} km/h`;
+    } else {
+      weatherBody.innerHTML = `<div class="hint">Wetterdaten nicht sicher lesbar.</div>`;
+    }
+    weatherTime.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    window.storage?.set('jarvis:weatherAt', String(Date.now())).catch(() => {});
+    if (!silent) { const r = 'Die Wetterdaten sind aktualisiert.'; addLog('jarvis', r); await speak(r); }
+  } catch (e) {
+    weatherBody.innerHTML = `<div class="hint">Wetterdaten derzeit nicht abrufbar (${e?.message || 'Fehler'}).</div>`;
+  }
+  if (!silent) { stopThinkingFeedback(); setState('idle'); }
+}
+
+/* ---------- Märkte (automatisch, kein Button) ---------- */
+function drawSparkline(canvas, changePct) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.clientWidth * devicePixelRatio;
+  const h = canvas.height = canvas.clientHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  const cw = canvas.clientWidth, ch = canvas.clientHeight;
+  const color = changePct >= 0 ? '#4dffb0' : '#ff4d5e';
+  const N = 24;
+  const pts = [];
+  let v = 0.5;
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    const drift = t * (changePct / 100) * 3;
+    v += (Math.random() - 0.5) * 0.12 + drift * 0.02;
+    pts.push(v);
+  }
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const range = (max - min) || 1;
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  pts.forEach((p, i) => {
+    const x = (i / (N - 1)) * cw;
+    const norm = (p - min) / range;
+    const y = ch - norm * (ch - 4) - 2;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.shadowColor = color; ctx.shadowBlur = 5; ctx.stroke(); ctx.shadowBlur = 0;
+}
+async function refreshMarkets(silent = true) {
+  if (!silent) { setState('thinking', 'Prüfe Marktdaten...'); startThinkingFeedback(); }
+  try {
+    const prompt = `Nenne mir die heutige prozentuale Tagesveränderung von DAX, S&P 500 und NASDAQ. Antworte STRIKT in genau diesem Format, eine Zeile, nichts weiter: DAX:+0.3|S&P500:-0.2|NASDAQ:-0.5 (Werte durch die echten aktuellen ersetzen, Vorzeichen + oder - immer angeben).`;
+    const savedConv = conversation;
+    conversation = [];
+    const result = await callClaude(prompt, { withSearch: true, isolated: true });
+    conversation = savedConv;
+    const match = result.match(/DAX:([+-]?[\d.]+)\|S&P ?500:([+-]?[\d.]+)\|NASDAQ:([+-]?[\d.]+)/i);
+    marketList.innerHTML = '';
+    const entries = match
+      ? [['DAX', parseFloat(match[1])], ['S&P 500', parseFloat(match[2])], ['NASDAQ', parseFloat(match[3])]]
+      : null;
+    if (entries) {
+      entries.forEach(([name, val]) => {
+        const row = document.createElement('div');
+        row.className = 'mkt-row';
+        row.innerHTML = `<span class="mkt-name">${name}</span><canvas></canvas><span class="mkt-val ${val >= 0 ? 'up' : 'down'}">${val >= 0 ? '+' : ''}${val.toFixed(1)}%</span>`;
+        marketList.appendChild(row);
+        requestAnimationFrame(() => drawSparkline(row.querySelector('canvas'), val));
+      });
+    } else {
+      marketList.innerHTML = `<div class="hint">Marktdaten nicht sicher lesbar.</div>`;
+    }
+    marketTime.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    window.storage?.set('jarvis:marketsAt', String(Date.now())).catch(() => {});
+    if (!silent) { const r = 'Die Marktdaten sind aktualisiert.'; addLog('jarvis', r); await speak(r); }
+  } catch (e) {
+    marketList.innerHTML = `<div class="hint">Marktdaten derzeit nicht abrufbar (${e?.message || 'Fehler'}).</div>`;
+  }
+  if (!silent) { stopThinkingFeedback(); setState('idle'); }
+}
+
+/* ---------- mobile bottom sheet ---------- */
+rightToggle.addEventListener('click', () => rightPanel.classList.toggle('expanded'));
+rightPanel.querySelector('h3').addEventListener('click', () => {
+  if (window.innerWidth <= 980) rightPanel.classList.toggle('expanded');
+});
+
+/* ---------- automatische Panel-Aktualisierung beim Start ---------- */
+async function autoRefreshPanels() {
+  const STALE = 10 * 60 * 1000; // 10 Minuten
+  async function isStale(key) {
+    try {
+      const v = await window.storage?.get(key);
+      return !v?.value || (Date.now() - parseInt(v.value, 10)) > STALE;
+    } catch (e) { return true; }
+  }
+  if (await isStale('jarvis:briefingAt')) await refreshBriefing(true);
+  if (await isStale('jarvis:weatherAt')) await refreshWeather(true);
+  if (await isStale('jarvis:marketsAt')) await refreshMarkets(true);
+}
+
+/* ---------- boot sequence ---------- */
+function runBootSequence() {
+  return new Promise(resolve => {
+    const lines = [
+      'Initialisiere Kernsysteme...',
+      'Lade Spracherkennung (de-DE)...',
+      'Verbinde neuronales Sprachmodell...',
+      'Kalibriere globales Monitoring...',
+      'Alle Systeme betriebsbereit.'
+    ];
+    let i = 0;
+    function step() {
+      if (i > 0) { const prev = bootLines.children[i - 1]; if (prev) prev.style.opacity = '0.3'; }
+      if (i < lines.length) {
+        const div = document.createElement('div');
+        div.textContent = lines[i];
+        bootLines.appendChild(div);
+        bootBarFill.style.width = Math.round(((i + 1) / lines.length) * 100) + '%';
+        i++;
+        setTimeout(step, 420);
+      } else {
+        setTimeout(() => { bootOverlay.classList.add('hidden'); setTimeout(resolve, 600); }, 300);
+      }
+    }
+    step();
+  });
+}
+
+/* ---------- init ---------- */
+(async function init() {
+  await runBootSequence();
+  try {
+    const saved = await window.storage?.get('jarvis:username');
+    if (saved?.value) userName = saved.value;
+  } catch (e) {}
+  await loadMemory();
+  tickClock();
+  await loadPersisted();
+  addLog('system', 'J.A.R.V.I.S. Interface initialisiert. Klicke den Orb, um zu aktivieren.');
+  setState('idle', 'Klicke, um J.A.R.V.I.S. zu aktivieren');
+  setTimeout(autoRefreshPanels, 2500);
+  setInterval(autoRefreshPanels, 10 * 60 * 1000);
+})();
+
+</script>
+</body>
+</html>
