@@ -259,6 +259,9 @@ html,body{
 #right{grid-area:right; gap:6px;}
 #briefingBody{ flex:1; overflow-y:auto; font-size:11.5px; line-height:1.6; color:var(--ink-dim); padding-right:4px; }
 #briefingBody .item{ border-left:2px solid var(--orange); padding-left:8px; margin-bottom:10px; }
+#briefingBody .news-item{ display:flex; gap:8px; align-items:flex-start; border-left:2px solid var(--orange); padding-left:8px; margin-bottom:10px; }
+#briefingBody .news-thumb{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--panel-border); flex-shrink:0; box-shadow:0 0 8px rgba(79,216,255,0.15); }
+#briefingBody .news-text{ flex:1; padding-top:1px; }
 #taskList{list-style:none; margin-top:8px; font-size:11px; max-height:100px; overflow-y:auto;}
 #taskList li{padding:4px 0; color:var(--ink-dim); border-bottom:1px dashed rgba(79,216,255,0.12);}
 #taskList li::before{content:'▸ '; color:var(--orange);}
@@ -1292,6 +1295,14 @@ let recordStream = null;
    (z.B. auf dem iPad) nicht direkt im Browser läuft. */
 const OPENAI_API_KEY = "DEIN-OPENAI-API-SCHLÜSSEL-HIER";
 
+/* ---------- eigener NewsAPI-Schlüssel (für Bilder im Live-Intel-Panel) ----------
+   Kostenlosen Schlüssel auf newsapi.org holen und HIER eintragen,
+   zwischen den Anführungszeichen. Hinweis: Der kostenlose Tarif von
+   NewsAPI erlaubt Browser-Aufrufe nur von "localhost" — falls die
+   Bilder nicht laden, die Seite über den lokalen Server statt per
+   Doppelklick öffnen (python3 -m http.server, dann localhost:8080). */
+const NEWSAPI_KEY = "DEIN-NEWSAPI-SCHLÜSSEL-HIER";
+
 async function transcribeAudio(blob) {
   if (!OPENAI_API_KEY || OPENAI_API_KEY === 'DEIN-OPENAI-API-SCHLÜSSEL-HIER') {
     throw new Error('Kein OpenAI-API-Schlüssel eingetragen. Siehe Kommentar bei OPENAI_API_KEY.');
@@ -1456,10 +1467,20 @@ setInterval(() => {
 async function refreshBriefing(silent = true) {
   if (!silent) { setState('thinking', 'Aktualisiere Live-Intel...'); startThinkingFeedback(); }
   try {
-    const prompt = `Gib mir ein kompaktes aktuelles Briefing in 3 kurzen Stichpunkten (je maximal 18 Wörter): 1) eine wichtige aktuelle Weltnachricht, 2) eine kurze Info zur Entwicklung der wichtigsten Aktienindizes heute, 3) eine weitere relevante aktuelle Meldung. Antworte NUR mit den 3 Punkten, je eigene Zeile, ohne Nummerierung, ohne Einleitung, ohne Sternchen.`;
-    const result = await callClaude(prompt, { withSearch: true, isolated: true });
-    const lines = result.split('\n').map(l => l.trim()).filter(Boolean);
-    briefingBody.innerHTML = lines.map(l => `<div class="item">${escapeHtml(l)}</div>`).join('');
+    if (!NEWSAPI_KEY || NEWSAPI_KEY === 'DEIN-NEWSAPI-SCHLÜSSEL-HIER') {
+      throw new Error('Kein NewsAPI-Schlüssel eingetragen.');
+    }
+    const res = await fetch(`https://newsapi.org/v2/top-headlines?country=de&pageSize=3&apiKey=${NEWSAPI_KEY}`);
+    if (!res.ok) throw new Error(`NewsAPI-Fehler ${res.status}`);
+    const data = await res.json();
+    const articles = (data.articles || []).filter(a => a.title).slice(0, 3);
+    briefingBody.innerHTML = articles.length
+      ? articles.map(a => `
+        <div class="news-item">
+          ${a.urlToImage ? `<img class="news-thumb" src="${a.urlToImage}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          <div class="news-text">${escapeHtml(a.title)}</div>
+        </div>`).join('')
+      : '<div class="hint">Keine aktuellen Meldungen gefunden.</div>';
     briefingTime.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     window.storage?.set('jarvis:briefingAt', String(Date.now())).catch(() => {});
     if (!silent) { const r = 'Das Live-Briefing wurde aktualisiert.'; addLog('jarvis', r); await speak(r); }
