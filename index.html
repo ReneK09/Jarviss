@@ -1470,7 +1470,10 @@ async function refreshBriefing(silent = true) {
     if (!NEWSAPI_KEY || NEWSAPI_KEY === 'DEIN-NEWSAPI-SCHLÜSSEL-HIER') {
       throw new Error('Kein NewsAPI-Schlüssel eingetragen.');
     }
-    const res = await fetch(`https://newsapi.org/v2/top-headlines?country=de&pageSize=3&apiKey=${NEWSAPI_KEY}`);
+    // NewsAPIs "top-headlines?country=de" liefert seit einer Änderung an der
+    // zugrundeliegenden Quelle durchgehend leere Ergebnisse — "everything" mit
+    // language=de funktioniert zuverlässig und liefert dieselben Artikelbilder.
+    const res = await fetch(`https://newsapi.org/v2/everything?q=Deutschland&language=de&sortBy=publishedAt&pageSize=3&apiKey=${NEWSAPI_KEY}`);
     if (!res.ok) throw new Error(`NewsAPI-Fehler ${res.status}`);
     const data = await res.json();
     const articles = (data.articles || []).filter(a => a.title).slice(0, 3);
