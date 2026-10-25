@@ -1,0 +1,37 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #outro-ground { position: absolute; inset: 0; background: #ffc93c; }
+    .outro-txt { position: absolute; left: 0; width: 100%; text-align: center; font-family: "Archivo Black", sans-serif; color: #16110b; line-height: 0.95; letter-spacing: -0.01em; }
+    #outro-recap { top: 250px; font-size: 104px; }
+    #outro-gt { color: #d42f1a; }
+    #outro-follow { top: 400px; font-size: 200px; }
+    #outro-tomorrow { top: 610px; font-size: 68px; }
+    #outro-venus-wrap { position: absolute; left: 90px; top: 960px; width: 900px; height: 900px; filter: drop-shadow(0 30px 0 rgba(22, 17, 11, 0.18)); }
+    #outro-venus { width: 100%; height: 100%; }
+    #outro-source { position: absolute; left: 0; width: 100%; top: 760px; text-align: center; font-family: "Inter", sans-serif; font-weight: 700; font-size: 30px; color: #16110b; }
+    #outro-source span { background: #ffc93c; padding: 4px 12px; }
+  </style>
+  <div data-hf-id="hf-x6uq" id="root" data-composition-id="outro" data-width="1080" data-height="1920">
+    <div data-hf-id="hf-ebea" id="outro-ground"></div>
+    <div data-hf-id="hf-razm" id="outro-venus-wrap" data-layout-allow-overflow><img data-hf-id="hf-75j2" id="outro-venus" src="assets/venus.png" alt="Venus" /></div>
+    <div data-hf-id="hf-is7o" id="outro-recap" class="outro-txt">1 DAY <span data-hf-id="hf-87hl" id="outro-gt">&gt;</span> 1 YEAR</div>
+    <div data-hf-id="hf-qky0" id="outro-follow" class="outro-txt">FOLLOW</div>
+    <div data-hf-id="hf-ozxn" id="outro-tomorrow" class="outro-txt">A NEW FACT EVERY DAY</div>
+    <div data-hf-id="hf-9rq0" id="outro-source"><span data-hf-id="hf-ex0k">Images: NASA/JPL (Magellan) · NASA (Apollo 17) · NASA/SDO</span></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // the horizon drops away and yellow returns from the top
+      tl.fromTo("#outro-ground", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.35, ease: "power2.inOut" }, 0);
+      tl.fromTo("#outro-venus-wrap", { y: 700 }, { y: 0, duration: 0.9, ease: "expo.out" }, 0.1);
+      tl.fromTo("#outro-venus", { rotation: 0 }, { rotation: 30, duration: 3.95, ease: "none" }, 0);
+      tl.fromTo("#outro-recap", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out" }, 0.25);
+      tl.fromTo("#outro-follow", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 0.45);
+      tl.fromTo("#outro-tomorrow", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out" }, 0.9);
+      tl.fromTo("#outro-source", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 1.0);
+      window.__timelines["outro"] = tl;
+    })();
+  </script>
+</template>

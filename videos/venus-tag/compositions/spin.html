@@ -1,0 +1,48 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #spin-ground { position: absolute; inset: 0; background: #ffc93c; }
+    #spin-stage { position: absolute; inset: 0; }
+    .spin-txt { position: absolute; left: 0; width: 100%; text-align: center; font-family: "Archivo Black", sans-serif; color: #16110b; line-height: 0.95; letter-spacing: -0.01em; }
+    #spin-label { top: 250px; font-size: 68px; }
+    #spin-count { top: 340px; font-size: 230px; font-variant-numeric: tabular-nums; }
+    #spin-unit { font-size: 120px; }
+    #spin-once { top: 590px; font-size: 68px; }
+    #spin-wrap { position: absolute; left: 160px; top: 720px; width: 760px; height: 760px; filter: drop-shadow(0 30px 0 rgba(22, 17, 11, 0.18)); }
+    #spin-venus { width: 100%; height: 100%; }
+    #spin-ring { position: absolute; left: 110px; top: 670px; width: 860px; height: 860px; overflow: visible; }
+  </style>
+  <div data-hf-id="hf-b2jv" id="root" data-composition-id="spin" data-width="1080" data-height="1920">
+    <div data-hf-id="hf-jdnz" id="spin-ground"></div>
+    <div data-hf-id="hf-03yx" id="spin-stage" data-layout-allow-overflow>
+      <svg data-hf-id="hf-g8nc" id="spin-ring" viewBox="0 0 860 860">
+        <circle data-hf-id="hf-4dn9" cx="430" cy="430" r="420" fill="none" stroke="rgba(22,17,11,0.15)" stroke-width="18" />
+        <circle data-hf-id="hf-9tmi" id="spin-arc" cx="430" cy="430" r="420" fill="none" stroke="#16110b" stroke-width="18"
+          stroke-linecap="round" stroke-dasharray="2638.9" stroke-dashoffset="2638.9" transform="rotate(-90 430 430)" />
+      </svg>
+      <div data-hf-id="hf-6r8q" id="spin-wrap"><img data-hf-id="hf-u5v9" id="spin-venus" src="assets/venus.png" alt="Venus" /></div>
+      <div data-hf-id="hf-xfxl" id="spin-label" class="spin-txt">VENUS</div>
+      <div data-hf-id="hf-oxzr" id="spin-count" class="spin-txt"><span data-hf-id="hf-bgpv" id="spin-num">0</span><span data-hf-id="hf-mnqa" id="spin-unit"> DAYS</span></div>
+      <div data-hf-id="hf-08sh" id="spin-once" class="spin-txt">= 1 SPIN</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#spin-ground", { clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)", duration: 0.3, ease: "power2.inOut" }, 0);
+      tl.fromTo("#spin-stage", { y: 600, filter: "blur(16px)" }, { y: 0, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 0.05);
+      // one slow clockwise spin; the ring and the day counter run with it
+      const T0 = 0.6, D = 2.1;
+      tl.fromTo("#spin-venus", { rotation: 0 }, { rotation: 360, duration: D, ease: "power1.inOut" }, T0);
+      tl.fromTo("#spin-arc", { strokeDashoffset: 2638.9 }, { strokeDashoffset: 0, duration: D, ease: "power1.inOut" }, T0);
+      const c = { v: 0 };
+      tl.fromTo(c, { v: 0 }, { v: 243, duration: D, ease: "power1.inOut", onUpdate: () => {
+        document.getElementById("spin-num").textContent = Math.round(c.v);
+      } }, T0);
+      // "= 1 SPIN" on "just once" (local ~4.2)
+      tl.fromTo("#spin-once", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 4.2);
+      tl.to("#spin-ring", { opacity: 0, duration: 0.2, ease: "power2.in" }, 5.2);
+      window.__timelines["spin"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,242 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    .cap-group { position: absolute; left: 0; width: 100%; bottom: 610px; padding: 0 80px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; opacity: 0; visibility: hidden; overflow: visible; }
+    .cap-word { position: relative; display: inline-block; padding: 4px 14px 8px; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 72px; line-height: 1; color: #ffffff; letter-spacing: 0.01em; }
+    .cap-text { position: relative; z-index: 1; -webkit-text-stroke: 10px #16110b; paint-order: stroke fill; }
+    .cap-bg { position: absolute; inset: 0; background: #d42f1a; border-radius: 6px; transform-origin: 0% 50%; transform: scaleX(0); z-index: 0; }
+  </style>
+  <div data-hf-id="hf-ov84" id="root" data-composition-id="captions" data-width="1080" data-height="1920">
+    <div data-hf-id="hf-1joo" class="cap-group" id="cap-g0"><span data-hf-id="hf-2eil" class="cap-word" id="cap-w0-0"><span data-hf-id="hf-9oiy" class="cap-bg" id="cap-bg0-0"></span><span data-hf-id="hf-478k" class="cap-text">A</span></span><span data-hf-id="hf-1mus" class="cap-word" id="cap-w0-1"><span data-hf-id="hf-dmmz" class="cap-bg" id="cap-bg0-1"></span><span data-hf-id="hf-zcqt" class="cap-text">DAY</span></span><span data-hf-id="hf-aaqn" class="cap-word" id="cap-w0-2"><span data-hf-id="hf-4yr4" class="cap-bg" id="cap-bg0-2"></span><span data-hf-id="hf-9q48" class="cap-text">ON</span></span></div>
+    <div data-hf-id="hf-2bch" class="cap-group" id="cap-g1"><span data-hf-id="hf-gkrs" class="cap-word" id="cap-w1-0"><span data-hf-id="hf-84vz" class="cap-bg" id="cap-bg1-0"></span><span data-hf-id="hf-ccdq" class="cap-text">VENUS</span></span><span data-hf-id="hf-hcfl" class="cap-word" id="cap-w1-1"><span data-hf-id="hf-04su" class="cap-bg" id="cap-bg1-1"></span><span data-hf-id="hf-07f1" class="cap-text">IS</span></span><span data-hf-id="hf-lajm" class="cap-word" id="cap-w1-2"><span data-hf-id="hf-w6ot" class="cap-bg" id="cap-bg1-2"></span><span data-hf-id="hf-syrs" class="cap-text">LONGER</span></span></div>
+    <div data-hf-id="hf-69gi" class="cap-group" id="cap-g2"><span data-hf-id="hf-sw1n" class="cap-word" id="cap-w2-0"><span data-hf-id="hf-2ngs" class="cap-bg" id="cap-bg2-0"></span><span data-hf-id="hf-abb6" class="cap-text">THAN</span></span><span data-hf-id="hf-oxxm" class="cap-word" id="cap-w2-1"><span data-hf-id="hf-5mqd" class="cap-bg" id="cap-bg2-1"></span><span data-hf-id="hf-yfnl" class="cap-text">ITS</span></span><span data-hf-id="hf-kztl" class="cap-word" id="cap-w2-2"><span data-hf-id="hf-9kue" class="cap-bg" id="cap-bg2-2"></span><span data-hf-id="hf-ndp0" class="cap-text">YEAR</span></span></div>
+    <div data-hf-id="hf-a7kj" class="cap-group" id="cap-g3"><span data-hf-id="hf-ufom" class="cap-word" id="cap-w3-0"><span data-hf-id="hf-x54x" class="cap-bg" id="cap-bg3-0"></span><span data-hf-id="hf-2xgj" class="cap-text">HERE</span></span><span data-hf-id="hf-ydsn" class="cap-word" id="cap-w3-1"><span data-hf-id="hf-wdh4" class="cap-bg" id="cap-bg3-1"></span><span data-hf-id="hf-zscw" class="cap-text">ON</span></span><span data-hf-id="hf-ppws" class="cap-word" id="cap-w3-2"><span data-hf-id="hf-51cz" class="cap-bg" id="cap-bg3-2"></span><span data-hf-id="hf-j3jz" class="cap-text">EARTH</span></span></div>
+    <div data-hf-id="hf-mq30" class="cap-group" id="cap-g4"><span data-hf-id="hf-adkx" class="cap-word" id="cap-w4-0"><span data-hf-id="hf-h78m" class="cap-bg" id="cap-bg4-0"></span><span data-hf-id="hf-34lj" class="cap-text">ONE</span></span><span data-hf-id="hf-9lx4" class="cap-word" id="cap-w4-1"><span data-hf-id="hf-l5cn" class="cap-bg" id="cap-bg4-1"></span><span data-hf-id="hf-buu9" class="cap-text">SPIN</span></span><span data-hf-id="hf-i9sz" class="cap-word" id="cap-w4-2"><span data-hf-id="hf-chgs" class="cap-bg" id="cap-bg4-2"></span><span data-hf-id="hf-nhd3" class="cap-text">TAKES</span></span></div>
+    <div data-hf-id="hf-nhqt" class="cap-group" id="cap-g5"><span data-hf-id="hf-fvws" class="cap-word" id="cap-w5-0"><span data-hf-id="hf-fnln" class="cap-bg" id="cap-bg5-0"></span><span data-hf-id="hf-wxnf" class="cap-text">24</span></span></div>
+    <div data-hf-id="hf-rfuu" class="cap-group" id="cap-g6"><span data-hf-id="hf-hbcv" class="cap-word" id="cap-w6-0"><span data-hf-id="hf-3cbs" class="cap-bg" id="cap-bg6-0"></span><span data-hf-id="hf-kbrg" class="cap-text">HOURS</span></span></div>
+    <div data-hf-id="hf-vdyv" class="cap-group" id="cap-g7"><span data-hf-id="hf-mwyy" class="cap-word" id="cap-w7-0"><span data-hf-id="hf-p62l" class="cap-bg" id="cap-bg7-0"></span><span data-hf-id="hf-qb3m" class="cap-text">VENUS</span></span></div>
+    <div data-hf-id="hf-7whc" class="cap-group" id="cap-g8"><span data-hf-id="hf-ysw5" class="cap-word" id="cap-w8-0"><span data-hf-id="hf-k502" class="cap-bg" id="cap-bg8-0"></span><span data-hf-id="hf-2zk8" class="cap-text">IT</span></span><span data-hf-id="hf-y18c" class="cap-word" id="cap-w8-1"><span data-hf-id="hf-o343" class="cap-bg" id="cap-bg8-1"></span><span data-hf-id="hf-j8hu" class="cap-text">NEEDS</span></span><span data-hf-id="hf-6p47" class="cap-word" id="cap-w8-2"><span data-hf-id="hf-ff88" class="cap-bg" id="cap-bg8-2"></span><span data-hf-id="hf-vrg8" class="cap-text">243</span></span></div>
+    <div data-hf-id="hf-8o55" class="cap-group" id="cap-g9"><span data-hf-id="hf-jwz4" class="cap-word" id="cap-w9-0"><span data-hf-id="hf-ild3" class="cap-bg" id="cap-bg9-0"></span><span data-hf-id="hf-yoxr" class="cap-text">EARTH</span></span><span data-hf-id="hf-komx" class="cap-word" id="cap-w9-1"><span data-hf-id="hf-en92" class="cap-bg" id="cap-bg9-1"></span><span data-hf-id="hf-b4pu" class="cap-text">DAYS</span></span><span data-hf-id="hf-qucq" class="cap-word" id="cap-w9-2"><span data-hf-id="hf-ap51" class="cap-bg" id="cap-bg9-2"></span><span data-hf-id="hf-veik" class="cap-text">TO</span></span></div>
+    <div data-hf-id="hf-77x7" class="cap-group" id="cap-g10"><span data-hf-id="hf-ftzi" class="cap-word" id="cap-w10-0"><span data-hf-id="hf-fm6v" class="cap-bg" id="cap-bg10-0"></span><span data-hf-id="hf-px82" class="cap-text">TURN</span></span><span data-hf-id="hf-js3j" class="cap-word" id="cap-w10-1"><span data-hf-id="hf-9gh2" class="cap-bg" id="cap-bg10-1"></span><span data-hf-id="hf-qnis" class="cap-text">AROUND</span></span><span data-hf-id="hf-8wlw" class="cap-word" id="cap-w10-2"><span data-hf-id="hf-5id1" class="cap-bg" id="cap-bg10-2"></span><span data-hf-id="hf-y99z" class="cap-text">JUST</span></span></div>
+    <div data-hf-id="hf-39t6" class="cap-group" id="cap-g11"><span data-hf-id="hf-dif7" class="cap-word" id="cap-w11-0"><span data-hf-id="hf-cfwi" class="cap-bg" id="cap-bg11-0"></span><span data-hf-id="hf-dbu4" class="cap-text">ONCE</span></span></div>
+    <div data-hf-id="hf-zbp5" class="cap-group" id="cap-g12"><span data-hf-id="hf-84z4" class="cap-word" id="cap-w12-0"><span data-hf-id="hf-hwex" class="cap-bg" id="cap-bg12-0"></span><span data-hf-id="hf-faqs" class="cap-text">BUT</span></span><span data-hf-id="hf-8wmx" class="cap-word" id="cap-w12-1"><span data-hf-id="hf-h4r4" class="cap-bg" id="cap-bg12-1"></span><span data-hf-id="hf-7x1c" class="cap-text">IT</span></span><span data-hf-id="hf-f2cq" class="cap-word" id="cap-w12-2"><span data-hf-id="hf-psmz" class="cap-bg" id="cap-bg12-2"></span><span data-hf-id="hf-1bom" class="cap-text">CIRCLES</span></span></div>
+    <div data-hf-id="hf-yk1c" class="cap-group" id="cap-g13"><span data-hf-id="hf-n0w5" class="cap-word" id="cap-w13-0"><span data-hf-id="hf-umzo" class="cap-bg" id="cap-bg13-0"></span><span data-hf-id="hf-w6f8" class="cap-text">THE</span></span><span data-hf-id="hf-m98c" class="cap-word" id="cap-w13-1"><span data-hf-id="hf-xm99" class="cap-bg" id="cap-bg13-1"></span><span data-hf-id="hf-kwg9" class="cap-text">SUN</span></span><span data-hf-id="hf-ux47" class="cap-word" id="cap-w13-2"><span data-hf-id="hf-1kda" class="cap-bg" id="cap-bg13-2"></span><span data-hf-id="hf-bqau" class="cap-text">IN</span></span></div>
+    <div data-hf-id="hf-ulxb" class="cap-group" id="cap-g14"><span data-hf-id="hf-llg2" class="cap-word" id="cap-w14-0"><span data-hf-id="hf-bl4j" class="cap-bg" id="cap-bg14-0"></span><span data-hf-id="hf-3crj" class="cap-text">ONLY</span></span><span data-hf-id="hf-pjk3" class="cap-word" id="cap-w14-1"><span data-hf-id="hf-7n0i" class="cap-bg" id="cap-bg14-1"></span><span data-hf-id="hf-g3fs" class="cap-text">225</span></span></div>
+    <div data-hf-id="hf-qnta" class="cap-group" id="cap-g15"><span data-hf-id="hf-fztz" class="cap-word" id="cap-w15-0"><span data-hf-id="hf-mr5q" class="cap-bg" id="cap-bg15-0"></span><span data-hf-id="hf-x4vi" class="cap-text">AND</span></span><span data-hf-id="hf-c1py" class="cap-word" id="cap-w15-1"><span data-hf-id="hf-qp9r" class="cap-bg" id="cap-bg15-1"></span><span data-hf-id="hf-6q49" class="cap-text">IT</span></span><span data-hf-id="hf-83lx" class="cap-word" id="cap-w15-2"><span data-hf-id="hf-i1dw" class="cap-bg" id="cap-bg15-2"></span><span data-hf-id="hf-1fsm" class="cap-text">SPINS</span></span></div>
+    <div data-hf-id="hf-ki3h" class="cap-group" id="cap-g16"><span data-hf-id="hf-l7hw" class="cap-word" id="cap-w16-0"><span data-hf-id="hf-dvcl" class="cap-bg" id="cap-bg16-0"></span><span data-hf-id="hf-lisd" class="cap-text">BACKWARDS</span></span></div>
+    <div data-hf-id="hf-jqfo" class="cap-group" id="cap-g17"><span data-hf-id="hf-mc15" class="cap-word" id="cap-w17-0"><span data-hf-id="hf-js2o" class="cap-bg" id="cap-bg17-0"></span><span data-hf-id="hf-lqen" class="cap-text">SO</span></span><span data-hf-id="hf-lkdc" class="cap-word" id="cap-w17-1"><span data-hf-id="hf-kjqh" class="cap-bg" id="cap-bg17-1"></span><span data-hf-id="hf-ylft" class="cap-text">ON</span></span><span data-hf-id="hf-wfuz" class="cap-word" id="cap-w17-2"><span data-hf-id="hf-qpga" class="cap-bg" id="cap-bg17-2"></span><span data-hf-id="hf-qpen" class="cap-text">VENUS</span></span></div>
+    <div data-hf-id="hf-ynir" class="cap-group" id="cap-g18"><span data-hf-id="hf-inom" class="cap-word" id="cap-w18-0"><span data-hf-id="hf-iq3z" class="cap-bg" id="cap-bg18-0"></span><span data-hf-id="hf-q3zw" class="cap-text">THE</span></span><span data-hf-id="hf-mlsn" class="cap-word" id="cap-w18-1"><span data-hf-id="hf-cke6" class="cap-bg" id="cap-bg18-1"></span><span data-hf-id="hf-kegt" class="cap-text">SUN</span></span><span data-hf-id="hf-dxws" class="cap-word" id="cap-w18-2"><span data-hf-id="hf-8ma5" class="cap-bg" id="cap-bg18-2"></span><span data-hf-id="hf-yi4x" class="cap-text">RISES</span></span></div>
+    <div data-hf-id="hf-upeq" class="cap-group" id="cap-g19"><span data-hf-id="hf-h41n" class="cap-word" id="cap-w19-0"><span data-hf-id="hf-ms2i" class="cap-bg" id="cap-bg19-0"></span><span data-hf-id="hf-4dwq" class="cap-text">IN</span></span><span data-hf-id="hf-d5xm" class="cap-word" id="cap-w19-1"><span data-hf-id="hf-qq6j" class="cap-bg" id="cap-bg19-1"></span><span data-hf-id="hf-ox2t" class="cap-text">THE</span></span></div>
+    <div data-hf-id="hf-r106" class="cap-group" id="cap-g20"><span data-hf-id="hf-o6sr" class="cap-word" id="cap-w20-0"><span data-hf-id="hf-r0t6" class="cap-bg" id="cap-bg20-0"></span><span data-hf-id="hf-qjh2" class="cap-text">WEST</span></span></div>
+    <div data-hf-id="hf-x6pz" class="cap-group" id="cap-g21"><span data-hf-id="hf-s8ra" class="cap-word" id="cap-w21-0"><span data-hf-id="hf-kr8v" class="cap-bg" id="cap-bg21-0"></span><span data-hf-id="hf-ll3s" class="cap-text">FOLLOW</span></span><span data-hf-id="hf-yeh3" class="cap-word" id="cap-w21-1"><span data-hf-id="hf-gt4u" class="cap-bg" id="cap-bg21-1"></span><span data-hf-id="hf-g6ew" class="cap-text">FOR</span></span><span data-hf-id="hf-nizg" class="cap-word" id="cap-w21-2"><span data-hf-id="hf-cv0t" class="cap-bg" id="cap-bg21-2"></span><span data-hf-id="hf-ufjb" class="cap-text">ONE</span></span></div>
+    <div data-hf-id="hf-mb8c" class="cap-group" id="cap-g22"><span data-hf-id="hf-xp9p" class="cap-word" id="cap-w22-0"><span data-hf-id="hf-jbss" class="cap-bg" id="cap-bg22-0"></span><span data-hf-id="hf-rbuw" class="cap-text">MORE</span></span><span data-hf-id="hf-wxlw" class="cap-word" id="cap-w22-1"><span data-hf-id="hf-k3gl" class="cap-bg" id="cap-bg22-1"></span><span data-hf-id="hf-k087" class="cap-text">FACT</span></span><span data-hf-id="hf-5lhr" class="cap-word" id="cap-w22-2"><span data-hf-id="hf-q96e" class="cap-bg" id="cap-bg22-2"></span><span data-hf-id="hf-o12m" class="cap-text">TOMORROW</span></span></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.set("#cap-g0", { visibility: "visible" }, 0.30);
+      tl.fromTo("#cap-g0", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 0.30);
+      tl.fromTo("#cap-bg0-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 0.35);
+      tl.to("#cap-bg0-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 0.50);
+      tl.fromTo("#cap-bg0-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 0.38);
+      tl.to("#cap-bg0-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 0.63);
+      tl.fromTo("#cap-bg0-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 0.63);
+      tl.to("#cap-bg0-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 0.80);
+      tl.to("#cap-g0", { opacity: 0, duration: 0.1, ease: "power2.in" }, 0.65);
+      tl.set("#cap-g0", { opacity: 0, visibility: "hidden" }, 0.75);
+      tl.set("#cap-g1", { visibility: "visible" }, 0.75);
+      tl.fromTo("#cap-g1", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 0.75);
+      tl.fromTo("#cap-bg1-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 0.80);
+      tl.to("#cap-bg1-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 1.20);
+      tl.fromTo("#cap-bg1-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 1.22);
+      tl.to("#cap-bg1-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 1.39);
+      tl.fromTo("#cap-bg1-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 1.39);
+      tl.to("#cap-bg1-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 1.90);
+      tl.to("#cap-g1", { opacity: 0, duration: 0.1, ease: "power2.in" }, 1.75);
+      tl.set("#cap-g1", { opacity: 0, visibility: "hidden" }, 1.85);
+      tl.set("#cap-g2", { visibility: "visible" }, 1.85);
+      tl.fromTo("#cap-g2", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 1.85);
+      tl.fromTo("#cap-bg2-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 1.90);
+      tl.to("#cap-bg2-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 2.24);
+      tl.fromTo("#cap-bg2-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 2.24);
+      tl.to("#cap-bg2-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 2.43);
+      tl.fromTo("#cap-bg2-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 2.48);
+      tl.to("#cap-bg2-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 3.06);
+      tl.to("#cap-g2", { opacity: 0, duration: 0.1, ease: "power2.in" }, 2.96);
+      tl.set("#cap-g2", { opacity: 0, visibility: "hidden" }, 3.06);
+      tl.set("#cap-g3", { visibility: "visible" }, 3.06);
+      tl.fromTo("#cap-g3", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 3.06);
+      tl.fromTo("#cap-bg3-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 3.11);
+      tl.to("#cap-bg3-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 3.37);
+      tl.fromTo("#cap-bg3-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 3.37);
+      tl.to("#cap-bg3-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 3.52);
+      tl.fromTo("#cap-bg3-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 3.52);
+      tl.to("#cap-bg3-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 4.06);
+      tl.to("#cap-g3", { opacity: 0, duration: 0.1, ease: "power2.in" }, 3.91);
+      tl.set("#cap-g3", { opacity: 0, visibility: "hidden" }, 4.01);
+      tl.set("#cap-g4", { visibility: "visible" }, 4.01);
+      tl.fromTo("#cap-g4", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 4.01);
+      tl.fromTo("#cap-bg4-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 4.06);
+      tl.to("#cap-bg4-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 4.29);
+      tl.fromTo("#cap-bg4-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 4.29);
+      tl.to("#cap-bg4-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 4.56);
+      tl.fromTo("#cap-bg4-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 4.59);
+      tl.to("#cap-bg4-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 4.99);
+      tl.to("#cap-g4", { opacity: 0, duration: 0.1, ease: "power2.in" }, 4.84);
+      tl.set("#cap-g4", { opacity: 0, visibility: "hidden" }, 4.94);
+      tl.set("#cap-g5", { visibility: "visible" }, 4.94);
+      tl.fromTo("#cap-g5", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 4.94);
+      tl.fromTo("#cap-bg5-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 4.99);
+      tl.to("#cap-bg5-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 5.19);
+      tl.to("#cap-g5", { opacity: 0, duration: 0.1, ease: "power2.in" }, 5.44);
+      tl.set("#cap-g5", { opacity: 0, visibility: "hidden" }, 5.54);
+      tl.set("#cap-g6", { visibility: "visible" }, 5.69);
+      tl.fromTo("#cap-g6", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 5.69);
+      tl.fromTo("#cap-bg6-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 5.74);
+      tl.to("#cap-bg6-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 6.00);
+      tl.to("#cap-g6", { opacity: 0, duration: 0.1, ease: "power2.in" }, 5.92);
+      tl.set("#cap-g6", { opacity: 0, visibility: "hidden" }, 6.02);
+      tl.set("#cap-g7", { visibility: "visible" }, 6.02);
+      tl.fromTo("#cap-g7", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 6.02);
+      tl.fromTo("#cap-bg7-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 6.07);
+      tl.to("#cap-bg7-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 7.20);
+      tl.to("#cap-g7", { opacity: 0, duration: 0.1, ease: "power2.in" }, 7.10);
+      tl.set("#cap-g7", { opacity: 0, visibility: "hidden" }, 7.20);
+      tl.set("#cap-g8", { visibility: "visible" }, 7.20);
+      tl.fromTo("#cap-g8", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 7.20);
+      tl.fromTo("#cap-bg8-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 7.25);
+      tl.to("#cap-bg8-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 7.40);
+      tl.fromTo("#cap-bg8-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 7.38);
+      tl.to("#cap-bg8-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 7.84);
+      tl.fromTo("#cap-bg8-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 7.84);
+      tl.to("#cap-bg8-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 8.67);
+      tl.to("#cap-g8", { opacity: 0, duration: 0.1, ease: "power2.in" }, 8.52);
+      tl.set("#cap-g8", { opacity: 0, visibility: "hidden" }, 8.62);
+      tl.set("#cap-g9", { visibility: "visible" }, 8.62);
+      tl.fromTo("#cap-g9", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 8.62);
+      tl.fromTo("#cap-bg9-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 8.67);
+      tl.to("#cap-bg9-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 9.13);
+      tl.fromTo("#cap-bg9-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 9.13);
+      tl.to("#cap-bg9-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 9.33);
+      tl.fromTo("#cap-bg9-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 9.49);
+      tl.to("#cap-bg9-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 9.67);
+      tl.to("#cap-g9", { opacity: 0, duration: 0.1, ease: "power2.in" }, 9.73);
+      tl.set("#cap-g9", { opacity: 0, visibility: "hidden" }, 9.83);
+      tl.set("#cap-g10", { visibility: "visible" }, 9.83);
+      tl.fromTo("#cap-g10", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 9.83);
+      tl.fromTo("#cap-bg10-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 9.88);
+      tl.to("#cap-bg10-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 10.03);
+      tl.fromTo("#cap-bg10-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 10.03);
+      tl.to("#cap-bg10-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 10.57);
+      tl.fromTo("#cap-bg10-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 10.57);
+      tl.to("#cap-bg10-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 10.86);
+      tl.to("#cap-g10", { opacity: 0, duration: 0.1, ease: "power2.in" }, 10.81);
+      tl.set("#cap-g10", { opacity: 0, visibility: "hidden" }, 10.91);
+      tl.set("#cap-g11", { visibility: "visible" }, 10.91);
+      tl.fromTo("#cap-g11", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 10.91);
+      tl.fromTo("#cap-bg11-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 10.96);
+      tl.to("#cap-bg11-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 11.54);
+      tl.to("#cap-g11", { opacity: 0, duration: 0.1, ease: "power2.in" }, 11.39);
+      tl.set("#cap-g11", { opacity: 0, visibility: "hidden" }, 11.49);
+      tl.set("#cap-g12", { visibility: "visible" }, 11.49);
+      tl.fromTo("#cap-g12", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 11.49);
+      tl.fromTo("#cap-bg12-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 11.54);
+      tl.to("#cap-bg12-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 11.79);
+      tl.fromTo("#cap-bg12-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 11.91);
+      tl.to("#cap-bg12-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 12.09);
+      tl.fromTo("#cap-bg12-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 12.09);
+      tl.to("#cap-bg12-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 12.65);
+      tl.to("#cap-g12", { opacity: 0, duration: 0.1, ease: "power2.in" }, 12.86);
+      tl.set("#cap-g12", { opacity: 0, visibility: "hidden" }, 12.96);
+      tl.set("#cap-g13", { visibility: "visible" }, 12.96);
+      tl.fromTo("#cap-g13", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 12.96);
+      tl.fromTo("#cap-bg13-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 13.01);
+      tl.to("#cap-bg13-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 13.19);
+      tl.fromTo("#cap-bg13-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 13.19);
+      tl.to("#cap-bg13-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 13.52);
+      tl.fromTo("#cap-bg13-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 13.52);
+      tl.to("#cap-bg13-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 13.67);
+      tl.to("#cap-g13", { opacity: 0, duration: 0.1, ease: "power2.in" }, 13.80);
+      tl.set("#cap-g13", { opacity: 0, visibility: "hidden" }, 13.90);
+      tl.set("#cap-g14", { visibility: "visible" }, 13.98);
+      tl.fromTo("#cap-g14", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 13.98);
+      tl.fromTo("#cap-bg14-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 14.03);
+      tl.to("#cap-bg14-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 14.18);
+      tl.fromTo("#cap-bg14-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 14.18);
+      tl.to("#cap-bg14-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 15.20);
+      tl.to("#cap-g14", { opacity: 0, duration: 0.1, ease: "power2.in" }, 15.10);
+      tl.set("#cap-g14", { opacity: 0, visibility: "hidden" }, 15.20);
+      tl.set("#cap-g15", { visibility: "visible" }, 15.20);
+      tl.fromTo("#cap-g15", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 15.20);
+      tl.fromTo("#cap-bg15-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 15.25);
+      tl.to("#cap-bg15-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 15.43);
+      tl.fromTo("#cap-bg15-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 15.43);
+      tl.to("#cap-bg15-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 15.58);
+      tl.fromTo("#cap-bg15-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 15.58);
+      tl.to("#cap-bg15-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 15.97);
+      tl.to("#cap-g15", { opacity: 0, duration: 0.1, ease: "power2.in" }, 15.82);
+      tl.set("#cap-g15", { opacity: 0, visibility: "hidden" }, 15.92);
+      tl.set("#cap-g16", { visibility: "visible" }, 15.92);
+      tl.fromTo("#cap-g16", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 15.92);
+      tl.fromTo("#cap-bg16-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 15.97);
+      tl.to("#cap-bg16-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 16.90);
+      tl.to("#cap-g16", { opacity: 0, duration: 0.1, ease: "power2.in" }, 16.84);
+      tl.set("#cap-g16", { opacity: 0, visibility: "hidden" }, 16.94);
+      tl.set("#cap-g17", { visibility: "visible" }, 16.94);
+      tl.fromTo("#cap-g17", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 16.94);
+      tl.fromTo("#cap-bg17-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 16.99);
+      tl.to("#cap-bg17-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 17.14);
+      tl.fromTo("#cap-bg17-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 17.11);
+      tl.to("#cap-bg17-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 17.28);
+      tl.fromTo("#cap-bg17-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 17.28);
+      tl.to("#cap-bg17-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 17.89);
+      tl.to("#cap-g17", { opacity: 0, duration: 0.1, ease: "power2.in" }, 17.74);
+      tl.set("#cap-g17", { opacity: 0, visibility: "hidden" }, 17.84);
+      tl.set("#cap-g18", { visibility: "visible" }, 17.84);
+      tl.fromTo("#cap-g18", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 17.84);
+      tl.fromTo("#cap-bg18-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 17.89);
+      tl.to("#cap-bg18-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 18.15);
+      tl.fromTo("#cap-bg18-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 18.15);
+      tl.to("#cap-bg18-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 18.41);
+      tl.fromTo("#cap-bg18-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 18.41);
+      tl.to("#cap-bg18-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 18.85);
+      tl.to("#cap-g18", { opacity: 0, duration: 0.1, ease: "power2.in" }, 18.70);
+      tl.set("#cap-g18", { opacity: 0, visibility: "hidden" }, 18.80);
+      tl.set("#cap-g19", { visibility: "visible" }, 18.80);
+      tl.fromTo("#cap-g19", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 18.80);
+      tl.fromTo("#cap-bg19-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 18.85);
+      tl.to("#cap-bg19-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 19.02);
+      tl.fromTo("#cap-bg19-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 19.02);
+      tl.to("#cap-bg19-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 19.17);
+      tl.to("#cap-g19", { opacity: 0, duration: 0.1, ease: "power2.in" }, 19.32);
+      tl.set("#cap-g19", { opacity: 0, visibility: "hidden" }, 19.42);
+      tl.set("#cap-g20", { visibility: "visible" }, 19.57);
+      tl.fromTo("#cap-g20", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 19.57);
+      tl.fromTo("#cap-bg20-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 19.62);
+      tl.to("#cap-bg20-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 19.96);
+      tl.to("#cap-g20", { opacity: 0, duration: 0.1, ease: "power2.in" }, 19.86);
+      tl.set("#cap-g20", { opacity: 0, visibility: "hidden" }, 19.96);
+      tl.set("#cap-g21", { visibility: "visible" }, 19.96);
+      tl.fromTo("#cap-g21", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 19.96);
+      tl.fromTo("#cap-bg21-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 20.01);
+      tl.to("#cap-bg21-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 20.34);
+      tl.fromTo("#cap-bg21-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 20.34);
+      tl.to("#cap-bg21-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 20.49);
+      tl.fromTo("#cap-bg21-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 20.53);
+      tl.to("#cap-bg21-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 20.72);
+      tl.to("#cap-g21", { opacity: 0, duration: 0.1, ease: "power2.in" }, 20.57);
+      tl.set("#cap-g21", { opacity: 0, visibility: "hidden" }, 20.67);
+      tl.set("#cap-g22", { visibility: "visible" }, 20.67);
+      tl.fromTo("#cap-g22", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 20.67);
+      tl.fromTo("#cap-bg22-0", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 20.72);
+      tl.to("#cap-bg22-0", { opacity: 0, duration: 0.08, ease: "power2.in" }, 20.97);
+      tl.fromTo("#cap-bg22-1", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 20.97);
+      tl.to("#cap-bg22-1", { opacity: 0, duration: 0.08, ease: "power2.in" }, 21.22);
+      tl.fromTo("#cap-bg22-2", { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power2.out" }, 21.22);
+      tl.to("#cap-bg22-2", { opacity: 0, duration: 0.08, ease: "power2.in" }, 21.96);
+      tl.to("#cap-g22", { opacity: 0, duration: 0.1, ease: "power2.in" }, 22.21);
+      tl.set("#cap-g22", { opacity: 0, visibility: "hidden" }, 22.31);
+      window.__timelines["captions"] = tl;
+    })();
+  </script>
+</template>

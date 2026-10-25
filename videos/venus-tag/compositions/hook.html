@@ -1,0 +1,35 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #ffc93c; }
+    #hook-stage { position: absolute; inset: 0; }
+    .hook-txt { position: absolute; left: 0; width: 100%; text-align: center; font-family: "Archivo Black", sans-serif; color: #16110b; line-height: 0.95; letter-spacing: -0.01em; }
+    #hook-label { top: 250px; font-size: 68px; }
+    #hook-day { top: 345px; font-size: 240px; }
+    #hook-year { top: 600px; font-size: 158px; }
+    #hook-gt { display: inline-block; color: #d42f1a; }
+    #hook-venus-wrap { position: absolute; left: 90px; top: 960px; width: 900px; height: 900px; filter: drop-shadow(0 30px 0 rgba(22, 17, 11, 0.18)); }
+    #hook-venus { width: 100%; height: 100%; }
+  </style>
+  <div data-hf-id="hf-srfg" id="root" data-composition-id="hook" data-width="1080" data-height="1920">
+    <div data-hf-id="hf-hkkg" id="hook-stage" data-layout-allow-overflow>
+      <div data-hf-id="hf-sdmd" id="hook-venus-wrap"><img data-hf-id="hf-o7xq" id="hook-venus" src="assets/venus.png" alt="Venus" /></div>
+      <div data-hf-id="hf-rhxw" id="hook-label" class="hook-txt">ON VENUS</div>
+      <div data-hf-id="hf-vorl" id="hook-day" class="hook-txt">1 DAY</div>
+      <div data-hf-id="hf-vvvx" id="hook-year" class="hook-txt"><span data-hf-id="hf-1r2t" id="hook-gt">&gt;</span> 1 YEAR</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Venus rises from the bottom edge and keeps spinning clockwise (retrograde)
+      tl.fromTo("#hook-venus-wrap", { y: 260 }, { y: 0, duration: 1.1, ease: "expo.out" }, 0);
+      tl.fromTo("#hook-venus", { rotation: 0 }, { rotation: 14, duration: 3.1, ease: "none" }, 0);
+      // ">" punches on "longer"
+      tl.fromTo("#hook-gt", { scale: 1 }, { scale: 1.35, duration: 0.12, ease: "power2.out" }, 1.38);
+      tl.to("#hook-gt", { scale: 1, duration: 0.35, ease: "expo.out" }, 1.5);
+      // whip up out
+      tl.to("#hook-stage", { y: -700, filter: "blur(18px)", duration: 0.26, ease: "power3.in" }, 2.84);
+      window.__timelines["hook"] = tl;
+    })();
+  </script>
+</template>

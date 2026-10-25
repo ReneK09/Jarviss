@@ -1,0 +1,332 @@
+[
+  {
+    "text": "A",
+    "start": 0.05,
+    "end": 0.08,
+    "id": "w0"
+  },
+  {
+    "text": "day",
+    "start": 0.08,
+    "end": 0.33,
+    "id": "w1"
+  },
+  {
+    "text": "on",
+    "start": 0.33,
+    "end": 0.5,
+    "id": "w2"
+  },
+  {
+    "text": "Venus",
+    "start": 0.5,
+    "end": 0.9,
+    "id": "w3"
+  },
+  {
+    "text": "is",
+    "start": 0.92,
+    "end": 1.09,
+    "id": "w4"
+  },
+  {
+    "text": "longer",
+    "start": 1.09,
+    "end": 1.6,
+    "id": "w5"
+  },
+  {
+    "text": "than",
+    "start": 1.6,
+    "end": 1.94,
+    "id": "w6"
+  },
+  {
+    "text": "its",
+    "start": 1.94,
+    "end": 2.13,
+    "id": "w7"
+  },
+  {
+    "text": "year.",
+    "start": 2.18,
+    "end": 2.76,
+    "id": "w8"
+  },
+  {
+    "text": "Here",
+    "start": 2.81,
+    "end": 3.07,
+    "id": "w9"
+  },
+  {
+    "text": "on",
+    "start": 3.07,
+    "end": 3.22,
+    "id": "w10"
+  },
+  {
+    "text": "Earth,",
+    "start": 3.22,
+    "end": 3.76,
+    "id": "w11"
+  },
+  {
+    "text": "one",
+    "start": 3.76,
+    "end": 3.99,
+    "id": "w12"
+  },
+  {
+    "text": "spin",
+    "start": 3.99,
+    "end": 4.26,
+    "id": "w13"
+  },
+  {
+    "text": "takes",
+    "start": 4.29,
+    "end": 4.69,
+    "id": "w14"
+  },
+  {
+    "text": "24",
+    "start": 4.69,
+    "end": 4.89,
+    "id": "w15"
+  },
+  {
+    "text": "hours,",
+    "start": 5.44,
+    "end": 5.7,
+    "id": "w16"
+  },
+  {
+    "text": "Venus.",
+    "start": 5.77,
+    "end": 6.9,
+    "id": "w17"
+  },
+  {
+    "text": "It",
+    "start": 6.95,
+    "end": 7.08,
+    "id": "w18"
+  },
+  {
+    "text": "needs",
+    "start": 7.08,
+    "end": 7.54,
+    "id": "w19"
+  },
+  {
+    "text": "243",
+    "start": 7.54,
+    "end": 8.37,
+    "id": "w20"
+  },
+  {
+    "text": "Earth",
+    "start": 8.37,
+    "end": 8.83,
+    "id": "w21"
+  },
+  {
+    "text": "days",
+    "start": 8.83,
+    "end": 9.03,
+    "id": "w22"
+  },
+  {
+    "text": "to",
+    "start": 9.19,
+    "end": 9.37,
+    "id": "w23"
+  },
+  {
+    "text": "turn",
+    "start": 9.58,
+    "end": 9.73,
+    "id": "w24"
+  },
+  {
+    "text": "around",
+    "start": 9.73,
+    "end": 10.27,
+    "id": "w25"
+  },
+  {
+    "text": "just",
+    "start": 10.27,
+    "end": 10.56,
+    "id": "w26"
+  },
+  {
+    "text": "once,",
+    "start": 10.66,
+    "end": 11.24,
+    "id": "w27"
+  },
+  {
+    "text": "but",
+    "start": 11.24,
+    "end": 11.49,
+    "id": "w28"
+  },
+  {
+    "text": "it",
+    "start": 11.61,
+    "end": 11.79,
+    "id": "w29"
+  },
+  {
+    "text": "circles",
+    "start": 11.79,
+    "end": 12.35,
+    "id": "w30"
+  },
+  {
+    "text": "the",
+    "start": 12.71,
+    "end": 12.89,
+    "id": "w31"
+  },
+  {
+    "text": "Sun",
+    "start": 12.89,
+    "end": 13.22,
+    "id": "w32"
+  },
+  {
+    "text": "in",
+    "start": 13.22,
+    "end": 13.25,
+    "id": "w33"
+  },
+  {
+    "text": "only",
+    "start": 13.73,
+    "end": 13.88,
+    "id": "w34"
+  },
+  {
+    "text": "225,",
+    "start": 13.88,
+    "end": 14.9,
+    "id": "w35"
+  },
+  {
+    "text": "and",
+    "start": 14.95,
+    "end": 15.13,
+    "id": "w36"
+  },
+  {
+    "text": "it",
+    "start": 15.13,
+    "end": 15.28,
+    "id": "w37"
+  },
+  {
+    "text": "spins",
+    "start": 15.28,
+    "end": 15.67,
+    "id": "w38"
+  },
+  {
+    "text": "backwards.",
+    "start": 15.67,
+    "end": 16.6,
+    "id": "w39"
+  },
+  {
+    "text": "So",
+    "start": 16.69,
+    "end": 16.81,
+    "id": "w40"
+  },
+  {
+    "text": "on",
+    "start": 16.81,
+    "end": 16.98,
+    "id": "w41"
+  },
+  {
+    "text": "Venus,",
+    "start": 16.98,
+    "end": 17.59,
+    "id": "w42"
+  },
+  {
+    "text": "the",
+    "start": 17.59,
+    "end": 17.85,
+    "id": "w43"
+  },
+  {
+    "text": "Sun",
+    "start": 17.85,
+    "end": 18.11,
+    "id": "w44"
+  },
+  {
+    "text": "rises",
+    "start": 18.11,
+    "end": 18.55,
+    "id": "w45"
+  },
+  {
+    "text": "in",
+    "start": 18.55,
+    "end": 18.72,
+    "id": "w46"
+  },
+  {
+    "text": "the",
+    "start": 18.72,
+    "end": 18.77,
+    "id": "w47"
+  },
+  {
+    "text": "West.",
+    "start": 19.32,
+    "end": 19.66,
+    "id": "w48"
+  },
+  {
+    "text": "Follow",
+    "start": 19.71,
+    "end": 20.04,
+    "id": "w49"
+  },
+  {
+    "text": "for",
+    "start": 20.04,
+    "end": 20.17,
+    "id": "w50"
+  },
+  {
+    "text": "one",
+    "start": 20.23,
+    "end": 20.42,
+    "id": "w51"
+  },
+  {
+    "text": "more",
+    "start": 20.42,
+    "end": 20.67,
+    "id": "w52"
+  },
+  {
+    "text": "fact",
+    "start": 20.67,
+    "end": 20.92,
+    "id": "w53"
+  },
+  {
+    "text": "tomorrow.",
+    "start": 20.92,
+    "end": 21.66,
+    "id": "w54"
+  }
+]
