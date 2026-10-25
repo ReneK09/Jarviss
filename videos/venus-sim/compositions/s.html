@@ -1,0 +1,120 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; color: #eaf2f8; }
+    .s-hud { position: absolute; top: 200px; height: 128px; padding: 18px 26px; border-radius: 18px;
+      background: rgba(16, 30, 42, 0.82); border: 2px solid rgba(160, 200, 230, 0.18); }
+    .s-hud-l { font-weight: 700; font-size: 28px; letter-spacing: 0.12em; color: #8fa5b5; line-height: 1; }
+    .s-hud-v { margin-top: 12px; font-weight: 900; font-size: 64px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .s-hud-v small { font-size: 30px; font-weight: 700; color: #8fa5b5; margin-left: 8px; }
+    .s-title { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 900; line-height: 0.98; letter-spacing: -0.01em; }
+    .s-label { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 700; font-size: 32px; letter-spacing: 0.14em; color: #8fa5b5; }
+    .s-chip { position: absolute; padding: 12px 24px; border-radius: 999px; font-weight: 900; font-size: 34px; letter-spacing: 0.04em; white-space: nowrap; line-height: 1; }
+    .s-sun { position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 40% 38%, #ffe6a8 0%, #ffb648 48%, #f08a24 100%);
+      box-shadow: 0 0 50px 8px rgba(255, 170, 60, 0.35), 0 0 140px 40px rgba(255, 150, 40, 0.12); }
+    .s-planet { position: absolute; border-radius: 50%; }
+    .s-surf { position: absolute; inset: 0; border-radius: 50%; overflow: visible; }
+    .s-surf-fill { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+    .s-venus .s-surf-fill { background: repeating-linear-gradient(-14deg, #e9b46c 0 11%, #d39448 11% 19%, #efc584 19% 30%, #dca159 30% 37%); }
+    .s-earth .s-surf-fill { background: #2a7fd0; }
+    .s-earth .s-surf-fill svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .s-pin { position: absolute; left: 50%; top: -6%; width: 7%; height: 17%; margin-left: -3.5%; border-radius: 999px; background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(13, 24, 34, 0.55); }
+    .s-night { position: absolute; inset: 0; border-radius: 50%;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, rgba(6, 12, 22, 0.66) 50%); }
+    .s-rim { position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.10); }
+    
+    #s-hud1 { left: 70px; width: 430px; }
+    #s-hud2 { right: 70px; width: 440px; }
+    #s-path { position: absolute; left: 320px; top: 420px; width: 440px; height: 440px; overflow: visible; }
+    #s-sun { left: 470px; top: 570px; width: 140px; height: 140px; }
+    #s-ray { position: absolute; left: 540px; top: 640px; width: 0; height: 0; }
+    #s-ray i { position: absolute; left: -2px; top: 0; width: 4px; height: 220px; background: linear-gradient(to bottom, rgba(255, 182, 72, 0.7), rgba(255, 182, 72, 0)); }
+    .s-tag { position: absolute; top: 960px; width: 540px; text-align: center; font-weight: 900; font-size: 38px; letter-spacing: 0.06em; }
+    #s-tag1 { left: 0; color: #3dd6c6; } #s-tag2 { left: 540px; color: #ff6b5b; }
+    #s-vs { position: absolute; left: 490px; top: 952px; width: 100px; text-align: center; font-weight: 900; font-size: 46px; color: #ffb648; }
+    #s-line { position: absolute; left: 90px; top: 960px; width: 900px; height: 200px; }
+    #s-line-lbl { position: absolute; left: 0; top: 0; font-weight: 700; font-size: 28px; letter-spacing: 0.12em; color: #8fa5b5; }
+    #s-track { position: absolute; left: 0; top: 92px; width: 900px; height: 18px; border-radius: 9px; background: rgba(255, 107, 91, 0.35); }
+    #s-track-f { position: absolute; inset: 0; border-radius: 9px; background: #ff6b5b; transform-origin: 0 50%; }
+    .s-mk { position: absolute; top: 48px; width: 34px; height: 34px; margin-left: -17px; border-radius: 50%; background: #ffb648; box-shadow: 0 0 18px rgba(255, 182, 72, 0.6); }
+    .s-mk::after { content: ""; position: absolute; left: 15px; top: 34px; width: 4px; height: 12px; background: #ffb648; }
+    #s-mk1 { left: 0; } #s-mk2 { left: 468px; }
+    #s-two { position: absolute; left: 0; width: 900px; top: 130px; text-align: center; font-weight: 900; font-size: 40px; color: #ffb648; }
+    
+  </style>
+  <div data-hf-id="hf-rph0" id="root" data-composition-id="s" data-width="1080" data-height="1920">
+
+    <div data-hf-id="hf-1j7q" id="s-stage" data-layout-allow-overflow>
+      <svg data-hf-id="hf-fs9m" id="s-path" viewBox="0 0 440 440"><circle data-hf-id="hf-43mu" cx="220.0" cy="220.0" r="220" fill="none" stroke="rgba(160,200,230,.28)" stroke-width="3" stroke-dasharray="10 12"/><circle data-hf-id="hf-j0ro" id="s-path-trail" cx="220.0" cy="220.0" r="220" fill="none" stroke="#ff6b5b" stroke-width="6" stroke-linecap="round" stroke-dasharray="1382" stroke-dashoffset="1382" transform="translate(440,0) scale(-1,1) rotate(90 220.0 220.0)"/></svg>
+      <div data-hf-id="hf-ukdr" id="s-ray"><i data-hf-id="hf-wt6k"></i></div>
+      <div data-hf-id="hf-mx4i" id="s-sun" class="s-sun"></div>
+      <div data-hf-id="hf-cm7y" id="s-vbox" style="position:absolute;left:460px;top:780px;width:160px;height:160px"><div data-hf-id="hf-0dg0" id="s-venus" class="s-planet s-venus" style="left:0px;top:0px;width:160px;height:160px"><div data-hf-id="hf-v04a" id="s-venus-surf" class="s-surf"><div data-hf-id="hf-18ru" class="s-surf-fill"></div><div data-hf-id="hf-4seh" class="s-pin"></div></div><div data-hf-id="hf-8qbm" id="s-venus-night" class="s-night"></div><div data-hf-id="hf-dbf8" class="s-rim"></div></div></div>
+      <div data-hf-id="hf-68jx" id="s-hud1" class="s-hud"><div data-hf-id="hf-l1sv" class="s-hud-l">SONNENTAG</div><div data-hf-id="hf-0enq" class="s-hud-v"><span data-hf-id="hf-bg2q" id="s-d">0</span><small data-hf-id="hf-j4ya">Erdtage</small></div></div>
+      <div data-hf-id="hf-a6ny" id="s-hud2" class="s-hud"><div data-hf-id="hf-huhq" class="s-hud-l">SONNENAUFGÄNGE</div><div data-hf-id="hf-xcwq" class="s-hud-v"><span data-hf-id="hf-4pos" id="s-n">0</span></div></div>
+      <div data-hf-id="hf-2lyx" id="s-tag1" class="s-tag">DREHUNG ↻</div>
+      <div data-hf-id="hf-k7ds" id="s-vs">⇄</div>
+      <div data-hf-id="hf-v828" id="s-tag2" class="s-tag">UMLAUF ↺</div>
+      <div data-hf-id="hf-xua3" id="s-line">
+        <div data-hf-id="hf-ohzr" id="s-line-lbl">1 VENUS-JAHR = 225 TAGE</div>
+        <div data-hf-id="hf-hz0j" id="s-mk1" class="s-mk"></div><div data-hf-id="hf-73iw" id="s-mk2" class="s-mk"></div>
+        <div data-hf-id="hf-vfy6" id="s-track"><div data-hf-id="hf-6n4r" id="s-track-f"></div></div>
+        <div data-hf-id="hf-a4dl" id="s-two">≈ 2 SONNENAUFGÄNGE PRO JAHR</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const lerp = (a, b, u) => a + (b - a) * u;
+      const clamp = (u) => Math.max(0, Math.min(1, u));
+      const sm = (u) => { u = clamp(u); return u * u * (3 - 2 * u); };
+      // piecewise keyframes [[t, v], ...] with smoothstep between keys
+      const keys = (k, t) => {
+        if (t <= k[0][0]) return k[0][1];
+        for (let i = 1; i < k.length; i++) if (t <= k[i][0]) return lerp(k[i - 1][1], k[i][1], sm((t - k[i - 1][0]) / (k[i][0] - k[i - 1][0])));
+        return k[k.length - 1][1];
+      };
+
+      const DUR = 10.4, P = { t: 0 }, R = 220;
+      const K = [[2.0, 0], [7.6, 116.75]];
+      const dEl = document.getElementById("s-d"), nEl = document.getElementById("s-n");
+      const pin = () => document.querySelector("#s-venus .s-pin");
+      const render = (t) => {
+        const d = keys(K, t);
+        const a = 180 - 360 * d / 224.7, ar = a * Math.PI / 180;
+        gsap.set("#s-vbox", { x: R * Math.sin(ar), y: -R * Math.cos(ar) - R });
+        gsap.set("#s-ray", { rotation: a + 180 });
+        // the observer pin starts exactly on the sunrise line (a + 90) and turns clockwise
+        const b = 270 + 360 * d / 243;
+        gsap.set("#s-venus-surf", { rotation: b });
+        gsap.set("#s-venus-night", { rotation: a + 180 });
+        gsap.set("#s-path-trail", { strokeDashoffset: 1382 * (1 - d / 224.7) });
+        let diff = ((b - (a + 180)) % 360 + 540) % 360 - 180;
+        const lit = Math.abs(diff) <= 90.5 && t >= 2.0;
+        const el = pin(); if (el) el.style.background = lit ? "#ffb648" : "#ffffff";
+        dEl.textContent = Math.round(d);
+        nEl.textContent = t < 2.0 ? 0 : d >= 116.7 ? 2 : 1;
+      };
+      render(0);
+      tl.fromTo(P, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(P.t) }, 0);
+      tl.fromTo("#s-stage", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power2.out" }, 0);
+      tl.fromTo("#s-tag1", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.54);
+      tl.fromTo("#s-tag2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 1.17);
+      tl.fromTo("#s-vs", { opacity: 0, scale: 2 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 1.54);
+      tl.fromTo("#s-hud2", { scale: 1 }, { scale: 1.06, duration: 0.12, ease: "power2.out" }, 2.0);
+      tl.to("#s-hud2", { scale: 1, duration: 0.3, ease: "expo.out" }, 2.12);
+      tl.fromTo("#s-hud2", { scale: 1 }, { scale: 1.06, duration: 0.12, ease: "power2.out", immediateRender: false }, 7.6);
+      tl.to("#s-hud2", { scale: 1, duration: 0.3, ease: "expo.out" }, 7.72);
+      tl.to(["#s-tag1", "#s-tag2", "#s-vs"], { opacity: 0, duration: 0.2, ease: "power2.in" }, 7.9);
+      tl.fromTo("#s-line", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 8.15);
+      tl.fromTo("#s-track-f", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.out" }, 8.2);
+      tl.fromTo("#s-mk1", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 8.3);
+      tl.fromTo("#s-mk2", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 8.6);
+      tl.fromTo("#s-two", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 8.88);
+      tl.to("#s-stage", { opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power2.in" }, 10.15);
+    
+      window.__timelines["s"] = tl;
+    })();
+  </script>
+</template>

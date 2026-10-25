@@ -1,0 +1,114 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; color: #eaf2f8; }
+    .w-hud { position: absolute; top: 200px; height: 128px; padding: 18px 26px; border-radius: 18px;
+      background: rgba(16, 30, 42, 0.82); border: 2px solid rgba(160, 200, 230, 0.18); }
+    .w-hud-l { font-weight: 700; font-size: 28px; letter-spacing: 0.12em; color: #8fa5b5; line-height: 1; }
+    .w-hud-v { margin-top: 12px; font-weight: 900; font-size: 64px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .w-hud-v small { font-size: 30px; font-weight: 700; color: #8fa5b5; margin-left: 8px; }
+    .w-title { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 900; line-height: 0.98; letter-spacing: -0.01em; }
+    .w-label { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 700; font-size: 32px; letter-spacing: 0.14em; color: #8fa5b5; }
+    .w-chip { position: absolute; padding: 12px 24px; border-radius: 999px; font-weight: 900; font-size: 34px; letter-spacing: 0.04em; white-space: nowrap; line-height: 1; }
+    .w-sun { position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 40% 38%, #ffe6a8 0%, #ffb648 48%, #f08a24 100%);
+      box-shadow: 0 0 50px 8px rgba(255, 170, 60, 0.35), 0 0 140px 40px rgba(255, 150, 40, 0.12); }
+    .w-planet { position: absolute; border-radius: 50%; }
+    .w-surf { position: absolute; inset: 0; border-radius: 50%; overflow: visible; }
+    .w-surf-fill { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+    .w-venus .w-surf-fill { background: repeating-linear-gradient(-14deg, #e9b46c 0 11%, #d39448 11% 19%, #efc584 19% 30%, #dca159 30% 37%); }
+    .w-earth .w-surf-fill { background: #2a7fd0; }
+    .w-earth .w-surf-fill svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .w-pin { position: absolute; left: 50%; top: -6%; width: 7%; height: 17%; margin-left: -3.5%; border-radius: 999px; background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(13, 24, 34, 0.55); }
+    .w-night { position: absolute; inset: 0; border-radius: 50%;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, rgba(6, 12, 22, 0.66) 50%); }
+    .w-rim { position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.10); }
+    
+    #w-a { position: absolute; inset: 0; }
+    #w-aber { top: 640px; font-size: 64px; color: #8fa5b5; }
+    #w-moment { top: 715px; font-size: 150px; color: #ffb648; }
+    #w-b { position: absolute; inset: 0; }
+    #w-b-lbl { top: 228px; }
+    #w-back { top: 290px; font-size: 128px; color: #ff6b5b; }
+    #w-arr-e { left: 140px; top: 610px; width: 300px; height: 300px; }
+    #w-arr-v { left: 640px; top: 610px; width: 300px; height: 300px; }
+    .w-name { position: absolute; top: 960px; width: 400px; text-align: center; font-weight: 900; font-size: 40px; letter-spacing: 0.08em; }
+    #w-name-e { left: 90px; color: #3dd6c6; } #w-name-v { left: 590px; color: #ff6b5b; }
+    #w-c { position: absolute; inset: 0; }
+    #w-sky { position: absolute; left: 0; top: 0; width: 1080px; height: 1000px; background: linear-gradient(to bottom, rgba(13, 24, 34, 0) 40%, rgba(240, 138, 36, 0.28) 100%); }
+    #w-sun { left: 130px; top: 1000px; width: 200px; height: 200px; }
+    #w-ground { position: absolute; left: 0; top: 1000px; width: 1080px; height: 920px; background: #3b2618; border-top: 3px solid #a8683a; }
+    .w-dir { position: absolute; top: 1030px; font-weight: 900; font-size: 56px; line-height: 1; }
+    #w-dir-w { left: 212px; color: #ffb648; } #w-dir-o { left: 828px; color: rgba(234, 242, 248, 0.6); }
+    #w-c-lbl { top: 228px; }
+    #w-west { top: 290px; font-size: 150px; color: #ffb648; }
+    
+  </style>
+  <div data-hf-id="hf-6vdc" id="root" data-composition-id="w" data-width="1080" data-height="1920">
+
+    <div data-hf-id="hf-h2we" id="w-a"><div data-hf-id="hf-flns" id="w-aber" class="w-title">ABER</div><div data-hf-id="hf-iwn6" id="w-moment" class="w-title">MOMENT.</div></div>
+    <div data-hf-id="hf-c2cq" id="w-b" data-layout-allow-overflow>
+      <div data-hf-id="hf-yuki" id="w-b-lbl" class="w-label">DIE VENUS DREHT SICH</div>
+      <div data-hf-id="hf-fg5l" id="w-back" class="w-title">RÜCKWÄRTS</div>
+      <svg data-hf-id="hf-pfjd" id="w-arr-e" viewBox="0 0 400 400" style="position:absolute;overflow:visible"><path data-hf-id="hf-n2jj" d="M 200 14 A 186 186 0 0 0 14 200" fill="none" stroke="#3dd6c6" stroke-width="12" stroke-linecap="round"/><path data-hf-id="hf-yb6h" d="M -10 176 L 14 212 L 38 176" fill="none" stroke="#3dd6c6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg data-hf-id="hf-bf88" id="w-arr-v" viewBox="0 0 400 400" style="position:absolute;overflow:visible"><path data-hf-id="hf-4i1p" d="M 200 14 A 186 186 0 0 1 386 200" fill="none" stroke="#ff6b5b" stroke-width="12" stroke-linecap="round"/><path data-hf-id="hf-vqtj" d="M 362 176 L 386 212 L 410 176" fill="none" stroke="#ff6b5b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div data-hf-id="hf-f3bm" id="w-earth" class="w-planet w-earth" style="left:165px;top:635px;width:250px;height:250px"><div data-hf-id="hf-u9b3" id="w-earth-surf" class="w-surf"><div data-hf-id="hf-g1dy" class="w-surf-fill"><svg data-hf-id="hf-gfbt" viewBox="0 0 100 100" preserveAspectRatio="none"><path data-hf-id="hf-y01n" d="M18 22 C28 12 44 14 46 26 C48 36 38 40 40 52 C42 62 30 66 24 58 C18 50 10 44 12 34 Z" fill="#4cb86a"/><path data-hf-id="hf-yjgn" d="M60 18 C70 14 84 22 86 34 C88 44 78 46 72 42 C66 38 58 30 60 18 Z" fill="#4cb86a"/><path data-hf-id="hf-219o" d="M58 58 C66 52 78 56 80 66 C82 78 70 88 62 84 C56 80 52 66 58 58 Z" fill="#4cb86a"/><path data-hf-id="hf-1wck" d="M20 74 C26 70 34 74 32 82 C30 88 22 88 20 82 Z" fill="#4cb86a"/><ellipse data-hf-id="hf-uzd7" cx="50" cy="4" rx="30" ry="6" fill="#e8f2fa"/><ellipse data-hf-id="hf-xl77" cx="50" cy="97" rx="30" ry="6" fill="#e8f2fa"/></svg></div><div data-hf-id="hf-5na5" class="w-pin"></div></div><div data-hf-id="hf-41q1" id="w-earth-night" class="w-night"></div><div data-hf-id="hf-bwgo" class="w-rim"></div></div>
+      <div data-hf-id="hf-qcm5" id="w-venus" class="w-planet w-venus" style="left:665px;top:635px;width:250px;height:250px"><div data-hf-id="hf-6zoq" id="w-venus-surf" class="w-surf"><div data-hf-id="hf-9qmi" class="w-surf-fill"></div><div data-hf-id="hf-tb8x" class="w-pin"></div></div><div data-hf-id="hf-iu7u" id="w-venus-night" class="w-night"></div><div data-hf-id="hf-q3jk" class="w-rim"></div></div>
+      <div data-hf-id="hf-tctq" id="w-name-e" class="w-name">ERDE ↺</div>
+      <div data-hf-id="hf-ba7t" id="w-name-v" class="w-name">VENUS ↻</div>
+    </div>
+    <div data-hf-id="hf-g0gr" id="w-c" data-layout-allow-overflow>
+      <div data-hf-id="hf-qmbg" id="w-sky"></div>
+      <div data-hf-id="hf-auaq" id="w-sun" class="w-sun"></div>
+      <div data-hf-id="hf-eq0g" id="w-ground"></div>
+      <div data-hf-id="hf-axzx" id="w-dir-w" class="w-dir">W</div>
+      <div data-hf-id="hf-0sfh" id="w-dir-o" class="w-dir">O</div>
+      <div data-hf-id="hf-qlcn" id="w-c-lbl" class="w-label">DIE SONNE GEHT AUF IM</div>
+      <div data-hf-id="hf-kbcd" id="w-west" class="w-title">WESTEN</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const lerp = (a, b, u) => a + (b - a) * u;
+      const clamp = (u) => Math.max(0, Math.min(1, u));
+      const sm = (u) => { u = clamp(u); return u * u * (3 - 2 * u); };
+      // piecewise keyframes [[t, v], ...] with smoothstep between keys
+      const keys = (k, t) => {
+        if (t <= k[0][0]) return k[0][1];
+        for (let i = 1; i < k.length; i++) if (t <= k[i][0]) return lerp(k[i - 1][1], k[i][1], sm((t - k[i - 1][0]) / (k[i][0] - k[i - 1][0])));
+        return k[k.length - 1][1];
+      };
+
+      const DUR = 6.5, P = { t: 0 };
+      const render = (t) => {
+        gsap.set("#w-earth-surf", { rotation: -t * 140 });
+        gsap.set("#w-venus-surf", { rotation: t * 60 });
+        gsap.set("#w-earth-night", { rotation: -90 }); gsap.set("#w-venus-night", { rotation: -90 });
+      };
+      render(0);
+      tl.fromTo(P, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(P.t) }, 0);
+      // A: "Aber Moment." slams in
+      tl.fromTo("#w-aber", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out" }, 0.05);
+      tl.fromTo("#w-moment", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 0.33);
+      tl.to("#w-a", { opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power2.in" }, 0.8);
+      // B: spin directions
+      tl.fromTo("#w-b", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.95);
+      tl.fromTo("#w-back", { opacity: 0, x: 140, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 2.05);
+      tl.fromTo("#w-arr-e", { rotation: 0 }, { rotation: -150, duration: 3.3, ease: "none" }, 0.95);
+      tl.fromTo("#w-arr-v", { rotation: 0 }, { rotation: 150, duration: 3.3, ease: "none" }, 0.95);
+      tl.to("#w-b", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, 4.1);
+      // C: sunrise in the west
+      tl.fromTo("#w-c", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 4.25);
+      tl.fromTo("#w-c-lbl", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 4.4);
+      tl.fromTo("#w-sun", { y: 0 }, { y: -300, duration: 1.3, ease: "power2.out" }, 5.0);
+      tl.fromTo("#w-sky", { opacity: 0 }, { opacity: 1, duration: 1.3, ease: "power2.out" }, 5.0);
+      tl.fromTo("#w-west", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 5.8);
+      tl.fromTo("#w-dir-w", { scale: 1 }, { scale: 1.4, duration: 0.12, ease: "power2.out" }, 5.8);
+      tl.to("#w-dir-w", { scale: 1, duration: 0.3, ease: "expo.out" }, 5.92);
+      tl.to("#w-c", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, 6.3);
+    
+      window.__timelines["w"] = tl;
+    })();
+  </script>
+</template>

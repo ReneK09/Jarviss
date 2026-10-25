@@ -1,0 +1,1100 @@
+[
+{
+"text": "Ein",
+"start": 0.0,
+"end": 0.198,
+"sent": 0
+},
+{
+"text": "Tag",
+"start": 0.198,
+"end": 0.396,
+"sent": 0
+},
+{
+"text": "auf",
+"start": 0.396,
+"end": 0.593,
+"sent": 0
+},
+{
+"text": "der",
+"start": 0.593,
+"end": 0.791,
+"sent": 0
+},
+{
+"text": "Venus",
+"start": 0.791,
+"end": 1.068,
+"sent": 0
+},
+{
+"text": "dauert",
+"start": 1.068,
+"end": 1.384,
+"sent": 0
+},
+{
+"text": "länger",
+"start": 1.384,
+"end": 1.701,
+"sent": 0
+},
+{
+"text": "als",
+"start": 1.701,
+"end": 1.899,
+"sent": 0
+},
+{
+"text": "ihr",
+"start": 1.899,
+"end": 2.097,
+"sent": 0
+},
+{
+"text": "ganzes",
+"start": 2.097,
+"end": 2.413,
+"sent": 0
+},
+{
+"text": "Jahr.",
+"start": 2.413,
+"end": 2.65,
+"sent": 0
+},
+{
+"text": "Stimmt",
+"start": 2.87,
+"end": 3.193,
+"sent": 1
+},
+{
+"text": "das?",
+"start": 3.193,
+"end": 3.394,
+"sent": 1
+},
+{
+"text": "Ja",
+"start": 3.714,
+"end": 3.965,
+"sent": 2
+},
+{
+"text": "oder",
+"start": 3.965,
+"end": 4.341,
+"sent": 2
+},
+{
+"text": "nein?",
+"start": 4.341,
+"end": 4.718,
+"sent": 2
+},
+{
+"text": "Entscheide",
+"start": 5.038,
+"end": 5.519,
+"sent": 3
+},
+{
+"text": "dich.",
+"start": 5.519,
+"end": 5.759,
+"sent": 3
+},
+{
+"text": "Schauen",
+"start": 8.379,
+"end": 8.726,
+"sent": 4
+},
+{
+"text": "wir",
+"start": 8.726,
+"end": 8.919,
+"sent": 4
+},
+{
+"text": "zuerst",
+"start": 8.919,
+"end": 9.228,
+"sent": 4
+},
+{
+"text": "auf",
+"start": 9.228,
+"end": 9.42,
+"sent": 4
+},
+{
+"text": "die",
+"start": 9.42,
+"end": 9.613,
+"sent": 4
+},
+{
+"text": "Erde.",
+"start": 9.613,
+"end": 9.844,
+"sent": 4
+},
+{
+"text": "Sie",
+"start": 10.064,
+"end": 10.287,
+"sent": 5
+},
+{
+"text": "dreht",
+"start": 10.287,
+"end": 10.599,
+"sent": 5
+},
+{
+"text": "sich",
+"start": 10.599,
+"end": 10.866,
+"sent": 5
+},
+{
+"text": "in",
+"start": 10.866,
+"end": 11.044,
+"sent": 5
+},
+{
+"text": "vierundzwanzig",
+"start": 11.044,
+"end": 11.756,
+"sent": 5
+},
+{
+"text": "Stunden",
+"start": 11.756,
+"end": 12.156,
+"sent": 5
+},
+{
+"text": "einmal",
+"start": 12.156,
+"end": 12.512,
+"sent": 5
+},
+{
+"text": "um",
+"start": 12.512,
+"end": 12.69,
+"sent": 5
+},
+{
+"text": "sich",
+"start": 12.69,
+"end": 12.957,
+"sent": 5
+},
+{
+"text": "selbst.",
+"start": 12.957,
+"end": 13.313,
+"sent": 5
+},
+{
+"text": "Das",
+"start": 13.533,
+"end": 13.768,
+"sent": 6
+},
+{
+"text": "ist",
+"start": 13.768,
+"end": 14.002,
+"sent": 6
+},
+{
+"text": "ein",
+"start": 14.002,
+"end": 14.236,
+"sent": 6
+},
+{
+"text": "Tag.",
+"start": 14.236,
+"end": 14.47,
+"sent": 6
+},
+{
+"text": "Für",
+"start": 14.69,
+"end": 14.908,
+"sent": 7
+},
+{
+"text": "eine",
+"start": 14.908,
+"end": 15.17,
+"sent": 7
+},
+{
+"text": "Runde",
+"start": 15.17,
+"end": 15.476,
+"sent": 7
+},
+{
+"text": "um",
+"start": 15.476,
+"end": 15.651,
+"sent": 7
+},
+{
+"text": "die",
+"start": 15.651,
+"end": 15.869,
+"sent": 7
+},
+{
+"text": "Sonne",
+"start": 15.869,
+"end": 16.175,
+"sent": 7
+},
+{
+"text": "braucht",
+"start": 16.175,
+"end": 16.568,
+"sent": 7
+},
+{
+"text": "sie",
+"start": 16.568,
+"end": 16.786,
+"sent": 7
+},
+{
+"text": "dreihundertfünfundsechzig",
+"start": 16.786,
+"end": 17.965,
+"sent": 7
+},
+{
+"text": "Tage.",
+"start": 17.965,
+"end": 18.227,
+"sent": 7
+},
+{
+"text": "Das",
+"start": 18.447,
+"end": 18.65,
+"sent": 8
+},
+{
+"text": "ist",
+"start": 18.65,
+"end": 18.853,
+"sent": 8
+},
+{
+"text": "ein",
+"start": 18.853,
+"end": 19.055,
+"sent": 8
+},
+{
+"text": "Jahr.",
+"start": 19.055,
+"end": 19.299,
+"sent": 8
+},
+{
+"text": "Jetzt",
+"start": 19.519,
+"end": 19.821,
+"sent": 9
+},
+{
+"text": "die",
+"start": 19.821,
+"end": 20.037,
+"sent": 9
+},
+{
+"text": "Venus.",
+"start": 20.037,
+"end": 20.34,
+"sent": 9
+},
+{
+"text": "Wir",
+"start": 20.56,
+"end": 20.74,
+"sent": 10
+},
+{
+"text": "lassen",
+"start": 20.74,
+"end": 21.027,
+"sent": 10
+},
+{
+"text": "die",
+"start": 21.027,
+"end": 21.207,
+"sent": 10
+},
+{
+"text": "Zeit",
+"start": 21.207,
+"end": 21.422,
+"sent": 10
+},
+{
+"text": "laufen.",
+"start": 21.422,
+"end": 21.71,
+"sent": 10
+},
+{
+"text": "Nach",
+"start": 21.93,
+"end": 22.166,
+"sent": 11
+},
+{
+"text": "hundert",
+"start": 22.166,
+"end": 22.521,
+"sent": 11
+},
+{
+"text": "Tagen",
+"start": 22.521,
+"end": 22.797,
+"sent": 11
+},
+{
+"text": "hat",
+"start": 22.797,
+"end": 22.995,
+"sent": 11
+},
+{
+"text": "sie",
+"start": 22.995,
+"end": 23.192,
+"sent": 11
+},
+{
+"text": "sich",
+"start": 23.192,
+"end": 23.428,
+"sent": 11
+},
+{
+"text": "noch",
+"start": 23.428,
+"end": 23.665,
+"sent": 11
+},
+{
+"text": "nicht",
+"start": 23.665,
+"end": 23.941,
+"sent": 11
+},
+{
+"text": "einmal",
+"start": 23.941,
+"end": 24.257,
+"sent": 11
+},
+{
+"text": "halb",
+"start": 24.257,
+"end": 24.493,
+"sent": 11
+},
+{
+"text": "gedreht.",
+"start": 24.493,
+"end": 24.848,
+"sent": 11
+},
+{
+"text": "Nach",
+"start": 25.068,
+"end": 25.36,
+"sent": 12
+},
+{
+"text": "zweihundertfünfundzwanzig",
+"start": 25.36,
+"end": 26.674,
+"sent": 12
+},
+{
+"text": "Tagen",
+"start": 26.674,
+"end": 27.014,
+"sent": 12
+},
+{
+"text": "ist",
+"start": 27.014,
+"end": 27.258,
+"sent": 12
+},
+{
+"text": "sie",
+"start": 27.258,
+"end": 27.501,
+"sent": 12
+},
+{
+"text": "einmal",
+"start": 27.501,
+"end": 27.89,
+"sent": 12
+},
+{
+"text": "um",
+"start": 27.89,
+"end": 28.085,
+"sent": 12
+},
+{
+"text": "die",
+"start": 28.085,
+"end": 28.328,
+"sent": 12
+},
+{
+"text": "Sonne.",
+"start": 28.328,
+"end": 28.668,
+"sent": 12
+},
+{
+"text": "Ein",
+"start": 28.888,
+"end": 29.105,
+"sent": 13
+},
+{
+"text": "Jahr",
+"start": 29.105,
+"end": 29.365,
+"sent": 13
+},
+{
+"text": "ist",
+"start": 29.365,
+"end": 29.581,
+"sent": 13
+},
+{
+"text": "vorbei.",
+"start": 29.581,
+"end": 29.927,
+"sent": 13
+},
+{
+"text": "Aber",
+"start": 30.147,
+"end": 30.359,
+"sent": 14
+},
+{
+"text": "ihre",
+"start": 30.359,
+"end": 30.571,
+"sent": 14
+},
+{
+"text": "Drehung?",
+"start": 30.571,
+"end": 30.889,
+"sent": 14
+},
+{
+"text": "Noch",
+"start": 31.209,
+"end": 31.428,
+"sent": 15
+},
+{
+"text": "nicht",
+"start": 31.428,
+"end": 31.685,
+"sent": 15
+},
+{
+"text": "fertig.",
+"start": 31.685,
+"end": 31.977,
+"sent": 15
+},
+{
+"text": "Erst",
+"start": 32.197,
+"end": 32.473,
+"sent": 16
+},
+{
+"text": "nach",
+"start": 32.473,
+"end": 32.749,
+"sent": 16
+},
+{
+"text": "zweihundertdreiundvierzig",
+"start": 32.749,
+"end": 33.991,
+"sent": 16
+},
+{
+"text": "Tagen",
+"start": 33.991,
+"end": 34.312,
+"sent": 16
+},
+{
+"text": "hat",
+"start": 34.312,
+"end": 34.542,
+"sent": 16
+},
+{
+"text": "sie",
+"start": 34.542,
+"end": 34.772,
+"sent": 16
+},
+{
+"text": "sich",
+"start": 34.772,
+"end": 35.048,
+"sent": 16
+},
+{
+"text": "einmal",
+"start": 35.048,
+"end": 35.416,
+"sent": 16
+},
+{
+"text": "gedreht.",
+"start": 35.416,
+"end": 35.83,
+"sent": 16
+},
+{
+"text": "Also",
+"start": 36.05,
+"end": 36.378,
+"sent": 17
+},
+{
+"text": "ja?",
+"start": 36.378,
+"end": 36.597,
+"sent": 17
+},
+{
+"text": "Eine",
+"start": 36.917,
+"end": 37.154,
+"sent": 18
+},
+{
+"text": "Drehung",
+"start": 37.154,
+"end": 37.509,
+"sent": 18
+},
+{
+"text": "dauert",
+"start": 37.509,
+"end": 37.824,
+"sent": 18
+},
+{
+"text": "länger",
+"start": 37.824,
+"end": 38.14,
+"sent": 18
+},
+{
+"text": "als",
+"start": 38.14,
+"end": 38.337,
+"sent": 18
+},
+{
+"text": "ein",
+"start": 38.337,
+"end": 38.535,
+"sent": 18
+},
+{
+"text": "Jahr.",
+"start": 38.535,
+"end": 38.771,
+"sent": 18
+},
+{
+"text": "Aber",
+"start": 38.991,
+"end": 39.271,
+"sent": 19
+},
+{
+"text": "Moment.",
+"start": 39.271,
+"end": 39.645,
+"sent": 19
+},
+{
+"text": "Die",
+"start": 39.865,
+"end": 40.085,
+"sent": 20
+},
+{
+"text": "Venus",
+"start": 40.085,
+"end": 40.393,
+"sent": 20
+},
+{
+"text": "dreht",
+"start": 40.393,
+"end": 40.702,
+"sent": 20
+},
+{
+"text": "sich",
+"start": 40.702,
+"end": 40.966,
+"sent": 20
+},
+{
+"text": "rückwärts,",
+"start": 40.966,
+"end": 41.45,
+"sent": 20
+},
+{
+"text": "anders",
+"start": 41.45,
+"end": 41.803,
+"sent": 20
+},
+{
+"text": "als",
+"start": 41.803,
+"end": 42.023,
+"sent": 20
+},
+{
+"text": "fast",
+"start": 42.023,
+"end": 42.287,
+"sent": 20
+},
+{
+"text": "alle",
+"start": 42.287,
+"end": 42.551,
+"sent": 20
+},
+{
+"text": "Planeten.",
+"start": 42.551,
+"end": 42.992,
+"sent": 20
+},
+{
+"text": "Deshalb",
+"start": 43.212,
+"end": 43.573,
+"sent": 21
+},
+{
+"text": "geht",
+"start": 43.573,
+"end": 43.813,
+"sent": 21
+},
+{
+"text": "dort",
+"start": 43.813,
+"end": 44.054,
+"sent": 21
+},
+{
+"text": "die",
+"start": 44.054,
+"end": 44.255,
+"sent": 21
+},
+{
+"text": "Sonne",
+"start": 44.255,
+"end": 44.535,
+"sent": 21
+},
+{
+"text": "im",
+"start": 44.535,
+"end": 44.696,
+"sent": 21
+},
+{
+"text": "Westen",
+"start": 44.696,
+"end": 45.017,
+"sent": 21
+},
+{
+"text": "auf.",
+"start": 45.017,
+"end": 45.217,
+"sent": 21
+},
+{
+"text": "Und",
+"start": 45.437,
+"end": 45.664,
+"sent": 22
+},
+{
+"text": "weil",
+"start": 45.664,
+"end": 45.937,
+"sent": 22
+},
+{
+"text": "Drehung",
+"start": 45.937,
+"end": 46.345,
+"sent": 22
+},
+{
+"text": "und",
+"start": 46.345,
+"end": 46.572,
+"sent": 22
+},
+{
+"text": "Umlauf",
+"start": 46.572,
+"end": 46.936,
+"sent": 22
+},
+{
+"text": "gegeneinander",
+"start": 46.936,
+"end": 47.616,
+"sent": 22
+},
+{
+"text": "laufen,",
+"start": 47.616,
+"end": 47.98,
+"sent": 22
+},
+{
+"text": "kommt",
+"start": 47.98,
+"end": 48.297,
+"sent": 22
+},
+{
+"text": "die",
+"start": 48.297,
+"end": 48.524,
+"sent": 22
+},
+{
+"text": "Sonne",
+"start": 48.524,
+"end": 48.842,
+"sent": 22
+},
+{
+"text": "schneller",
+"start": 48.842,
+"end": 49.342,
+"sent": 22
+},
+{
+"text": "zurück.",
+"start": 49.342,
+"end": 49.705,
+"sent": 22
+},
+{
+"text": "Von",
+"start": 49.925,
+"end": 50.146,
+"sent": 23
+},
+{
+"text": "Sonnenaufgang",
+"start": 50.146,
+"end": 50.81,
+"sent": 23
+},
+{
+"text": "zu",
+"start": 50.81,
+"end": 50.987,
+"sent": 23
+},
+{
+"text": "Sonnenaufgang",
+"start": 50.987,
+"end": 51.652,
+"sent": 23
+},
+{
+"text": "vergehen",
+"start": 51.652,
+"end": 52.094,
+"sent": 23
+},
+{
+"text": "nur",
+"start": 52.094,
+"end": 52.316,
+"sent": 23
+},
+{
+"text": "hundertsiebzehn",
+"start": 52.316,
+"end": 53.069,
+"sent": 23
+},
+{
+"text": "Tage.",
+"start": 53.069,
+"end": 53.334,
+"sent": 23
+},
+{
+"text": "Das",
+"start": 53.554,
+"end": 53.768,
+"sent": 24
+},
+{
+"text": "sind",
+"start": 53.768,
+"end": 54.024,
+"sent": 24
+},
+{
+"text": "etwa",
+"start": 54.024,
+"end": 54.28,
+"sent": 24
+},
+{
+"text": "zwei",
+"start": 54.28,
+"end": 54.537,
+"sent": 24
+},
+{
+"text": "Sonnenaufgänge",
+"start": 54.537,
+"end": 55.22,
+"sent": 24
+},
+{
+"text": "pro",
+"start": 55.22,
+"end": 55.434,
+"sent": 24
+},
+{
+"text": "Jahr.",
+"start": 55.434,
+"end": 55.69,
+"sent": 24
+},
+{
+"text": "Also:",
+"start": 55.91,
+"end": 56.36,
+"sent": 25
+},
+{
+"text": "Eine",
+"start": 56.68,
+"end": 56.903,
+"sent": 26
+},
+{
+"text": "Drehung",
+"start": 56.903,
+"end": 57.238,
+"sent": 26
+},
+{
+"text": "ist",
+"start": 57.238,
+"end": 57.424,
+"sent": 26
+},
+{
+"text": "länger",
+"start": 57.424,
+"end": 57.721,
+"sent": 26
+},
+{
+"text": "als",
+"start": 57.721,
+"end": 57.907,
+"sent": 26
+},
+{
+"text": "ein",
+"start": 57.907,
+"end": 58.093,
+"sent": 26
+},
+{
+"text": "Jahr.",
+"start": 58.093,
+"end": 58.316,
+"sent": 26
+},
+{
+"text": "Ein",
+"start": 58.536,
+"end": 58.764,
+"sent": 27
+},
+{
+"text": "Sonnentag",
+"start": 58.764,
+"end": 59.267,
+"sent": 27
+},
+{
+"text": "ist",
+"start": 59.267,
+"end": 59.495,
+"sent": 27
+},
+{
+"text": "kürzer.",
+"start": 59.495,
+"end": 59.861,
+"sent": 27
+},
+{
+"text": "Ist",
+"start": 60.081,
+"end": 60.294,
+"sent": 28
+},
+{
+"text": "der",
+"start": 60.294,
+"end": 60.507,
+"sent": 28
+},
+{
+"text": "Tag",
+"start": 60.507,
+"end": 60.72,
+"sent": 28
+},
+{
+"text": "auf",
+"start": 60.72,
+"end": 60.933,
+"sent": 28
+},
+{
+"text": "der",
+"start": 60.933,
+"end": 61.146,
+"sent": 28
+},
+{
+"text": "Venus",
+"start": 61.146,
+"end": 61.444,
+"sent": 28
+},
+{
+"text": "länger",
+"start": 61.444,
+"end": 61.785,
+"sent": 28
+},
+{
+"text": "als",
+"start": 61.785,
+"end": 61.998,
+"sent": 28
+},
+{
+"text": "ihr",
+"start": 61.998,
+"end": 62.211,
+"sent": 28
+},
+{
+"text": "Jahr?",
+"start": 62.211,
+"end": 62.467,
+"sent": 28
+},
+{
+"text": "Kommt",
+"start": 62.787,
+"end": 63.105,
+"sent": 29
+},
+{
+"text": "drauf",
+"start": 63.105,
+"end": 63.423,
+"sent": 29
+},
+{
+"text": "an,",
+"start": 63.423,
+"end": 63.604,
+"sent": 29
+},
+{
+"text": "wie",
+"start": 63.604,
+"end": 63.831,
+"sent": 29
+},
+{
+"text": "man",
+"start": 63.831,
+"end": 64.058,
+"sent": 29
+},
+{
+"text": "zählt.",
+"start": 64.058,
+"end": 64.376,
+"sent": 29
+}
+]

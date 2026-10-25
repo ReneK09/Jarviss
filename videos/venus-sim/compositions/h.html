@@ -1,0 +1,88 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; color: #eaf2f8; }
+    .h-hud { position: absolute; top: 200px; height: 128px; padding: 18px 26px; border-radius: 18px;
+      background: rgba(16, 30, 42, 0.82); border: 2px solid rgba(160, 200, 230, 0.18); }
+    .h-hud-l { font-weight: 700; font-size: 28px; letter-spacing: 0.12em; color: #8fa5b5; line-height: 1; }
+    .h-hud-v { margin-top: 12px; font-weight: 900; font-size: 64px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .h-hud-v small { font-size: 30px; font-weight: 700; color: #8fa5b5; margin-left: 8px; }
+    .h-title { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 900; line-height: 0.98; letter-spacing: -0.01em; }
+    .h-label { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 700; font-size: 32px; letter-spacing: 0.14em; color: #8fa5b5; }
+    .h-chip { position: absolute; padding: 12px 24px; border-radius: 999px; font-weight: 900; font-size: 34px; letter-spacing: 0.04em; white-space: nowrap; line-height: 1; }
+    .h-sun { position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 40% 38%, #ffe6a8 0%, #ffb648 48%, #f08a24 100%);
+      box-shadow: 0 0 50px 8px rgba(255, 170, 60, 0.35), 0 0 140px 40px rgba(255, 150, 40, 0.12); }
+    .h-planet { position: absolute; border-radius: 50%; }
+    .h-surf { position: absolute; inset: 0; border-radius: 50%; overflow: visible; }
+    .h-surf-fill { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+    .h-venus .h-surf-fill { background: repeating-linear-gradient(-14deg, #e9b46c 0 11%, #d39448 11% 19%, #efc584 19% 30%, #dca159 30% 37%); }
+    .h-earth .h-surf-fill { background: #2a7fd0; }
+    .h-earth .h-surf-fill svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .h-pin { position: absolute; left: 50%; top: -6%; width: 7%; height: 17%; margin-left: -3.5%; border-radius: 999px; background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(13, 24, 34, 0.55); }
+    .h-night { position: absolute; inset: 0; border-radius: 50%;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, rgba(6, 12, 22, 0.66) 50%); }
+    .h-rim { position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.10); }
+    
+    #h-lbl { top: 228px; }
+    #h-title { top: 284px; font-size: 118px; }
+    #h-title em { font-style: normal; color: #ffb648; }
+    #h-poll { position: absolute; left: 0; top: 1040px; width: 1080px; height: 170px; }
+    #h-ask { top: 0; font-size: 28px; }
+    #h-ja { left: 170px; top: 62px; color: #3dd6c6; background: rgba(61, 214, 198, 0.14); border: 3px solid #3dd6c6; width: 230px; text-align: center; }
+    #h-nein { left: 680px; top: 62px; color: #ff6b5b; background: rgba(255, 107, 91, 0.14); border: 3px solid #ff6b5b; width: 230px; text-align: center; }
+    #h-count { position: absolute; left: 490px; top: 48px; width: 100px; height: 100px; }
+    #h-count svg { position: absolute; inset: 0; overflow: visible; }
+    #h-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 50px; font-variant-numeric: tabular-nums; }
+    
+  </style>
+  <div data-hf-id="hf-7pp5" id="root" data-composition-id="h" data-width="1080" data-height="1920">
+
+    <div data-hf-id="hf-bejd" id="h-stage" data-layout-allow-overflow>
+      <div data-hf-id="hf-xyo7" id="h-venus" class="h-planet h-venus" style="left:320px;top:580px;width:440px;height:440px"><div data-hf-id="hf-0nyu" id="h-venus-surf" class="h-surf"><div data-hf-id="hf-6fup" class="h-surf-fill"></div><div data-hf-id="hf-mb82" class="h-pin"></div></div><div data-hf-id="hf-fwp8" id="h-venus-night" class="h-night"></div><div data-hf-id="hf-q2cf" class="h-rim"></div></div>
+      <div data-hf-id="hf-4joy" id="h-lbl" class="h-label">EIN TAG AUF DER VENUS</div>
+      <div data-hf-id="hf-im8m" id="h-title" class="h-title">LÄNGER ALS<br data-hf-id="hf-x5px"><em data-hf-id="hf-dfqt">EIN JAHR?</em></div>
+      <div data-hf-id="hf-vidb" id="h-poll">
+        <div data-hf-id="hf-prsc" id="h-ask" class="h-label">WAS MEINST DU?</div>
+        <div data-hf-id="hf-l82e" id="h-ja" class="h-chip">JA</div>
+        <div data-hf-id="hf-vk2d" id="h-count"><svg data-hf-id="hf-fohl" viewBox="0 0 100 100"><circle data-hf-id="hf-wlbc" cx="50" cy="50" r="46" fill="rgba(16,30,42,.9)" stroke="rgba(160,200,230,.25)" stroke-width="5"/>
+          <circle data-hf-id="hf-y3jc" id="h-arc" cx="50" cy="50" r="46" fill="none" stroke="#ffb648" stroke-width="6" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 50 50)"/></svg>
+          <div data-hf-id="hf-128x" id="h-num">3</div></div>
+        <div data-hf-id="hf-awbw" id="h-nein" class="h-chip">NEIN</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const lerp = (a, b, u) => a + (b - a) * u;
+      const clamp = (u) => Math.max(0, Math.min(1, u));
+      const sm = (u) => { u = clamp(u); return u * u * (3 - 2 * u); };
+      // piecewise keyframes [[t, v], ...] with smoothstep between keys
+      const keys = (k, t) => {
+        if (t <= k[0][0]) return k[0][1];
+        for (let i = 1; i < k.length; i++) if (t <= k[i][0]) return lerp(k[i - 1][1], k[i][1], sm((t - k[i - 1][0]) / (k[i][0] - k[i - 1][0])));
+        return k[k.length - 1][1];
+      };
+
+      const DUR = 8.6, P = { t: 0 };
+      const num = document.getElementById("h-num");
+      const render = (t) => {
+        gsap.set("#h-venus-surf", { rotation: 30 + t * 4 });
+        gsap.set("#h-venus-night", { rotation: 135 });
+        num.textContent = t < 6.6 ? "3" : t < 7.3 ? "2" : t < 8.0 ? "1" : "?";
+      };
+      render(0);
+      tl.fromTo(P, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(P.t) }, 0);
+      // poll on "Ja oder nein?"
+      tl.fromTo("#h-poll", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 3.9);
+      tl.fromTo("#h-arc", { strokeDashoffset: 289 }, { strokeDashoffset: 0, duration: 2.1, ease: "none" }, 5.9);
+      tl.fromTo("#h-num", { scale: 1.5 }, { scale: 1, duration: 0.3, ease: "expo.out" }, 5.9);
+      tl.fromTo("#h-num", { scale: 1.5 }, { scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 6.6);
+      tl.fromTo("#h-num", { scale: 1.5 }, { scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 7.3);
+      tl.to("#h-stage", { opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power2.in" }, 8.36);
+    
+      window.__timelines["h"] = tl;
+    })();
+  </script>
+</template>

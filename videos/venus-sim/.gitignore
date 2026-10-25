@@ -1,0 +1,4 @@
+.hyperframes/
+node_modules/
+assets/voice-raw.wav
+tools/__pycache__/
