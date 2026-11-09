@@ -263,6 +263,29 @@ button.row{background:none;border:0;text-align:left;width:100%}
   border-radius:10px;padding:6px 10px;font-size:13px;white-space:nowrap;pointer-events:none;z-index:2}
 .chart .tip b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
 
+/* profile */
+.profile-top{display:flex;gap:16px;align-items:center}
+.pf-avatar{width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--round);font-weight:700;font-size:22px;color:#fff;
+  background:linear-gradient(145deg,var(--teal),var(--pink))}
+.pf-name{font-size:22px;font-weight:700;line-height:28px;letter-spacing:-.01em;margin:0}
+.pf-handle{font-size:15px;color:var(--label-2);margin:0}
+.pf-bio{font-size:15px;line-height:21px;margin:0;max-width:60ch;white-space:pre-line}
+.pf-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;background:var(--card-2);border-radius:14px;padding:12px 8px}
+.pf-stat{text-align:center;min-width:0}
+.pf-stat b{display:block;font-size:20px;font-weight:600;font-family:var(--round);font-variant-numeric:tabular-nums}
+.pf-stat span{font-size:12px;color:var(--label-2)}
+.pf-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+a.btn{display:inline-flex;align-items:center;gap:8px}
+a.btn svg{width:16px;height:16px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:24px 16px;
+  border-radius:14px;background:var(--card-2);min-height:180px}
+.empty svg{width:28px;height:28px;color:var(--label-3)}
+.empty p{margin:0;font-size:15px;max-width:40ch}
+.empty .caption{max-width:44ch}
+.chip .sdot{width:7px;height:7px;border-radius:50%;background:var(--label-3)}
+.chip.synced .sdot{background:var(--green-ui)}
+.chip.connecting .sdot{background:var(--orange-ui)}
+
 /* media tiles */
 .thumb{width:52px;height:52px;border-radius:12px;flex:none;display:grid;place-items:center;color:#fff}
 .thumb svg{width:22px;height:22px}
@@ -373,7 +396,8 @@ button.row{background:none;border:0;text-align:left;width:100%}
         <p class="header-sub" id="viewSub"></p>
       </div>
       <div class="header-right">
-        <span class="chip" title="Diese Zahlen sind Platzhalter, bis echte Datenquellen angebunden sind">Beispieldaten</span>
+        <span class="chip" id="dataChip"></span>
+        <span class="chip" id="syncChip"><span class="sdot"></span><span id="syncText">Nur auf diesem Gerät</span></span>
         <div class="clock"><div class="clock-time" id="clockTime"></div><div class="clock-date" id="clockDate"></div></div>
         <div class="avatar" id="avatar" aria-hidden="true"></div>
       </div>
@@ -447,6 +471,17 @@ const P = {
 };
 const ico = (k, extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${P[k]||''}</svg>`;
 
+/* ============ TikTok (öffentliche Profildaten) ============ */
+const TIKTOK_DEFAULT = {
+  handle:'einfachsimple4k', name:'EinfachSimple',
+  bio:'Lass uns dein Allgemeinwissen trainieren.\nDu fragst, ich erkläre – einfach simpel.',
+  followers:2106, following:17, likes:1494, videos:16, updated:'2026-11-09',
+  history:[{d:'2026-11-09', f:2106}]
+};
+const TT = () => store.get('tiktok', TIKTOK_DEFAULT);
+const FOLLOWER_GOAL = 10000;
+const MILESTONES = [1000, 2500, 5000, 10000, 25000, 50000, 100000];
+
 /* ============ Formatierung ============ */
 const nf = new Intl.NumberFormat('de-DE');
 const nf1 = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -454,10 +489,27 @@ const eur = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maxim
 const compact = new Intl.NumberFormat('de-DE',{notation:'compact',maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* ============ Speicher (nur in diesem Browser) ============ */
-const store = {
+/* ============ Speicher ============
+   local: nur dieses Gerät (z. B. Hell/Dunkel).
+   store: wird – wenn verfügbar – über die private Datenbank auf alle Geräte abgeglichen,
+          sonst bleibt es im Browser. */
+const local = {
   get(k, d){ try{ const v = localStorage.getItem('jhq.'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem('jhq.'+k, JSON.stringify(v)); }catch(e){} }
+};
+const SYNC_KEYS = new Set();
+const cache = {};
+let db = null;
+const writeChain = {};
+const store = {
+  get(k, d){ SYNC_KEYS.add(k); if(k in cache) return cache[k]; const v = local.get(k, undefined); if(v !== undefined){ cache[k] = v; return v; } return d; },
+  set(k, v){
+    cache[k] = v; local.set(k, v); SYNC_KEYS.add(k);
+    if(!db) return;
+    writeChain[k] = (writeChain[k] || Promise.resolve())
+      .then(() => db.doc('hq/' + k).set({v}))
+      .catch(e => toast(e && e.code === 'quota_exceeded' ? 'Speicher voll – bitte alte Einträge löschen' : 'Änderung nur auf diesem Gerät gespeichert'));
+  }
 };
 
 /* ============ Beispieldaten-Generator ============ */
@@ -481,7 +533,7 @@ const MODULES = [
   {id:'business',   name:'Business',  agent:'Sentinel',icon:'briefcase', tint:'var(--indigo)', sub:'Sentinel wacht über Projekte und Kunden'},
   {id:'karriere',   name:'Karriere',  agent:'Oracle',  icon:'cap',       tint:'var(--teal)',   sub:'Oracle plant deine nächsten Schritte'},
   {id:'kreativ',    name:'Kreativ',   agent:'Atlas',   icon:'spark',     tint:'var(--purple)', sub:'Atlas sammelt Ideen und Projekte'},
-  {id:'social',     name:'Social',    agent:'Hermes',  icon:'mega',      tint:'var(--pink)',   sub:'Hermes steuert deine Kanäle'},
+  {id:'social',     name:'TikTok',    agent:'Hermes',  icon:'mega',      tint:'var(--pink)',   sub:'Hermes steuert @einfachsimple4k', alias:['social','tiktok']},
 ];
 const MOD = Object.fromEntries(MODULES.map(m => [m.id, m]));
 
@@ -493,17 +545,23 @@ const social = {
   '1J':  {values: walk(12, 4100, 8932, 260),labels: lastMonths(12)},
 };
 
-const VIEWS = {
+let VIEWS = {};
+function buildViews(){
+  const tt = TT();
+  const hist = (tt.history && tt.history.length) ? tt.history : [{d:tt.updated, f:tt.followers}];
+  const nextMs = MILESTONES.find(m => m > tt.followers) || FOLLOWER_GOAL;
+  const firstF = hist[0].f, growth = hist.length > 1 && firstF ? (tt.followers - firstF) / firstF * 100 : null;
+  VIEWS = {
   uebersicht: [
-    {type:'hero', size:'w', id:'focus', title:'JARVIS Dashboard live schalten', sub:'Heute zählt nur das. Alles andere kann warten.',
-      steps:['Design im Apple-Stil fertigstellen','Auf iPhone, iPad und iMac testen','Echte Kontodaten anbinden','Social-Statistiken verbinden','Als Startseite einrichten']},
+    {type:'hero', size:'w', id:'main', doneDefault:4, title:'JARVIS Dashboard live schalten', sub:'Heute zählt nur das. Alles andere kann warten.',
+      steps:['Design im Apple-Stil fertigstellen','Auf iPhone, iPad und iMac testen','TikTok-Zahlen verbinden','Abgleich zwischen Geräten einrichten','Kalender anbinden','Als Startseite einrichten']},
     {type:'rings', size:'m', title:'Tagesziele', rings:[
       {name:'Bewegung', value:7240, goal:10000, unit:'Schritte', color:'var(--pink)'},
       {name:'Fokuszeit', value:3.5, goal:5, unit:'Std.', color:'var(--green-ui)', dec:true},
-      {name:'Content', value:1, goal:2, unit:'Posts', color:'var(--teal)'} ]},
+      {name:'TikTok', value:1, goal:3, unit:'Videos/Woche', color:'var(--teal)'} ]},
     {type:'kpi', size:'s', icon:'wallet', tint:'var(--green-ui)', label:'Kontostand', value:eur.format(4820), delta:6.2, note:'ggü. Oktober', spark:balance12},
     {type:'kpi', size:'s', icon:'euro', tint:'var(--indigo)', label:'Sparquote November', value:'18 %', delta:2, deltaUnit:' Pkt.', note:'ggü. Oktober', spark:[12,14,13,15,16,18]},
-    {type:'kpi', size:'s', icon:'people', tint:'var(--pink)', label:'Follower gesamt', value:nf.format(8932), delta:14.7, note:'in 30 Tagen', spark:social['30T'].values},
+    {type:'kpi', size:'s', icon:'people', tint:'var(--pink)', label:'TikTok-Follower', value:nf.format(tt.followers), deltaText:`Nächstes Ziel: ${nf.format(nextMs)}`, spark:hist.length>1?hist.map(h=>h.f):null, live:true},
     {type:'kpi', size:'s', icon:'flame', tint:'var(--orange-ui)', label:'Content-Streak', value:'12 Tage', deltaText:'Rekord: 19 Tage', spark:null},
     {type:'line', size:'w', title:'Kontostand', fmt:'eur', note:'Letzte 12 Monate', series:{'12M':{values:balance12, labels:lastMonths(12)}}},
     {type:'list', size:'m', title:'Heute', variant:'agenda', rows:[
@@ -516,7 +574,7 @@ const VIEWS = {
       {t:'Sparrate auf 20 % erhöhen', tag:'Finanzen'},
       {t:'3 Reels vorproduzieren', tag:'Social'},
       {t:'Arzttermin vereinbaren', tag:'Persönlich', done:true} ]},
-    {type:'notes', size:'m', id:'ideen', title:'Ideen', items:['Serie über Autos und Ziele','Finanz-Tipps in 60 Sekunden','JARVIS per Sprache steuern']},
+    {type:'notes', size:'m', id:'ideen', title:'Ideen', items:['Serie: Allgemeinwissen in 30 Sekunden','Zuschauerfragen als Format','JARVIS per Sprache steuern']},
     {type:'areas', size:'m', title:'Bereiche'},
   ],
   finanzen: [
@@ -606,36 +664,37 @@ const VIEWS = {
     {type:'kpi', size:'s', icon:'camera', tint:'var(--orange-ui)', label:'Laufende Projekte', value:'3', deltaText:'1 im Schnitt', spark:null},
     {type:'kpi', size:'s', icon:'check', tint:'var(--green-ui)', label:'Veröffentlicht 2026', value:'41', delta:24, note:'ggü. 2025', spark:[2,3,3,4,4,3,4,5,4,5,4]},
     {type:'kpi', size:'s', icon:'clock', tint:'var(--teal)', label:'Kreativzeit Woche', value:'8 Std.', delta:14, note:'ggü. Vorwoche', spark:[5,6,7,6,7,8]},
-    {type:'notes', size:'w', id:'ideen', title:'Ideenboard', items:['Serie über Autos und Ziele','Finanz-Tipps in 60 Sekunden','JARVIS per Sprache steuern']},
+    {type:'notes', size:'w', id:'ideen', title:'Ideenboard', items:['Serie: Allgemeinwissen in 30 Sekunden','Zuschauerfragen als Format','JARVIS per Sprache steuern']},
     {type:'list', size:'m', title:'Projekte', rows:[
       {icon:'camera', color:'var(--orange-ui)', title:'Kurzfilm „Morgenroutine“', sub:'Schnitt', pill:['In Arbeit','info']},
       {icon:'doc', color:'var(--blue)', title:'E-Book Finanzen', sub:'Kapitel 3 von 7', pill:['In Arbeit','info']},
       {icon:'spark', color:'var(--purple)', title:'Neues Logo', sub:'Feedback ausstehend', pill:['Wartet','warn']} ]},
   ],
   social: [
-    {type:'kpi', size:'s', icon:'people', tint:'var(--pink)', label:'Follower gesamt', value:nf.format(8932), delta:14.7, note:'in 30 Tagen', spark:social['30T'].values},
-    {type:'kpi', size:'s', icon:'eye', tint:'var(--blue)', label:'Aufrufe (30 Tage)', value:'245,2 Tsd.', delta:28.6, note:'ggü. Vormonat', spark:[120,150,140,180,210,245]},
-    {type:'kpi', size:'s', icon:'heart', tint:'var(--red)', label:'Interaktionsrate', value:'6,8 %', delta:1.2, deltaUnit:' Pkt.', note:'ggü. Vormonat', spark:[5.1,5.4,5.6,6.0,6.3,6.8]},
-    {type:'kpi', size:'s', icon:'doc', tint:'var(--purple)', label:'Posts November', value:'14', deltaText:'Plan: 24', spark:null},
-    {type:'line', size:'w', title:'Follower-Wachstum', fmt:'num', note:'Alle Plattformen', series:social, start:'30T'},
-    {type:'bars', size:'m', title:'Plattformen', items:[
-      {name:'TikTok', value:4010, delta:24.1},
-      {name:'Instagram', value:3120, delta:15.2},
-      {name:'YouTube', value:1233, delta:11.6},
-      {name:'Facebook', value:569, delta:8.7} ]},
-    {type:'list', size:'m', title:'Content-Plan heute', variant:'agenda', rows:[
-      {lead:'10:00', title:'Instagram-Post', sub:'Hinter den Kulissen', color:'var(--pink)'},
-      {lead:'13:00', title:'TikTok-Video', sub:'Finanz-Reise Update', color:'var(--label)'},
-      {lead:'16:00', title:'YouTube-Upload', sub:'Wochenrückblick', color:'var(--red)'},
-      {lead:'19:00', title:'Facebook-Post', sub:'Motivation', color:'var(--blue)'} ]},
-    {type:'media', size:'m', title:'Top-Beiträge', rows:[
-      {title:'Porsche-Ziele', sub:'245,6 Tsd. Aufrufe', delta:42, color:'var(--indigo)', icon:'car'},
-      {title:'Familie zuerst', sub:'188,3 Tsd. Aufrufe', delta:38, color:'var(--orange-ui)', icon:'heart'},
-      {title:'Mindset Monday', sub:'162,1 Tsd. Aufrufe', delta:27, color:'var(--teal)', icon:'play'} ]},
+    {type:'profile', size:'w', title:'Profil', tt},
     {type:'progress', size:'m', title:'Wachstumsziel', fmt:'num', items:[
-      {name:'10.000 Follower', value:8932, max:10000, note:'Noch 1.068'} ]},
+      {name:`Nächster Meilenstein: ${nf.format(nextMs)}`, value:tt.followers, max:nextMs, note:`Noch ${nf.format(Math.max(nextMs - tt.followers, 0))} Follower`},
+      {name:`Großes Ziel: ${nf.format(FOLLOWER_GOAL)}`, value:tt.followers, max:FOLLOWER_GOAL, note:`${Math.round(tt.followers / FOLLOWER_GOAL * 100)} % geschafft`} ]},
+    {type:'kpi', size:'s', icon:'people', tint:'var(--pink)', label:'Follower', value:nf.format(tt.followers),
+      ...(growth != null ? {delta:+growth.toFixed(1), note:'seit ' + fmtDay(hist[0].d)} : {deltaText:'Verlauf startet ' + fmtDay(hist[0].d)}), spark:hist.length>1?hist.map(h=>h.f):null, live:true},
+    {type:'kpi', size:'s', icon:'heart', tint:'var(--red)', label:'Likes gesamt', value:nf.format(tt.likes), deltaText:'auf allen Videos', spark:null, live:true},
+    {type:'kpi', size:'s', icon:'play', tint:'var(--indigo)', label:'Videos', value:nf.format(tt.videos), deltaText:'Plan: 3 pro Woche', spark:null, live:true},
+    {type:'kpi', size:'s', icon:'spark', tint:'var(--orange-ui)', label:'Ø Likes pro Video', value:tt.videos ? nf.format(Math.round(tt.likes / tt.videos)) : '–', deltaText:'Likes ÷ Videos', spark:null, live:true},
+    {type:'line', size:'w', title:'Follower-Verlauf', fmt:'num', note:'Bei jedem Abgleich ein Punkt',
+      series:{'Alle':{values:hist.map(h=>h.f), labels:hist.map(h=>fmtDay(h.d))}},
+      empty:`Erster Stand: ${nf.format(tt.followers)} Follower am ${fmtDay(hist[0].d)}. Ab dem nächsten Abgleich entsteht hier deine Kurve.`},
+    {type:'list', size:'m', title:'Posting-Plan', variant:'agenda', rows:[
+      {lead:'Mo.', title:'Zuschauerfrage beantworten', sub:'18:00 Uhr', color:'var(--pink)'},
+      {lead:'Mi.', title:'Wissen in 30 Sekunden', sub:'18:00 Uhr', color:'var(--teal)'},
+      {lead:'Fr.', title:'Mythos oder Fakt?', sub:'18:00 Uhr', color:'var(--indigo)'},
+      {lead:'So.', title:'Kommentare beantworten', sub:'Neue Fragen sammeln', color:'var(--orange-ui)'} ]},
+    {type:'notes', size:'l', id:'videoIdeen', title:'Video-Ideen', items:['Warum ist der Himmel blau?','Wie funktioniert der Zinseszins?','Warum gibt es Schaltjahre?','Mythos: Wir nutzen nur 10 % unseres Gehirns']},
+    {type:'tasks', size:'l', id:'tiktok', title:'Content-Aufgaben', items:[
+      {t:'Kommentare der letzten Videos beantworten'},{t:'3 neue Fragen aus den Kommentaren sammeln'},{t:'Nächste 3 Videos vorproduzieren'} ]},
   ],
 };
+}
+function fmtDay(iso){ const d = new Date(iso + 'T12:00:00'); return d.getDate() + '. ' + MONTHS[d.getMonth()]; }
 
 /* ============ Renderer ============ */
 const CHARTS = {};
@@ -667,7 +726,7 @@ function deltaHTML(w){
 
 const R = {
   hero(w){
-    const done = store.get('focus.'+w.id, 2);
+    const done = store.get('focus.'+w.id, w.doneDefault || 0);
     const steps = w.steps.map((s,i)=>`<li class="${i<done?'done':''}"><span class="tick">${i<done?ico('check','style="width:12px;height:12px"'):''}</span><span class="t">${esc(s)}</span></li>`).join('');
     const pct = Math.round(done / w.steps.length * 100);
     return `<article class="card hero ${w.size}">
@@ -678,7 +737,7 @@ const R = {
       <div class="hero-foot">
         <div class="meter" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt"><span style="width:${pct}%"></span></div>
         <span class="num" style="font-size:15px;font-weight:600">${done} von ${w.steps.length}</span>
-        <button class="btn filled" data-focus="${w.id}" data-total="${w.steps.length}">${done>=w.steps.length?'Zurücksetzen':'Schritt abhaken'}</button>
+        <button class="btn filled" data-focus="${w.id}" data-def="${w.doneDefault||0}" data-total="${w.steps.length}">${done>=w.steps.length?'Zurücksetzen':'Schritt abhaken'}</button>
       </div></article>`;
   },
   kpi(w){
@@ -702,6 +761,11 @@ const R = {
     return card(w, `<div class="rings"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(w.title)}">${circles}</svg><div class="ring-legend">${legend}</div></div>`);
   },
   line(w){
+    const first = Object.values(w.series)[0];
+    if(w.empty && first.values.length < 2){
+      w.action = `<span class="caption">${esc(w.note||'')}</span>`;
+      return card(w, `<div class="empty">${ico('clock')}<p>${esc(w.empty)}</p><span class="caption">Sag JARVIS „TikTok aktualisieren“ oder bitte Claude darum, die Zahlen neu abzurufen.</span></div>`);
+    }
     const id = 'c' + (++chartSeq);
     const keys = Object.keys(w.series);
     const start = w.start || keys[0];
@@ -779,10 +843,28 @@ const R = {
     w.action = `<span class="caption num">${done} erledigt diese Woche</span>`;
     return card(w, `<div class="habits">${head}${rows}</div>`);
   },
+  profile(w){
+    const t = w.tt;
+    const initials = t.name.replace(/[^A-ZÄÖÜ]/g,'').slice(0,2) || t.name.slice(0,2).toUpperCase();
+    return `<article class="card ${w.size}">
+      <div class="profile-top"><span class="pf-avatar" aria-hidden="true">${esc(initials)}</span>
+        <div style="min-width:0"><p class="pf-name">${esc(t.name)}</p><p class="pf-handle">@${esc(t.handle)} · TikTok</p></div></div>
+      <p class="pf-bio">${esc(t.bio)}</p>
+      <div class="pf-stats">
+        <div class="pf-stat"><b>${nf.format(t.followers)}</b><span>Follower</span></div>
+        <div class="pf-stat"><b>${nf.format(t.following)}</b><span>Folge ich</span></div>
+        <div class="pf-stat"><b>${nf.format(t.likes)}</b><span>Likes</span></div>
+        <div class="pf-stat"><b>${nf.format(t.videos)}</b><span>Videos</span></div>
+      </div>
+      <div class="pf-foot"><span class="caption">Öffentliche Profildaten · Stand ${fmtDay(t.updated)} ${new Date(t.updated+'T12:00:00').getFullYear()}</span>
+        <a class="btn tinted" href="https://www.tiktok.com/@${encodeURIComponent(t.handle)}" target="_blank" rel="noopener">Auf TikTok öffnen ${ico('chev')}</a></div>
+    </article>`;
+  },
   areas(w){
+    const tt = TT();
     const status = {
       finanzen:['Budget im Plan','ok'], persoenlich:['1 Termin morgen','info'], business:['1 Antwort fällig','warn'],
-      karriere:['Auf Kurs','ok'], kreativ:['Feedback ausstehend','warn'], social:['+ 14,7 % Follower','ok']
+      karriere:['Auf Kurs','ok'], kreativ:['Feedback ausstehend','warn'], social:[nf.format(tt.followers) + ' Follower','ok']
     };
     const rows = MODULES.slice(1).map(m=>`<li><a class="row" href="#${m.id}" style="--inset:56px">
       <span class="tile" style="background:${m.tint};width:32px;height:32px;border-radius:8px">${ico(m.icon,'style="width:17px;height:17px"')}</span>
@@ -826,16 +908,25 @@ function lineInner(id){
 
 /* ============ Rendering & Navigation ============ */
 const grid = document.getElementById('grid');
+let pendingRender = false;
+grid.addEventListener('focusout', () => { if(pendingRender) setTimeout(render, 0); });
 function current(){ const h = location.hash.slice(1); return MOD[h] ? h : 'uebersicht'; }
 
 function render(){
   const id = current(), m = MOD[id];
+  const ae = document.activeElement;
+  if(ae && ae.matches && ae.matches('#grid input') && ae.value){ pendingRender = true; return; }
+  pendingRender = false;
+  buildViews();
   chartSeq = 0; for(const k in CHARTS) delete CHARTS[k];
   grid.innerHTML = VIEWS[id].map(w => R[w.type](w)).join('');
   document.getElementById('viewEyebrow').textContent = id==='uebersicht' ? greeting() : m.agent;
   document.getElementById('viewTitle').textContent = m.name;
   document.getElementById('viewSub').textContent = m.sub;
   document.title = id==='uebersicht' ? 'Jarvis HQ' : m.name + ' · Jarvis HQ';
+  const chip = document.getElementById('dataChip');
+  chip.textContent = id==='social' ? 'TikTok · Stand ' + fmtDay(TT().updated) : id==='uebersicht' ? 'Teils Beispieldaten' : 'Beispieldaten';
+  chip.title = id==='social' ? 'Echte öffentliche Profildaten' : 'Platzhalter, bis echte Quellen angebunden sind';
   document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav===id ? 'page' : 'false'));
   const more = document.getElementById('tabMore');
   if(more) more.setAttribute('aria-current', ['business','karriere','kreativ'].includes(id) ? 'page' : 'false');
@@ -883,7 +974,7 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   if(t.dataset.focus){
     const total = +t.dataset.total, k = 'focus.'+t.dataset.focus;
-    let d = store.get(k, 2); d = d >= total ? 0 : d + 1; store.set(k, d);
+    let d = store.get(k, +t.dataset.def); d = d >= total ? 0 : d + 1; store.set(k, d);
     render(); toast(d >= total ? 'Fokus erledigt. Stark.' : d === 0 ? 'Zurückgesetzt' : 'Schritt erledigt');
   } else if(t.dataset.task){
     const w = findWidget('tasks', t.dataset.task);
@@ -937,7 +1028,11 @@ function ask(q){
   if(!q) return;
   const input = document.getElementById('askInput');
   const low = q.toLowerCase();
-  const hit = MODULES.find(m => low.includes(m.name.toLowerCase()) || low.includes(m.agent.toLowerCase()) || low === m.id);
+  if(/tiktok/.test(low) && /(aktualis|update|abrufen|neu laden)/.test(low)){
+    location.hash = 'social'; input.value = '';
+    toast('Bitte Claude im Chat: „TikTok aktualisieren“ – dann kommen die neuen Zahlen auf alle Geräte'); return;
+  }
+  const hit = MODULES.find(m => low.includes(m.name.toLowerCase()) || low.includes(m.agent.toLowerCase()) || low === m.id || (m.alias||[]).some(a => low.includes(a)));
   const taskM = q.match(/^(aufgabe|todo|to-do)\s*:?\s*(.+)$/i);
   if(taskM){ addTask('today', taskM[2]); location.hash = 'uebersicht'; render(); toast('Aufgabe hinzugefügt'); }
   else if(hit && q.split(/\s+/).length <= 3){ location.hash = hit.id; toast(hit.agent + ' ist bereit'); }
@@ -995,14 +1090,50 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') openSheet(fal
 function setTheme(mode){
   const root = document.documentElement;
   if(mode === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', mode);
-  store.set('theme', mode);
+  local.set('theme', mode);
   document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', b.dataset.themeSet === mode));
 }
 
 /* Start */
 buildNav();
-const savedTheme = store.get('theme', 'system'); if(savedTheme !== 'system') setTheme(savedTheme);
+const savedTheme = local.get('theme', 'system'); if(savedTheme !== 'system') setTheme(savedTheme);
 render(); tick(); setInterval(tick, 15000);
+initSync();
+
+function setSync(state){
+  const c = document.getElementById('syncChip'), t = document.getElementById('syncText');
+  c.className = 'chip ' + state;
+  t.textContent = {synced:'Auf allen Geräten', connecting:'Verbinde …', offline:'Gerade offline', local:'Nur auf diesem Gerät'}[state];
+}
+async function initSync(){
+  const C = window.claude;
+  if(!C || typeof C.use !== 'function'){ setSync('local'); return; }
+  setSync('connecting');
+  let d = null;
+  try{ d = await C.use('db'); }catch(e){ d = null; }
+  if(!d){ setSync('local'); return; }
+  db = d;
+  let migrated = false;
+  const timer = setTimeout(() => setSync('offline'), 10000);
+  db.collection('hq').onSnapshot(snap => {
+    let changed = false;
+    const remote = new Set();
+    for(const doc of snap.docs){
+      const body = doc.data(); if(!body || !('v' in body)) continue;
+      remote.add(doc.id);
+      if(JSON.stringify(cache[doc.id]) !== JSON.stringify(body.v)){ cache[doc.id] = body.v; local.set(doc.id, body.v); changed = true; }
+    }
+    if(!snap.metadata.fromCache){
+      clearTimeout(timer); setSync('synced');
+      if(!migrated){
+        migrated = true;
+        // Was bisher nur auf diesem Gerät lag, einmalig hochladen
+        for(const k of SYNC_KEYS){ if(!remote.has(k) && k in cache) store.set(k, cache[k]); }
+      }
+    }
+    if(changed) render();
+  }, () => { clearTimeout(timer); db = null; setSync('local'); });
+}
 window.addEventListener('hashchange', () => { render(); window.scrollTo({top:0}); });
 </script>
 </body>
