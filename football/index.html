@@ -236,6 +236,10 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .field > label{ font-size:13px; font-weight:650; color: var(--text-2); margin-left:16px; }
 .input{ display:flex; align-items:center; height:54px; border-radius:18px; padding:0 16px; gap:10px; transition: box-shadow .25s; }
 .input input{ flex:1; min-width:0; background:none; border:0; outline:0; color: var(--text); font: inherit; font-size:17px; }
+.input input:-webkit-autofill, .input input:-webkit-autofill:hover, .input input:-webkit-autofill:focus{
+  -webkit-text-fill-color: var(--text); caret-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px transparent inset; box-shadow: 0 0 0 1000px transparent inset;
+  transition: background-color 600000s 0s, color 600000s 0s; }
 .input input::placeholder{ color: var(--text-3); }
 .input:focus-within{ box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-sm); }
 .input.invalid{ box-shadow: inset 0 0 0 1.5px var(--loss), var(--shadow-sm); }
@@ -878,6 +882,8 @@ const AUTH_ERR = [
   [/rate limit|too many|For security purposes/i, 'Zu viele Versuche. Bitte warte kurz und versuche es erneut.'],
   [/Password should be|weak password/i, 'Das Passwort ist zu schwach. Bitte wähle ein längeres Passwort.'],
   [/invalid.*email|Unable to validate email/i, 'Diese E-Mail-Adresse ist ungültig.'],
+  [/Error sending (confirmation|recovery|magic link|email change)|sending.*e?mail/i, 'Die E-Mail konnte gerade nicht verschickt werden. Bitte versuche es später erneut.'],
+  [/Signups not allowed|signup.*disabled/i, 'Registrierungen sind im Moment nicht möglich.'],
   [/Failed to fetch|NetworkError|network/i, 'Keine Verbindung. Bitte prüfe deine Internetverbindung.'],
 ];
 const authMsg = err => (AUTH_ERR.find(([re]) => re.test(err?.message || '')) || [0, err?.message || 'Unbekannter Fehler.'])[1];
