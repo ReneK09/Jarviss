@@ -40,9 +40,21 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 
 Die Farben kommen aus ESPNs Vereinsfarbe, sofern sie eine echte Farbe ist (nicht nur Weiß), und aus den dominanten Farben des Wappens, die per Canvas ausgelesen werden. Ein Beispiel: Dortmund wird Gelb/Schwarz, Frankfurt Rot/Dunkelrot, Real Madrid Gold/Blau. Die Akzentfarbe wird für Hell- und Dunkelmodus automatisch so angepasst, dass sie lesbar bleibt.
 
-### Registrierung: noch lokal
+### Konten mit Supabase
 
-Konten werden derzeit **nur auf dem Gerät** gespeichert. Das Passwort wird dabei nicht gespeichert. Für echte Konten muss in `index.html` nur das `Auth`-Objekt (`register`, `signOut`) an einen Dienst angebunden werden, z. B. Supabase Auth oder Firebase Auth.
+Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, Nationalteam, Farben und Favoriten werden geräteübergreifend gespeichert). Solange `config.js` leer ist, läuft die App im **lokalen Modus**, d. h. das Profil liegt nur auf dem Gerät.
+
+**Einrichtung (ca. 10 Minuten):**
+
+1. Auf [supabase.com](https://supabase.com) kostenlos ein Projekt anlegen, als Region **Frankfurt (eu-central-1)** wählen.
+2. **SQL Editor:** Inhalt von [`supabase/schema.sql`](supabase/schema.sql) einfügen und ausführen. Das legt die Tabelle `profiles` mit Row Level Security an: Jeder sieht nur sein eigenes Profil.
+3. **Authentication → URL Configuration:** als *Site URL* die Adresse der App eintragen (z. B. `https://<name>.github.io/Jarviss/football/`) und unter *Redirect URLs* zusätzlich `http://localhost:8000/**` für lokale Tests.
+4. **Authentication → Emails** (optional): die Bestätigungs- und Passwort-Mails ins Deutsche übersetzen.
+5. **Project Settings → API:** *Project URL* und den *anon public* Key in [`config.js`](config.js) eintragen. Dieser Key ist für den Browser gedacht und darf öffentlich sein. Den *service_role* Key niemals eintragen.
+
+**Funktionen:** Registrierung mit E-Mail-Bestätigung (inkl. „Erneut senden“), Anmeldung, „Passwort vergessen“ mit Link zum Festlegen eines neuen Passworts, Abmelden, Synchronisierung des Profils und deutsche Fehlermeldungen.
+
+**Mit Apple anmelden** (optional, erfordert einen Apple-Developer-Account, 99 $/Jahr): in Supabase unter *Authentication → Providers → Apple* einrichten, dann in `config.js` `appleSignIn: true` setzen.
 
 ## Marke & Icon
 

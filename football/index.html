@@ -259,6 +259,19 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .done-logos img{ width:110px; height:110px; object-fit:contain; filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--accent) 70%, transparent)); animation: float 6s ease-in-out infinite; }
 .done-logos img.nat{ width:76px; height:54px; object-fit:cover; border-radius:10px; animation-delay: -3s; }
 
+.auth-switch{ text-align:center; margin-top:14px; font-size:15px; color: var(--text-2); }
+.auth-switch button, .link{ color: var(--accent); font-weight:650; }
+.link{ font-size:14px; align-self:flex-end; margin: -2px 6px 8px 0; }
+.form-error{ display:none; padding: 12px 14px; border-radius:14px; font-size:14px; font-weight:550; margin-bottom:12px;
+  background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
+.form-error.on{ display:block; }
+.form-error.ok{ background: color-mix(in srgb, var(--win) 16%, transparent); color: var(--win); }
+.divider{ display:flex; align-items:center; gap:12px; color: var(--text-3); font-size:13px; margin: 16px 0; }
+.divider::before, .divider::after{ content:""; flex:1; height:1px; background: var(--sep); }
+.btn.apple{ background:#000; color:#fff; box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.4); }
+@media (prefers-color-scheme: dark){ .btn.apple{ background:#fff; color:#000; } }
+.mail-icon{ font-size:64px; margin: 30px 0 10px; text-align:center; }
+
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
 .avatar{ width:64px; height:64px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:24px; font-weight:800; color: var(--on-accent);
@@ -570,6 +583,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <div class="scrim" id="scrim"></div>
 <div class="sheet glass" id="sheet" role="dialog" aria-modal="true"></div>
 
+<script src="config.js"></script>
 <script>
 'use strict';
 /* =============================================================
@@ -722,6 +736,7 @@ function toggleFav(team){
   const i = list.findIndex(f => f.id === team.id);
   if (i >= 0) list.splice(i, 1); else list.push(team);
   store.set('fb.favs', list);
+  Auth.syncSoon();
   return i < 0;
 }
 
@@ -846,16 +861,127 @@ async function tintHero(el, team){
    PROFILE & AUTH
    ============================================================= */
 const profile = () => store.get('fb.profile', null);
-const saveProfile = pr => store.set('fb.profile', pr);
-/* Auth adapter. LOCAL MODE: the account lives only on this device and the password is
-   never stored. To make registration real, replace register/signOut with calls to a backend
-   (e.g. Supabase Auth or Firebase Auth) — the rest of the app only uses this interface. */
+const saveProfile = pr => { store.set('fb.profile', pr); Auth.syncSoon(); };
+
+/* =============================================================
+   AUTH — Supabase (cloud) with a local fallback
+   Fill in config.js to switch on real accounts. Without it the app
+   keeps working in LOCAL MODE (profile only on this device).
+   ============================================================= */
+const CFG = window.ARENLY_CONFIG || {};
+const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+const loadScript = src => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('Supabase konnte nicht geladen werden.')); document.head.appendChild(sc); });
+const AUTH_ERR = [
+  [/already registered|already been registered|User already/i, 'Diese E-Mail ist bereits registriert. Melde dich stattdessen an.'],
+  [/Invalid login credentials/i, 'E-Mail oder Passwort ist falsch.'],
+  [/Email not confirmed/i, 'Bitte bestätige zuerst deine E-Mail-Adresse.'],
+  [/rate limit|too many|For security purposes/i, 'Zu viele Versuche. Bitte warte kurz und versuche es erneut.'],
+  [/Password should be|weak password/i, 'Das Passwort ist zu schwach. Bitte wähle ein längeres Passwort.'],
+  [/invalid.*email|Unable to validate email/i, 'Diese E-Mail-Adresse ist ungültig.'],
+  [/Failed to fetch|NetworkError|network/i, 'Keine Verbindung. Bitte prüfe deine Internetverbindung.'],
+];
+const authMsg = err => (AUTH_ERR.find(([re]) => re.test(err?.message || '')) || [0, err?.message || 'Unbekannter Fehler.'])[1];
+const redirectUrl = () => location.origin + location.pathname;
+
 const Auth = {
-  async register({ name, email }){
-    const pr = { name: name.trim(), email: email.trim().toLowerCase(), createdAt: new Date().toISOString() };
-    saveProfile(pr); return pr;
+  cloud: !!(CFG.supabaseUrl && CFG.supabaseAnonKey),
+  sb: null,
+  user: null,
+  _t: null,
+
+  async init(){
+    if (!this.cloud) return null;
+    if (!window.supabase) await loadScript(SUPABASE_CDN);
+    this.sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+    this.sb.auth.onAuthStateChange((event, session) => {
+      this.user = session?.user || null;
+      if (event === 'PASSWORD_RECOVERY') startOnboarding(['newpass'], { edit:true, noBack:true });
+    });
+    const { data } = await this.sb.auth.getSession();
+    this.user = data.session?.user || null;
+    return this.user;
   },
-  signOut(){
+
+  /* returns { profile } or { needsConfirm:true } */
+  async register({ name, email, password }){
+    name = name.trim(); email = email.trim().toLowerCase();
+    if (!this.sb){
+      const pr = { name, email, createdAt: new Date().toISOString() };
+      saveProfile(pr); return { profile: pr };
+    }
+    const { data, error } = await this.sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirectUrl() } });
+    if (error) throw new Error(authMsg(error));
+    // Supabase answers an existing, confirmed address with a user without identities
+    if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) throw new Error(authMsg({ message:'already registered' }));
+    if (!data.session) return { needsConfirm: true, email };
+    this.user = data.user;
+    const pr = { name, email, createdAt: new Date().toISOString() };
+    store.set('fb.profile', pr); await this.pushNow();
+    return { profile: pr };
+  },
+
+  async login({ email, password }){
+    const { data, error } = await this.sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) throw new Error(authMsg(error));
+    this.user = data.user;
+    return { profile: await this.pull() };
+  },
+
+  async resetPassword(email){
+    const { error } = await this.sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: redirectUrl() });
+    if (error) throw new Error(authMsg(error));
+  },
+  async updatePassword(password){
+    const { error } = await this.sb.auth.updateUser({ password });
+    if (error) throw new Error(authMsg(error));
+  },
+  async resend(email){
+    const { error } = await this.sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: redirectUrl() } });
+    if (error) throw new Error(authMsg(error));
+  },
+  async apple(){
+    const { error } = await this.sb.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: redirectUrl() } });
+    if (error) throw new Error(authMsg(error));
+  },
+
+  /* ---- profile sync: table public.profiles (see supabase/schema.sql) ---- */
+  async pull(){
+    if (!this.sb || !this.user) return profile();
+    const { data, error } = await this.sb.from('profiles').select('*').eq('id', this.user.id).maybeSingle();
+    if (error) { console.warn('profile pull', error); return profile(); }
+    const meta = this.user.user_metadata || {};
+    const pr = {
+      ...(profile() || {}),
+      name: data?.name || meta.name || meta.full_name || profile()?.name || (this.user.email || '').split('@')[0],
+      email: this.user.email,
+      ...(data?.club ? { club: data.club } : {}),
+      ...(data?.nation ? { nation: data.nation } : {}),
+      ...(data?.theme ? { theme: data.theme } : {}),
+    };
+    store.set('fb.profile', pr);
+    if (Array.isArray(data?.favs)) store.set('fb.favs', data.favs);
+    if (!data) await this.pushNow();         // first login on a fresh account → create the row
+    return pr;
+  },
+  async pushNow(){
+    if (!this.sb || !this.user) return;
+    const pr = profile() || {};
+    const { error } = await this.sb.from('profiles').upsert({
+      id: this.user.id, name: pr.name || null, club: pr.club || null, nation: pr.nation || null,
+      theme: pr.theme || null, favs: favs(), updated_at: new Date().toISOString(),
+    });
+    if (error) console.warn('profile push', error);
+  },
+  syncSoon(){
+    if (!this.sb || !this.user) return;
+    clearTimeout(this._t); this._t = setTimeout(() => this.pushNow(), 600);
+  },
+
+  async signOut(){
+    try { await this.sb?.auth.signOut(); } catch {}
+    this.user = null;
     try { localStorage.removeItem('fb.profile'); localStorage.removeItem('fb.favs'); } catch {}
   },
 };
@@ -1549,16 +1675,15 @@ function renderMe(){
 
     <div class="section-h"><h2>Konto</h2></div>
     <div class="list glass">
-      <button class="row danger" style="width:100%;text-align:left" id="logout"><div class="grow"><div class="t1">Abmelden</div><div class="t2">Profil und Favoriten auf diesem Gerät löschen</div></div></button>
+      <button class="row danger" style="width:100%;text-align:left" id="logout"><div class="grow"><div class="t1">Abmelden</div><div class="t2">${Auth.cloud ? 'Dein Profil bleibt in deinem Konto gespeichert' : 'Profil und Favoriten auf diesem Gerät löschen'}</div></div></button>
     </div>
     <p class="foot"><img src="assets/icon-rounded-256.png" alt="">Arenly</p>
   </div>`;
   $('#chgClub').onclick = () => startOnboarding(['club'], { edit:true });
   $('#chgNation').onclick = () => startOnboarding(['nation'], { edit:true });
   $('#logout').onclick = () => {
-    if (!confirm('Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
-    Auth.signOut(); applyTheme(null); location.hash = '#/';
-    startOnboarding(['register', 'club', 'nation', 'done']);
+    if (!confirm(Auth.cloud ? 'Wirklich abmelden?' : 'Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
+    Auth.signOut().then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'nation', 'done']); });
   };
 }
 
@@ -1637,7 +1762,7 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
   let idx = 0;
   document.body.classList.add('locked');
   onb.hidden = false; onb.classList.remove('gone');
-  const counted = steps.filter(s2 => s2 !== 'done');
+  let counted = steps.filter(s2 => s2 !== 'done');
 
   const finish = () => {
     onb.classList.add('gone');
@@ -1645,7 +1770,7 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
     setTimeout(() => { onb.hidden = true; onb.innerHTML = ''; }, 500);
     route();
   };
-  const frame = (inner, { back = idx > 0 || opts.edit, step } = {}) => {
+  const frame = (inner, { back = !opts.noBack && (idx > 0 || opts.edit), step } = {}) => {
     const si = counted.indexOf(step);
     onb.innerHTML = `<div class="onb-inner">
       <div class="onb-top">
@@ -1661,51 +1786,158 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
   };
   const next = () => { idx++; idx < steps.length ? show() : finish(); };
 
-  const show = () => ({ register, club, nation, done })[steps[idx]]();
+  const show = () => ({ register: () => register(), club, nation, done, newpass })[steps[idx]]();
 
-  /* --- 1. Registration --- */
-  function register(){
-    frame(`
-      <img class="hero-icon" src="assets/icon-rounded-256.png" alt="Arenly">
+  /* --- 1. Account: register · login · forgot password --- */
+  const ICON = `<img class="hero-icon" src="assets/icon-rounded-256.png" alt="Arenly">`;
+  const field = (id, label, attrs, extra = '') => `<div class="field"><label for="r${id}">${label}</label>
+    <div class="input glass flat" id="w${id}"><input id="r${id}" ${attrs}>${extra}</div><div class="hint" id="h${id}"></div></div>`;
+  const V = {
+    Name: x => x.trim().length >= 2 || 'Bitte gib deinen Namen ein.',
+    Mail: x => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x.trim()) || 'Bitte gib eine gültige E-Mail-Adresse ein.',
+    Pass: x => x.length >= 8 && /\d|[^A-Za-z]/.test(x) || 'Mindestens 8 Zeichen, davon eine Zahl oder ein Sonderzeichen.',
+    LPass: x => x.length > 0 || 'Bitte gib dein Passwort ein.',
+  };
+  const wire = keys => {
+    const check = (k, show2) => {
+      const res = V[k]($('#r' + k).value);
+      if (show2){ $('#w' + k).classList.toggle('invalid', res !== true); $('#h' + k).textContent = res === true ? '' : res; }
+      return res === true;
+    };
+    keys.forEach(k => {
+      const el = $('#r' + k);
+      el.addEventListener('blur', () => el.value && check(k, true));
+      el.addEventListener('input', () => $('#w' + k).classList.contains('invalid') && check(k, true));
+    });
+    const eye = $('#eye');
+    if (eye) eye.onclick = () => { const p2 = eye.previousElementSibling; p2.type = p2.type === 'password' ? 'text' : 'password'; eye.textContent = p2.type === 'password' ? 'Zeigen' : 'Verbergen'; };
+    return () => keys.map(k => check(k, true)).every(Boolean);
+  };
+  const formMsg = (msg, ok = false) => { const el = $('#formErr'); el.textContent = msg; el.classList.toggle('on', !!msg); el.classList.toggle('ok', ok); };
+  const busy = (btn, on, label) => { btn.disabled = on; if (label) btn.textContent = label; };
+  const appleBtn = () => Auth.cloud && CFG.appleSignIn ? `<div class="divider">oder</div>
+    <button type="button" class="btn block apple" id="appleBtn"><svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9C3.6 4.8 2 5.8 1.1 7.4c-1.9 3.2-.5 8 1.3 10.6.9 1.3 1.9 2.7 3.3 2.6 1.3-.1 1.8-.9 3.4-.9s2 .9 3.4.8c1.4 0 2.3-1.3 3.2-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-3-4.3ZM11.5 3c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.1 1.1.1 2.3-.6 3-1.5Z"/></svg>Mit Apple fortfahren</button>` : '';
+  const bindApple = () => { const b = $('#appleBtn'); if (b) b.onclick = async () => { try { await Auth.apple(); } catch(err){ formMsg(err.message); } }; };
+
+  /* after a successful login/registration: skip steps the account already has */
+  const continueWith = pr => {
+    Object.assign(draft, pr);
+    if (pr?.theme) applyTheme(pr.theme);
+    const rest = ['club', 'nation'].filter(k => !pr?.[k]);
+    steps = [...steps.slice(0, idx + 1), ...rest, ...(rest.length ? ['done'] : [])];
+    counted = steps.filter(s2 => s2 !== 'done' && s2 !== 'confirm');
+    if (!rest.length) { toast(`Willkommen zurück, ${(pr.name || '').split(' ')[0]}!`); return finish(); }
+    next();
+  };
+
+  function register(mode = 'register'){
+    if (mode === 'login') return login();
+    frame(`${ICON}
       <h1>Willkommen bei Arenly</h1>
       <p class="lead">Erstelle dein Konto, um Ligen, Teams und Spiele zu verfolgen.</p>
       <form id="regForm" novalidate>
-        <div class="field"><label for="rName">Name</label>
-          <div class="input glass flat" id="wName"><input id="rName" autocomplete="name" placeholder="Max Mustermann" value="${esc(draft.name || '')}"></div>
-          <div class="hint" id="hName"></div></div>
-        <div class="field"><label for="rMail">E-Mail</label>
-          <div class="input glass flat" id="wMail"><input id="rMail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@beispiel.de" value="${esc(draft.email || '')}"></div>
-          <div class="hint" id="hMail"></div></div>
-        <div class="field"><label for="rPass">Passwort</label>
-          <div class="input glass flat" id="wPass"><input id="rPass" type="password" autocomplete="new-password" placeholder="Mindestens 8 Zeichen"><button type="button" class="eye" id="eye">Zeigen</button></div>
-          <div class="hint" id="hPass"></div></div>
+        <div class="form-error" id="formErr"></div>
+        ${field('Name', 'Name', `autocomplete="name" placeholder="Max Mustermann" value="${esc(draft.name || '')}"`)}
+        ${field('Mail', 'E-Mail', `type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@beispiel.de" value="${esc(draft.email || '')}"`)}
+        ${field('Pass', 'Passwort', `type="password" autocomplete="new-password" placeholder="Mindestens 8 Zeichen"`, `<button type="button" class="eye" id="eye">Zeigen</button>`)}
         <div class="cta"><button class="btn block" id="regBtn" type="submit">Konto erstellen</button>
+          ${appleBtn()}
+          ${Auth.cloud ? `<div class="auth-switch">Schon ein Konto? <button type="button" id="toLogin">Anmelden</button></div>` : ''}
           <p class="note">Mit der Registrierung akzeptierst du die Nutzungsbedingungen und die Datenschutzerklärung.</p></div>
       </form>`, { back:false, step:'register' });
-    const v = {
-      name: x => x.trim().length >= 2 || 'Bitte gib deinen Namen ein.',
-      mail: x => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x.trim()) || 'Bitte gib eine gültige E-Mail-Adresse ein.',
-      pass: x => x.length >= 8 && /\d|[^A-Za-z]/.test(x) || 'Mindestens 8 Zeichen, davon eine Zahl oder ein Sonderzeichen.',
-    };
-    const check = (k, show2) => {
-      const el = $('#r' + k[0].toUpperCase() + k.slice(1)), res = v[k](el.value);
-      if (show2){ $('#w' + k[0].toUpperCase() + k.slice(1)).classList.toggle('invalid', res !== true); $('#h' + k[0].toUpperCase() + k.slice(1)).textContent = res === true ? '' : res; }
-      return res === true;
-    };
-    ['name','mail','pass'].forEach(k => {
-      const el = $('#r' + k[0].toUpperCase() + k.slice(1));
-      el.addEventListener('blur', () => el.value && check(k, true));
-      el.addEventListener('input', () => { if ($('#w' + k[0].toUpperCase() + k.slice(1)).classList.contains('invalid')) check(k, true); });
-    });
-    $('#eye').onclick = () => { const p2 = $('#rPass'); p2.type = p2.type === 'password' ? 'text' : 'password'; $('#eye').textContent = p2.type === 'password' ? 'Zeigen' : 'Verbergen'; };
+    const valid = wire(['Name', 'Mail', 'Pass']);
+    bindApple();
+    $('#toLogin')?.addEventListener('click', () => login($('#rMail').value));
     $('#regForm').onsubmit = async e => {
-      e.preventDefault();
-      const ok = ['name','mail','pass'].map(k => check(k, true)).every(Boolean);
-      if (!ok) return;
-      $('#regBtn').disabled = true; $('#regBtn').textContent = 'Wird erstellt …';
-      const pr = await Auth.register({ name: $('#rName').value, email: $('#rMail').value, password: $('#rPass').value });
-      Object.assign(draft, pr);
-      next();
+      e.preventDefault(); formMsg('');
+      if (!valid()) return;
+      const btn = $('#regBtn'); busy(btn, true, 'Wird erstellt …');
+      try{
+        const res = await Auth.register({ name: $('#rName').value, email: $('#rMail').value, password: $('#rPass').value });
+        if (res.needsConfirm) return confirmMail(res.email, $('#rName').value);
+        continueWith(res.profile);
+      } catch(err){ formMsg(err.message); busy(btn, false, 'Konto erstellen'); }
+    };
+  }
+
+  function login(prefill = ''){
+    frame(`${ICON}
+      <h1>Willkommen zurück</h1>
+      <p class="lead">Melde dich mit deinem Arenly-Konto an.</p>
+      <form id="logForm" novalidate>
+        <div class="form-error" id="formErr"></div>
+        ${field('Mail', 'E-Mail', `type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@beispiel.de" value="${esc(prefill || draft.email || '')}"`)}
+        ${field('LPass', 'Passwort', `type="password" autocomplete="current-password" placeholder="Dein Passwort"`, `<button type="button" class="eye" id="eye">Zeigen</button>`)}
+        <button type="button" class="link" id="forgot">Passwort vergessen?</button>
+        <div class="cta"><button class="btn block" id="logBtn" type="submit">Anmelden</button>
+          ${appleBtn()}
+          <div class="auth-switch">Neu bei Arenly? <button type="button" id="toReg">Konto erstellen</button></div></div>
+      </form>`, { back:false, step:'register' });
+    const valid = wire(['Mail', 'LPass']);
+    bindApple();
+    $('#toReg').onclick = () => register();
+    $('#forgot').onclick = () => forgot($('#rMail').value);
+    $('#logForm').onsubmit = async e => {
+      e.preventDefault(); formMsg('');
+      if (!valid()) return;
+      const btn = $('#logBtn'); busy(btn, true, 'Anmelden …');
+      try { continueWith((await Auth.login({ email: $('#rMail').value, password: $('#rLPass').value })).profile); }
+      catch(err){ formMsg(err.message); busy(btn, false, 'Anmelden'); }
+    };
+  }
+
+  function forgot(prefill = ''){
+    frame(`${ICON}
+      <h1>Passwort vergessen</h1>
+      <p class="lead">Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.</p>
+      <form id="fgForm" novalidate>
+        <div class="form-error" id="formErr"></div>
+        ${field('Mail', 'E-Mail', `type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@beispiel.de" value="${esc(prefill)}"`)}
+        <div class="cta"><button class="btn block" id="fgBtn" type="submit">Link senden</button>
+          <div class="auth-switch"><button type="button" id="toLogin">Zurück zur Anmeldung</button></div></div>
+      </form>`, { back:false, step:'register' });
+    const valid = wire(['Mail']);
+    $('#toLogin').onclick = () => login($('#rMail').value);
+    $('#fgForm').onsubmit = async e => {
+      e.preventDefault(); formMsg('');
+      if (!valid()) return;
+      const btn = $('#fgBtn'); busy(btn, true, 'Wird gesendet …');
+      try { await Auth.resetPassword($('#rMail').value); formMsg('Falls ein Konto existiert, ist der Link unterwegs. Schau in dein Postfach.', true); busy(btn, false, 'Erneut senden'); }
+      catch(err){ formMsg(err.message); busy(btn, false, 'Link senden'); }
+    };
+  }
+
+  function confirmMail(email, name){
+    draft.name = name; draft.email = email;
+    store.set('fb.pending', { name, email });
+    frame(`<div class="mail-icon">✉️</div>
+      <h1 style="text-align:center">Bestätige deine E-Mail</h1>
+      <p class="lead" style="text-align:center">Wir haben einen Link an <b>${esc(email)}</b> geschickt. Tippe darauf, um dein Konto zu aktivieren. Danach geht es hier weiter.</p>
+      <div class="form-error" id="formErr"></div>
+      <div class="cta"><button class="btn block" id="cfLogin">Ich habe bestätigt – anmelden</button>
+        <div class="auth-switch">Keine Mail bekommen? <button type="button" id="cfResend">Erneut senden</button></div></div>`, { back:false, step:'register' });
+    $('#cfLogin').onclick = () => login(email);
+    $('#cfResend').onclick = async () => {
+      try { await Auth.resend(email); formMsg('Neue Bestätigungs-Mail ist unterwegs.', true); } catch(err){ formMsg(err.message); }
+    };
+  }
+
+  function newpass(){
+    frame(`${ICON}
+      <h1>Neues Passwort</h1>
+      <p class="lead">Lege ein neues Passwort für dein Konto fest.</p>
+      <form id="npForm" novalidate>
+        <div class="form-error" id="formErr"></div>
+        ${field('Pass', 'Neues Passwort', `type="password" autocomplete="new-password" placeholder="Mindestens 8 Zeichen"`, `<button type="button" class="eye" id="eye">Zeigen</button>`)}
+        <div class="cta"><button class="btn block" id="npBtn" type="submit">Passwort speichern</button></div>
+      </form>`, { back:false, step:'newpass' });
+    const valid = wire(['Pass']);
+    $('#npForm').onsubmit = async e => {
+      e.preventDefault(); formMsg('');
+      if (!valid()) return;
+      const btn = $('#npBtn'); busy(btn, true, 'Speichern …');
+      try { await Auth.updatePassword($('#rPass').value); toast('Passwort geändert'); finish(); }
+      catch(err){ formMsg(err.message); busy(btn, false, 'Passwort speichern'); }
     };
   }
 
@@ -1869,7 +2101,19 @@ function runIntro(){
 
 applyTheme(profile()?.theme);
 route();
-runIntro().then(() => {
+const authReady = Auth.init()
+  .then(async user => {
+    if (!Auth.cloud) return;
+    if (!user){ try { localStorage.removeItem('fb.profile'); } catch {} return; }   // cloud mode: no session → not signed in
+    const pending = store.get('fb.pending', null);                                    // name typed before e-mail confirmation
+    if (pending && !profile()?.name) store.set('fb.profile', { name: pending.name, email: pending.email });
+    try { localStorage.removeItem('fb.pending'); } catch {}
+    const pr = await Auth.pull();
+    applyTheme(pr?.theme); route();
+  })
+  .catch(err => { console.warn(err); toast('Anmeldedienst nicht erreichbar – lokaler Modus'); Auth.cloud = false; });
+Promise.all([runIntro(), authReady]).then(() => {
+  if (!$('#onb').hidden) return;                       // e.g. password-recovery screen already open
   const pr = profile();
   if (!pr) startOnboarding(['register', 'club', 'nation', 'done']);
   else if (!pr.club) startOnboarding(['club', 'nation', 'done']);
