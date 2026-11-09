@@ -869,7 +869,7 @@ const saveProfile = pr => { store.set('fb.profile', pr); Auth.syncSoon(); };
    keeps working in LOCAL MODE (profile only on this device).
    ============================================================= */
 const CFG = window.ARENLY_CONFIG || {};
-const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js';
 const loadScript = src => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('Supabase konnte nicht geladen werden.')); document.head.appendChild(sc); });
 const AUTH_ERR = [
   [/already registered|already been registered|User already/i, 'Diese E-Mail ist bereits registriert. Melde dich stattdessen an.'],
