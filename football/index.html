@@ -646,7 +646,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-09T23:18';
+const APP_BUILD = '2026-11-09T23:24';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -686,6 +686,24 @@ const leagueBy = slug => slug === 'nation'
 /* National teams: listed from these tables, schedules merged across these competitions */
 const NATION_LISTS = ['fifa.world', 'uefa.nations', 'fifa.worldq.uefa', 'fifa.worldq.conmebol', 'fifa.worldq.concacaf', 'fifa.worldq.caf', 'fifa.worldq.afc'];
 const NATION_SCHEDULES = ['fifa.world', 'uefa.nations', 'fifa.friendly', 'uefa.euro', 'fifa.worldq.uefa'];
+/* national-team competitions: worldwide + UEFA, or the other confederations for non-European teams */
+const NATION_BASE  = ['fifa.world', 'fifa.friendly'];
+const NATION_UEFA  = ['uefa.nations', 'uefa.euro', 'uefa.euroq', 'fifa.worldq.uefa'];
+const NATION_OTHER = ['conmebol.america', 'fifa.worldq.conmebol', 'concacaf.gold', 'concacaf.nations.league', 'fifa.worldq.concacaf',
+                      'caf.nations', 'fifa.worldq.caf', 'afc.asian.cup', 'fifa.worldq.afc'];
+async function nationSlugs(id){
+  const uefa = await Promise.allSettled(NATION_UEFA.map(sl => api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`)));
+  const european = uefa.some(r => r.status === 'fulfilled' && (r.value.events || []).length);
+  return [...NATION_BASE, ...(european ? NATION_UEFA : NATION_OTHER)];
+}
+/* competition names for match cards */
+const COMP_DE = { 'fifa.world':'WM', 'fifa.friendly':'Testspiel', 'uefa.nations':'Nations League', 'uefa.euro':'EM', 'uefa.euroq':'EM-Quali',
+  'fifa.worldq.uefa':'WM-Quali', 'fifa.worldq.conmebol':'WM-Quali', 'fifa.worldq.concacaf':'WM-Quali', 'fifa.worldq.caf':'WM-Quali', 'fifa.worldq.afc':'WM-Quali',
+  'conmebol.america':'Copa América', 'caf.nations':'Afrika-Cup', 'afc.asian.cup':'Asien-Cup', 'concacaf.gold':'Gold Cup', 'concacaf.nations.league':'Nations League',
+  'ger.dfb_pokal':'DFB-Pokal', 'uefa.champions':'Champions League', 'uefa.europa':'Europa League', 'uefa.europa.conf':'Conference League',
+  'eng.fa':'FA Cup', 'eng.league_cup':'League Cup', 'esp.copa_del_rey':'Copa del Rey', 'ita.coppa_italia':'Coppa Italia', 'fra.coupe_de_france':'Coupe de France',
+  'ned.cup':'KNVB-Pokal', 'por.taca.portugal':'Taça de Portugal', 'sco.tennents':'Scottish Cup', 'usa.open':'US Open Cup' };
+const compName = slug => COMP_DE[slug] || (typeof LEAGUES !== 'undefined' && LEAGUES.find(l => l.slug === slug)?.name) || '';
 const NATION_ROSTERS = ['fifa.world', 'uefa.nations', 'fifa.friendly'];
 const POPULAR_NATIONS = ['Germany', 'Austria', 'Switzerland', 'Turkey', 'Türkiye', 'Italy', 'Spain', 'France', 'England', 'Netherlands', 'Portugal', 'Croatia', 'Poland', 'Brazil', 'Argentina'];
 
@@ -1094,7 +1112,7 @@ function statusLabel(m){
   }
   return { txt: fmtDay(m.date) };
 }
-function matchCard(m, { showDate = false } = {}){
+function matchCard(m, { showDate = false, comp = false } = {}){
   const st = statusLabel(m);
   const played = m.state !== 'pre' && m.home.score != null;
   const hl = played && m.state === 'post' && m.away.winner ? 'loser' : '';
@@ -1107,7 +1125,8 @@ function matchCard(m, { showDate = false } = {}){
     <div class="side ${hl}">${img(m.home.logo, 'logo sm', m.home.name)}<span class="nm">${esc(m.home.name)}</span></div>
     <div class="mid">${mid}${stHtml}</div>
     <div class="side away ${al}">${img(m.away.logo, 'logo sm', m.away.name)}<span class="nm">${esc(m.away.name)}</span></div>
-    ${showDate && played ? `<div class="meta">${esc(fmtDay(m.date))}</div>` : ''}
+    ${(() => { const meta = [comp && compName(m.slug), showDate && played && fmtDay(m.date)].filter(Boolean).join(' · ');
+      return meta ? `<div class="meta">${esc(meta)}</div>` : ''; })()}
   </a>`;
 }
 
@@ -1318,7 +1337,7 @@ async function loadSchedules(slug, id){
     return { results, fixtures };
   }
   const tag = (d, sl) => (d.events || []).map(e => (e.__slug = sl, e));
-  const all = await Promise.allSettled(NATION_SCHEDULES.flatMap(sl => [
+  const all = await Promise.allSettled((await nationSlugs(id)).flatMap(sl => [
     api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`).then(d => ({ d, sl, fx:false })),
     api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl, fx:true })),
   ]));
@@ -1340,7 +1359,7 @@ async function renderTeam(slug, id){
     const { results, fixtures } = await loadSchedules(slug, id);
     if (my !== token) return;
     const T = results.team || fixtures.team || {};
-    T.displayName = tn(T.displayName); T.shortDisplayName = tn(T.shortDisplayName || T.displayName);
+    T.displayName = cn(tn(T.displayName)); T.shortDisplayName = cn(tn(T.shortDisplayName || T.displayName));
     const fav = { id: String(T.id || id), slug, name: T.shortDisplayName || T.displayName, logo: T.logo || T.logos?.[0]?.href };
     const rec = (T.recordSummary || '').split('-');
     $('.nav-title').textContent = T.displayName || '';
@@ -1362,7 +1381,7 @@ async function renderTeam(slug, id){
           <span class="pill"><b>${esc(rec[2])}</b> Niederl.</span>
         </div>` : ''}
       </section>
-      ${seg('tseg', [['games','Spiele'], ['squad','Kader']], state.teamTab)}
+      ${seg('tseg', [['games', slug === 'nation' ? 'Länderspiele' : 'Spiele'], ['squad','Kader']], state.teamTab)}
       <div id="pane"></div>`;
 
     tintHero($('#thero'), { color: T.color, logo: fav.logo });
@@ -1373,15 +1392,17 @@ async function renderTeam(slug, id){
       state.teamTab = k;
       const p = $('#pane');
       if (k === 'games'){
-        const next = fixturesList.slice(0, 5);
+        const isNat = slug === 'nation', o = { showDate:true, comp: isNat };
+        const next = fixturesList.slice(0, isNat ? 50 : 5);
         p.innerHTML = `
-          ${next.length ? `<div class="section-h"><h2>Nächste Spiele</h2><span>${fixturesList.length}</span></div>
-            <div class="matches">${next.map(m => matchCard(m, { showDate:true })).join('')}</div>
-            ${fixturesList.length > 5 ? `<button class="more glass flat press" id="morefx">Alle ${fixturesList.length} anzeigen</button>` : ''}` : ''}
-          <div class="section-h"><h2>Ergebnisse</h2><span>${resultsList.length}</span></div>
-          ${resultsList.length ? `<div class="matches">${resultsList.map(m => matchCard(m, { showDate:true })).join('')}</div>` : emptyBox('⚽', 'Noch keine Ergebnisse')}`;
+          ${next.length ? `<div class="section-h"><h2>${isNat ? 'Anstehende Länderspiele' : 'Nächste Spiele'}</h2><span>${fixturesList.length}</span></div>
+            <div class="matches">${next.map(m => matchCard(m, o)).join('')}</div>
+            ${fixturesList.length > next.length ? `<button class="more glass flat press" id="morefx">Alle ${fixturesList.length} anzeigen</button>` : ''}`
+            : isNat ? `<div class="section-h"><h2>Anstehende Länderspiele</h2></div><div class="ov-none glass flat">Noch keine Länderspiele angesetzt</div>` : ''}
+          <div class="section-h"><h2>${isNat ? 'Letzte Länderspiele' : 'Ergebnisse'}</h2><span>${resultsList.length}</span></div>
+          ${resultsList.length ? `<div class="matches">${resultsList.map(m => matchCard(m, o)).join('')}</div>` : emptyBox('⚽', 'Noch keine Ergebnisse')}`;
         $('#morefx')?.addEventListener('click', e => {
-          e.target.previousElementSibling.innerHTML = fixturesList.map(m => matchCard(m, { showDate:true })).join('');
+          e.target.previousElementSibling.innerHTML = fixturesList.map(m => matchCard(m, o)).join('');
           e.target.remove();
         });
       } else {
@@ -1787,10 +1808,9 @@ async function mergedSchedules(slugs, id){
   if (!ok.length) throw all[0]?.reason || new Error('Keine Spiele gefunden');
   const evs = [...new Map(ok.flatMap(x => (x.d.events || []).map(e => [e.id, normEvent(e, x.sl)]))).values()]
     .filter(m => m.date).sort((a, b) => new Date(a.date) - new Date(b.date));
-  return {
-    last: [...evs].reverse().find(m => m.state === 'in') || [...evs].reverse().find(m => m.state === 'post'),
-    next: evs.find(m => m.state === 'pre' && m.name !== 'STATUS_POSTPONED' && new Date(m.date) > Date.now() - 3 * 3600e3),
-  };
+  const upcoming = evs.filter(m => m.state === 'pre' && m.name !== 'STATUS_POSTPONED' && new Date(m.date) > Date.now() - 3 * 3600e3);
+  const past = evs.filter(m => m.state === 'post' || m.state === 'in').reverse();
+  return { last: past.find(m => m.state === 'in') || past[0], next: upcoming[0], upcoming, past };
 }
 
 const lgIcon = (logo, cls = 'lgw') => `<div class="${cls}"><img src="${esc(logo)}" alt="" onerror="this.style.visibility='hidden'"></div>`;
@@ -1832,8 +1852,8 @@ async function renderOverview(silent = false){
     <div class="ov-h">${img(C.logo, '', C.name)}<h2>${esc(C.name)}</h2><span class="pill" id="ovRank" style="display:none"></span></div>
     <div class="ov-pair" id="ovClub">${skeleton(2, 92)}</div>
 
-    ${N ? `<div class="ov-h">${img(N.logo, 'nat', N.name)}<h2>${esc(N.name)}</h2></div>
-    <div class="ov-pair" id="ovNation">${skeleton(2, 92)}</div>` : ''}
+    ${N ? `<div class="ov-h">${img(N.logo, 'nat', N.name)}<h2>${esc(N.name)}</h2><a class="more-link" href="#/team/nation/${esc(N.id)}">Alle Länderspiele</a></div>
+    <div id="ovNation">${skeleton(2, 92)}</div>` : ''}
 
     ${L ? `<div class="ov-h">${lgIcon(L.logo)}<h2>${esc(L.name)}</h2><a class="more-link" href="#/league/${esc(L.slug)}">Tabelle</a></div>
     <div id="ovLeague">${skeleton(1, 230)}</div>` : ''}
@@ -1844,7 +1864,7 @@ async function renderOverview(silent = false){
 
   const pair = (sel, data) => {
     const el = $(sel); if (!el || my !== token) return;
-    const block = (label, m) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true }) : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
+    const block = (label, m) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true, comp:true }) : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
     el.innerHTML = block(data.last?.state === 'in' ? 'Läuft gerade' : 'Letztes Spiel', data.last) + block('Nächstes Spiel', data.next);
   };
   let live = false;
@@ -1861,8 +1881,21 @@ async function renderOverview(silent = false){
     el.innerHTML = `<b>${esc(e.s.rank)}.</b> Platz · ${esc(e.s.points)} Pkt`; el.style.display = '';
   }).catch(() => {}));
   // national team
-  if (N) jobs.push(mergedSchedules(NATION_SCHEDULES, N.id)
-    .then(d => { live ||= d.last?.state === 'in'; pair('#ovNation', d); })
+  if (N) jobs.push(nationSlugs(N.id).then(sl => mergedSchedules(sl, N.id))
+    .then(d => {
+      live ||= d.last?.state === 'in';
+      const el = $('#ovNation'); if (!el || my !== token) return;
+      const o = { showDate:true, comp:true };
+      const liveNow = d.past.filter(m => m.state === 'in');
+      el.innerHTML = `
+        ${liveNow.length ? `<div class="ov-label">Läuft gerade</div><div class="matches" style="margin-bottom:14px">${liveNow.map(m => matchCard(m, o)).join('')}</div>` : ''}
+        <div class="ov-label">Nächste Länderspiele</div>
+        ${d.upcoming.length ? `<div class="matches">${d.upcoming.slice(0, 3).map(m => matchCard(m, o)).join('')}</div>`
+                            : `<div class="ov-none glass flat">Noch keine Länderspiele angesetzt</div>`}
+        <div class="ov-label" style="margin-top:16px">Letzte Länderspiele</div>
+        ${d.past.filter(m => m.state === 'post').length ? `<div class="matches">${d.past.filter(m => m.state === 'post').slice(0, 3).map(m => matchCard(m, o)).join('')}</div>`
+                            : `<div class="ov-none glass flat">Keine Ergebnisse</div>`}`;
+    })
     .catch(() => { const el = $('#ovNation'); if (el && my === token) el.innerHTML = `<div class="ov-none glass flat">Spiele konnten nicht geladen werden</div>`; }));
   // league table snippet (around the club if it plays there, else top 5)
   if (L) jobs.push(standings(L.slug).then(gs => {
