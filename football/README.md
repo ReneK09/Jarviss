@@ -49,7 +49,7 @@ Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, 
 1. Auf [supabase.com](https://supabase.com) kostenlos ein Projekt anlegen, als Region **Frankfurt (eu-central-1)** wählen.
 2. **SQL Editor:** Inhalt von [`supabase/schema.sql`](supabase/schema.sql) einfügen und ausführen. Das legt die Tabelle `profiles` mit Row Level Security an: Jeder sieht nur sein eigenes Profil.
 3. **Authentication → URL Configuration:** als *Site URL* die Adresse der App eintragen (z. B. `https://<name>.github.io/Jarviss/football/`) und unter *Redirect URLs* zusätzlich `http://localhost:8000/**` für lokale Tests.
-4. **Authentication → Emails** (optional): die Bestätigungs- und Passwort-Mails ins Deutsche übersetzen.
+4. **Authentication → Emails:** die deutschen Vorlagen aus [`supabase/email-templates/`](supabase/email-templates/) einfügen (Betreff und HTML, siehe [Anleitung](supabase/email-templates/README.md)).
 5. **Project Settings → API:** *Project URL* und den *anon public* Key in [`config.js`](config.js) eintragen. Dieser Key ist für den Browser gedacht und darf öffentlich sein. Den *service_role* Key niemals eintragen.
 
 **Funktionen:** Registrierung mit E-Mail-Bestätigung (inkl. „Erneut senden“), Anmeldung, „Passwort vergessen“ mit Link zum Festlegen eines neuen Passworts, Abmelden, Synchronisierung des Profils und deutsche Fehlermeldungen.
