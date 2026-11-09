@@ -24,7 +24,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 | **Ligen** | Bundesliga, 2. Bundesliga, DFB-Pokal, Premier League, LaLiga, Serie A, Ligue 1, Champions/Europa/Conference League, Eredivisie, Primeira Liga, Süper Lig, Österreich, Schweiz, Schottland, Belgien, MLS |
 | **Liga** | Tabelle mit Europapokal- und Abstiegszonen, Spieltage mit Datumsauswahl, alle Teams |
 | **Team** | Platzierung und Bilanz, nächste Spiele, Ergebnisse, Kader nach Positionen, Spielerprofil als Sheet |
-| **Spiel** | Ergebnis, Verlauf (Tore, Karten, Wechsel), Statistik-Balken, Aufstellungen mit Formation; aktualisiert sich bei Live-Spielen alle 30 s |
+| **Spiel** | Ergebnis, Verlauf (Tore, Karten, Wechsel), Statistik-Balken, **Aufstellung auf dem Spielfeld**: beide Teams stehen sich in ihrer echten Formation gegenüber, mit Spielerfotos, Rückennummer, Toren, Karten und Auswechslungen, darunter die Bank; aktualisiert sich bei Live-Spielen alle 30 s |
 | **Spiele** | Alle Ligen für einen Tag (−4 bis +4 Tage), Live-Zähler, deine Favoriten zuerst |
 | **Suche** | Teams (deutsch oder englisch) und Ligen |
 | **Favoriten** | Teams mit ★ markieren (wird lokal im Browser gespeichert) |
@@ -64,6 +64,10 @@ Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, 
 - **Transfermarkt** (deutsch): Meldungen, die den Verein in der Überschrift nennen
 - **ESPN** (englisch, mit „EN“ markiert): für Vereine und Ligen ohne kicker-Feed sowie als Quelle für Transfergerüchte
 - Transfers werden an der Überschrift erkannt (z. B. „verpflichtet“, „ist perfekt“, „im Visier“, „transfer rumors“) und als **Gerücht** oder **Offiziell** markiert. Angezeigt werden Meldungen der letzten 21 Tage, Doppelte werden zusammengefasst. Ein Tipp öffnet den Artikel beim Anbieter.
+
+### Spielerfotos
+
+Freigestellte Fotos von [TheSportsDB](https://www.thesportsdb.com) (kostenlose API, ca. 30 Anfragen pro Minute). Sie werden pro Spieler im Gerät zwischengespeichert, beim ersten Öffnen einer Aufstellung laden die Bank-Fotos daher etwas später. Fehlt ein Foto, erscheint die Rückennummer in den Vereinsfarben.
 
 ## Updates
 
