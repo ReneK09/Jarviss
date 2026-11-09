@@ -645,6 +645,8 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script src="config.js"></script>
 <script>
 'use strict';
+/* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
+const APP_BUILD = '2026-11-09T23:18';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -2441,6 +2443,22 @@ function runIntro(){
     fetch('assets/intro.mp4', { method:'HEAD' }).then(r => r.ok ? tryPlay() : useFallback()).catch(tryPlay);
   });
 }
+
+/* ---------- self-update: home-screen apps and browser caches keep old versions around ---------- */
+async function checkForUpdate(){
+  try{
+    const html = await (await fetch('index.html?u=' + Date.now(), { cache: 'no-store' })).text();
+    const live = (html.match(/const APP_BUILD = '([^']+)'/) || [])[1];
+    if (!live || live === APP_BUILD) return;
+    const k = 'fb.reloadedFor';
+    if (sessionStorage.getItem(k) === live) return;            // never loop
+    sessionStorage.setItem(k, live);
+    const u = new URL(location.href); u.searchParams.set('v', live);
+    location.replace(u.toString());                            // new URL → bypasses the cached page
+  } catch {}
+}
+checkForUpdate();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
 
 applyTheme(profile()?.theme);
 route();

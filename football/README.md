@@ -65,6 +65,10 @@ Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, 
 - **ESPN** (englisch, mit „EN“ markiert): für Vereine und Ligen ohne kicker-Feed sowie als Quelle für Transfergerüchte
 - Transfers werden an der Überschrift erkannt (z. B. „verpflichtet“, „ist perfekt“, „im Visier“, „transfer rumors“) und als **Gerücht** oder **Offiziell** markiert. Angezeigt werden Meldungen der letzten 21 Tage, Doppelte werden zusammengefasst. Ein Tipp öffnet den Artikel beim Anbieter.
 
+## Updates
+
+Die App prüft beim Start und bei jeder Rückkehr, ob online eine neuere Version liegt (`APP_BUILD` in `index.html`), und lädt sich dann einmal selbst neu. So bleiben auch App-Icons auf dem Home-Bildschirm aktuell. Vor jedem Veröffentlichen `tools/release.sh` ausführen, das setzt eine neue Build-Kennung.
+
 ## Marke & Icon
 
 - **Name:** Arenly (von *Arena*): international aussprechbar und an keine Sportart gebunden
