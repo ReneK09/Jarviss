@@ -212,6 +212,12 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .intro .fallback span{ font-weight:800; font-size:24px; letter-spacing:-.02em; color:#fff; opacity:0; }
 .intro.fb .fallback span{ animation: fadeUp .6s var(--ease) .3s forwards; }
 .intro .skip{ position:absolute; right:16px; top: calc(var(--safe-t) + 14px); padding: 9px 16px; border-radius:999px; font-size:14px; font-weight:650; color:#fff; background: rgba(255,255,255,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.6); z-index:2; }
+.intro .sound{ position:absolute; left:16px; top: calc(var(--safe-t) + 14px); display:flex; align-items:center; gap:7px; padding: 9px 14px 9px 11px; border-radius:999px; font-size:14px; font-weight:650; color:#fff; background: rgba(255,255,255,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.6); z-index:2; animation: fadeUp .4s var(--ease) both; }
+.intro .sound svg{ width:18px; height:18px; }
+.intro .sound .w1, .intro .sound .w2{ display:none; }
+.intro .sound.on .w1, .intro .sound.on .w2{ display:inline; }
+.intro .sound.on .x{ display:none; }
+@media (orientation: landscape){ .intro video{ object-fit: contain; } }   /* portrait video: never crop the logo on wide screens */
 .intro.gone{ opacity:0; visibility:hidden; }
 .intro.gone .fallback img{ transform: scale(1.35); filter: blur(6px); transition: transform .6s var(--ease), filter .6s; }
 @keyframes splashIn{ from{ transform: scale(.6); opacity:0; } to{ transform:none; opacity:1; } }
@@ -553,12 +559,15 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 
 <!-- Intro: put your video at assets/intro.mp4 (or .webm). Without it, an animated logo is shown. -->
 <div class="intro" id="intro">
-  <video id="introVideo" playsinline muted autoplay preload="auto">
-    <source src="assets/intro.webm" type="video/webm">
+  <video id="introVideo" playsinline webkit-playsinline muted autoplay preload="auto" disablepictureinpicture disableremoteplayback>
     <source src="assets/intro.mp4" type="video/mp4">
   </video>
   <div class="fallback"><img src="assets/icon-rounded-256.png" alt=""><span>Arenly</span></div>
   <button class="skip" id="introSkip">Überspringen</button>
+  <button class="sound" id="introSound" hidden aria-label="Ton einschalten">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="w1" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="w2" d="M18.5 5.5a9 9 0 0 1 0 13"/><path class="x" d="m16 9 6 6m0-6-6 6"/></svg>
+    <span>Ton an</span>
+  </button>
 </div>
 <div class="onb" id="onb" hidden></div>
 
@@ -2078,30 +2087,48 @@ function addFav(t){ if (!isFav(t.id)) toggleFav(t); }
    ============================================================= */
 function runIntro(){
   return new Promise(resolve => {
-    const intro = $('#intro'), vid = $('#introVideo');
-    let ended = false, fallbackTimer;
+    const intro = $('#intro'), vid = $('#introVideo'), snd = $('#introSound');
+    let ended = false, started = false, fallbackTimer, guard;
     const end = () => {
       if (ended) return; ended = true;
       clearTimeout(fallbackTimer); clearTimeout(guard);
       intro.classList.add('gone');
+      // fade the sound out together with the picture
+      if (!vid.muted){ const t0 = performance.now(), v0 = vid.volume;
+        const fade = () => { const k = Math.min(1, (performance.now() - t0) / 600); try { vid.volume = v0 * (1 - k); } catch {} if (k < 1) requestAnimationFrame(fade); }; fade(); }
       setTimeout(() => { try { vid.pause(); } catch {} intro.remove(); }, 800);
       resolve();
     };
     const useFallback = () => {
-      if (ended || intro.classList.contains('fb')) return;
+      if (ended || started || intro.classList.contains('fb')) return;
       intro.classList.add('fb');
       fallbackTimer = setTimeout(end, 1500);
     };
+    const setSound = on => {
+      vid.muted = !on; snd.classList.toggle('on', on);
+      snd.querySelector('span').textContent = on ? 'Ton aus' : 'Ton an';
+      snd.setAttribute('aria-label', on ? 'Ton ausschalten' : 'Ton einschalten');
+      store.set('fb.introSound', on);
+    };
     $('#introSkip').onclick = end;
-    vid.addEventListener('playing', () => { clearTimeout(guard); vid.classList.add('playing'); });
+    snd.onclick = () => { setSound(vid.muted); if (vid.paused) vid.play().catch(() => {}); };
+    vid.addEventListener('playing', () => { started = true; clearTimeout(guard); vid.classList.add('playing'); snd.hidden = false; });
     vid.addEventListener('ended', end);
     vid.addEventListener('error', useFallback, true);
-    vid.querySelectorAll('source').forEach((src, i, arr) => i === arr.length - 1 && src.addEventListener('error', useFallback));
-    const guard = setTimeout(() => { if (vid.paused || vid.readyState < 2) useFallback(); }, 1800);  // autoplay blocked / slow
-    // no intro video in assets/ yet → show the animated logo right away
-    Promise.all(['assets/intro.webm', 'assets/intro.mp4'].map(u => fetch(u, { method:'HEAD' }).then(r => r.ok).catch(() => false)))
-      .then(found => { if (!found.some(Boolean)) useFallback(); });
-    const pr = vid.play?.(); pr?.catch?.(useFallback);
+    vid.querySelector('source')?.addEventListener('error', useFallback);
+    // slow network / Low Power Mode: show the animated logo instead of a black screen
+    guard = setTimeout(() => { if (!started) useFallback(); }, 4000);
+
+    // Browsers only autoplay muted. If the viewer turned sound on last time, try with sound first.
+    const tryPlay = () => {
+      const wantSound = store.get('fb.introSound', false);
+      if (wantSound){ vid.muted = false; setSound(true); }
+      vid.play().catch(() => {
+        if (!vid.muted){ setSound(false); store.set('fb.introSound', true); vid.play().catch(useFallback); }
+        else useFallback();
+      });
+    };
+    fetch('assets/intro.mp4', { method:'HEAD' }).then(r => r.ok ? tryPlay() : useFallback()).catch(tryPlay);
   });
 }
 

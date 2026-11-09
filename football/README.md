@@ -30,7 +30,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 
 ## Start-Ablauf
 
-1. **Intro-Video:** `assets/intro.mp4` (optional zusätzlich `assets/intro.webm`) wird beim Start stumm und im Vollbild abgespielt und lässt sich überspringen. Solange es noch kein Video gibt, erscheint stattdessen das animierte Logo.
+1. **Intro-Video „Anpfiff“:** `assets/intro.mp4` (1080×1920, 5,6 s) läuft beim Start im Vollbild. Browser erlauben automatisches Abspielen nur stumm, deshalb gibt es oben links den Knopf **„Ton an“**; die Wahl wird gemerkt. Oben rechts kann man das Intro **überspringen**. Bei sehr langsamer Verbindung oder im Stromsparmodus erscheint nach 4 s stattdessen das animierte Logo. Ein neues Video einfach als `assets/intro.mp4` ablegen (H.264, Hochformat).
 2. **Registrierung:** Name, E-Mail und Passwort, mit Prüfung der Eingaben.
 3. **Lieblingsverein:** Auswahl über Liga-Chips oder Suche. Die App übernimmt sofort die Vereinsfarben als Live-Vorschau.
 4. **Nationalmannschaft:** über 200 Länder, die beliebtesten oben, mit Suche.
