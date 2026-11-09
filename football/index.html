@@ -283,6 +283,47 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 @media (prefers-color-scheme: dark){ .btn.apple{ background:#fff; color:#000; } }
 .mail-icon{ font-size:64px; margin: 30px 0 10px; text-align:center; }
 
+/* ============================================================
+   OVERVIEW
+   ============================================================ */
+.trio{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin: 8px 0 2px; }
+.trio a{ padding: 14px 6px 12px; border-radius: var(--r-md); display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center; min-width:0; }
+.trio .ico{ height:46px; display:grid; place-items:center; }
+.trio .ico img.club{ width:44px; height:44px; object-fit:contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.3)); }
+.trio .ico img.nat{ width:54px; height:38px; object-fit:cover; border-radius:7px; box-shadow: 0 4px 12px -4px rgba(0,0,0,.45), 0 0 0 .5px rgba(0,0,0,.2); }
+.trio .ico .lgw{ width:44px; height:44px; border-radius:12px; background: rgba(255,255,255,.94); display:grid; place-items:center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
+.trio .ico .lgw img{ width:32px; height:32px; object-fit:contain; }
+.trio small{ font-size:10px; font-weight:750; letter-spacing:.07em; text-transform:uppercase; color: var(--text-3); }
+.trio span{ font-size:13px; font-weight:650; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.ov-h{ display:flex; align-items:center; gap:10px; margin: 28px 6px 12px; }
+.ov-h img{ width:28px; height:28px; object-fit:contain; flex:none; }
+.ov-h img.nat{ width:30px; height:21px; object-fit:cover; border-radius:4px; }
+.ov-h .lgw{ width:28px; height:28px; border-radius:8px; background: rgba(255,255,255,.94); display:grid; place-items:center; flex:none; }
+.ov-h .lgw img{ width:21px; height:21px; }
+.ov-h h2{ flex:1; min-width:0; font-size:20px; font-weight:750; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ov-h .more-link{ font-size:14px; font-weight:650; color: var(--accent); flex:none; }
+.ov-pair{ display:grid; gap:14px; }
+@media (min-width: 620px){ .ov-pair{ grid-template-columns: 1fr 1fr; } }
+.ov-label{ font-size:11px; font-weight:750; letter-spacing:.07em; text-transform:uppercase; color: var(--text-3); margin: 0 8px 7px; }
+.ov-none{ padding: 18px; border-radius: var(--r-md); text-align:center; color: var(--text-2); font-size:14px; }
+.news{ border-radius: var(--r-lg); overflow:hidden; }
+.news a{ display:flex; gap:12px; padding: 14px 16px; position:relative; transition: background .2s; }
+.news a:active{ background: var(--glass-press); }
+.news a + a::before{ content:""; position:absolute; top:0; left:16px; right:16px; height:1px; background: var(--sep); }
+.news .nb{ flex:1; min-width:0; }
+.news .nt{ font-weight:650; font-size:15px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.news .nd{ font-size:13px; color: var(--text-2); line-height:1.35; margin-top:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.news .nm{ font-size:12px; color: var(--text-3); margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-weight:550; }
+.news img.th{ width:76px; height:76px; border-radius:12px; object-fit:cover; flex:none; background: var(--glass-strong); }
+.badge{ font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding: 3px 8px; border-radius:999px; }
+.badge.rumor{ background: rgba(255,159,10,.2); color:#ff9f0a; }
+.badge.done{ background: rgba(48,209,88,.2); color:#30d158; }
+.badge.src{ background: var(--glass-strong); color: var(--text-2); }
+@media (prefers-color-scheme: light){ .badge.rumor{ color:#b25e00; } .badge.done{ color:#1a8a3c; } }
+.pick.lg .lgw{ width:48px; height:48px; border-radius:13px; background: rgba(255,255,255,.94); display:grid; place-items:center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
+.pick.lg .lgw img{ width:36px; height:36px; filter:none; }
+.pick small{ font-size:11px; color: var(--text-2); font-weight:550; margin-top:-4px; }
+
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
 .avatar{ width:64px; height:64px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:24px; font-weight:800; color: var(--on-accent);
@@ -495,13 +536,13 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .tabbar{
   position: fixed; z-index: 50; left:50%; bottom: calc(14px + var(--safe-b));
   transform: translateX(-50%);
-  width: min(420px, calc(100% - 32px));
-  display:grid; grid-template-columns: repeat(4,1fr);
+  width: min(460px, calc(100% - 24px));
+  display:grid; grid-template-columns: repeat(5,1fr);
   padding: 6px; border-radius: 999px;
 }
 .tabbar .lens{
   position:absolute; top:6px; bottom:6px; left:6px;
-  width: calc((100% - 12px) / 4);
+  width: calc((100% - 12px) / 5);
   transform: translateX(calc(100% * var(--i, 0)));
   border-radius:999px;
   background: var(--glass-strong);
@@ -511,6 +552,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 }
 .tabbar .lens.squish{ animation: squish .55s var(--ease); }
 @keyframes squish{ 0%{ scale: 1 1; } 35%{ scale: 1.18 .86; } 70%{ scale: .97 1.04; } 100%{ scale: 1 1; } }
+.tab span{ white-space:nowrap; }
 .tab{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; height:54px; border-radius:999px; color: var(--text-2); font-size:10.5px; font-weight:650; transition: color .25s; }
 .tab svg{ width:24px; height:24px; transition: transform .45s var(--spring); }
 .tab.on{ color: var(--text); }
@@ -576,18 +618,22 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <nav class="tabbar glass strong" id="tabbar" aria-label="Hauptnavigation">
   <div class="lens" id="lens"></div>
   <a class="tab" data-tab="0" href="#/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+    <span>Übersicht</span>
+  </a>
+  <a class="tab" data-tab="1" href="#/leagues">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 1.5 1.5V7a4 4 0 0 1-4 4M7 5H4.5A1.5 1.5 0 0 0 3 6.5V7a4 4 0 0 0 4 4"/></svg>
     <span>Ligen</span>
   </a>
-  <a class="tab" data-tab="1" href="#/today">
+  <a class="tab" data-tab="2" href="#/today">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 7 4 3-1.5 4.5h-5L8 10l4-3Z"/><path d="M12 3v4M21 10.5 16 10M18 19l-3.5-4.5M6 19l3.5-4.5M3 10.5 8 10"/></svg>
     <span>Spiele</span>
   </a>
-  <a class="tab" data-tab="2" href="#/search">
+  <a class="tab" data-tab="3" href="#/search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <span>Suche</span>
   </a>
-  <a class="tab" data-tab="3" href="#/me">
+  <a class="tab" data-tab="4" href="#/me">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-3.7 4-5.5 7.5-5.5s6.3 1.8 7.5 5.5"/></svg>
     <span>Profil</span>
   </a>
@@ -973,6 +1019,7 @@ const Auth = {
       email: this.user.email,
       ...(data?.club ? { club: data.club } : {}),
       ...(data?.nation ? { nation: data.nation } : {}),
+      ...(data?.league ? { league: data.league } : {}),
       ...(data?.theme ? { theme: data.theme } : {}),
     };
     store.set('fb.profile', pr);
@@ -983,10 +1030,16 @@ const Auth = {
   async pushNow(){
     if (!this.sb || !this.user) return;
     const pr = profile() || {};
-    const { error } = await this.sb.from('profiles').upsert({
+    const row = {
       id: this.user.id, name: pr.name || null, club: pr.club || null, nation: pr.nation || null,
       theme: pr.theme || null, favs: favs(), updated_at: new Date().toISOString(),
-    });
+    };
+    if (!this.noLeagueCol) row.league = pr.league || null;
+    let { error } = await this.sb.from('profiles').upsert(row);
+    if (error && /league/.test(error.message || '')){        // database not migrated yet → save the rest anyway
+      this.noLeagueCol = true; delete row.league;
+      ({ error } = await this.sb.from('profiles').upsert(row));
+    }
     if (error) console.warn('profile push', error);
   },
   syncSoon(){
@@ -1009,8 +1062,8 @@ function normEvent(e, slug){
   const pick = side => c.competitors?.find(x => x.homeAway === side) || {};
   const team = x => ({
     id: x.team?.id,
-    name: tn(x.team?.shortDisplayName || x.team?.displayName || '—'),
-    full: tn(x.team?.displayName),
+    name: cn(tn(x.team?.shortDisplayName || x.team?.displayName || '—')),
+    full: cn(tn(x.team?.displayName)),
     logo: x.team?.logo || x.team?.logos?.[0]?.href,
     color: x.team?.color,
     score: typeof x.score === 'object' ? x.score?.displayValue : x.score,
@@ -1656,6 +1709,223 @@ function renderSearch(){
   buildIndex().catch(() => {}); // warm up
 }
 
+/* ---------- Overview: club · league · national team + news & transfers ---------- */
+/* kicker.de news feeds (German) for every 1. and 2. Bundesliga club, keyed by ESPN team id */
+const KICKER_TEAM = { '132':'fc-bayern-muenchen', '124':'borussia-dortmund', '126':'sc-freiburg', '11420':'rb-leipzig', '131':'bayer-04-leverkusen', '137':'werder-bremen', '10388':'sv-elversberg', '134':'vfb-stuttgart', '7911':'tsg-hoffenheim', '125':'eintracht-frankfurt', '127':'hamburger-sv', '2950':'1-fsv-mainz-05', '3307':'sc-paderborn-07', '3841':'fc-augsburg', '122':'1-fc-koeln', '598':'1-fc-union-berlin', '133':'fc-schalke-04', '268':'bor-moenchengladbach', '129':'hertha-bsc', '269':'1-fc-nuernberg', '130':'1-fc-kaiserslautern', '10382':'1-fc-magdeburg', '138':'vfl-wolfsburg', '2506':'arminia-bielefeld', '6418':'1-fc-heidenheim', '121':'vfl-bochum', '270':'fc-st-pauli', '3070':'spvgg-greuther-fuerth', '2428':'hannover-96', '123':'energie-cottbus', '3067':'eintracht-braunschweig', '7013':'vfl-osnabrueck', '7017':'dynamo-dresden', '4471':'karlsruher-sc', '3812':'sv-darmstadt-98', '7884':'holstein-kiel' };
+const KICKER_LEAGUE = { 'ger.1':'bundesliga', 'ger.2':'2-bundesliga', 'ger.dfb_pokal':'dfb-pokal', 'uefa.champions':'champions-league', 'uefa.europa':'europa-league' };
+const KICKER_NATION = { '481':'nationalmannschaft' };
+/* kicker league feeds also carry general items; keep only those kicker files under the league */
+const KICKER_LEAGUE_CAT = { 'ger.1':'Bundesliga', 'ger.2':'2. Bundesliga', 'ger.dfb_pokal':'DFB-Pokal', 'uefa.champions':'Champions League', 'uefa.europa':'Europa League' };          // Germany
+/* domestic cups per league, so "last / next match" also covers cup games */
+const CUPS = { 'ger.1':['ger.dfb_pokal'], 'ger.2':['ger.dfb_pokal'], 'eng.1':['eng.fa','eng.league_cup'], 'eng.2':['eng.fa','eng.league_cup'],
+  'esp.1':['esp.copa_del_rey'], 'ita.1':['ita.coppa_italia'], 'fra.1':['fra.coupe_de_france'], 'ned.1':['ned.cup'], 'por.1':['por.taca.portugal'],
+  'sco.1':['sco.tennents'], 'usa.1':['usa.open'] };
+const EURO_CUPS = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf'];
+/* extra search words for news filtering */
+const TEAM_ALIASES = { '124':['BVB'], '132':['FC Bayern','FCB'], '125':['Eintracht Frankfurt','SGE'], '133':['Schalke','S04'], '268':['Gladbach'],
+  '131':['Leverkusen','Bayer 04'], '127':['HSV'], '122':['1. FC Köln','FC Köln','Effzeh'], '137':['Werder'], '11420':['Leipzig'], '598':['Union Berlin'],
+  '270':['St. Pauli'], '129':['Hertha'], '86':['Real Madrid'], '83':['Barcelona','Barça'], '382':['Man City','Manchester City'], '360':['Manchester United','Man United'],
+  '364':['Liverpool'], '359':['Arsenal'], '363':['Chelsea'], '111':['Juventus'], '110':['Inter Mailand','Inter'], '103':['AC Mailand','Milan'], '160':['PSG','Paris Saint-Germain'] };
+
+const textCache = new Map();
+async function getText(url, ttl = 10 * 60_000){
+  const hit = textCache.get(url);
+  if (hit && Date.now() - hit.t < ttl) return hit.data;
+  const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.text(); textCache.set(url, { t: Date.now(), data }); return data;
+}
+const htmlText = h => new DOMParser().parseFromString(String(h || ''), 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+function parseRss(xml, source){
+  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  return [...doc.querySelectorAll('item')].map(it => {
+    const g = n => it.getElementsByTagName(n)[0]?.textContent?.trim() || '';
+    return { title: htmlText(g('title')), link: g('link') || g('guid'), date: new Date(g('pubDate')), desc: htmlText(g('description')),
+      cats: [...it.getElementsByTagName('category')].map(c => c.textContent.trim()), source, lang:'de' };
+  }).filter(n => n.title && n.link);
+}
+const kicker = path => getText(`https://newsfeed.kicker.de/${path}`).then(x => parseRss(x, 'kicker'));
+const transfermarkt = () => getText('https://www.transfermarkt.de/rss/news').then(x => parseRss(x, 'Transfermarkt'));
+const espnNews = (slug, team) => api(`site/v2/sports/soccer/${slug}/news?limit=12${team ? '&team=' + team : ''}`, { ttl: 10 * 60_000 })
+  .then(d => (d.articles || []).map(a => ({ title: a.headline, link: a.links?.web?.href, date: new Date(a.published), desc: a.description || '',
+    img: a.images?.[0]?.url, cats: (a.categories || []).map(c => c.description).filter(Boolean), source:'ESPN', lang:'en' })).filter(n => n.link));
+
+function teamWords(t){
+  const base = [t.name, tn(t.name), ...(TEAM_ALIASES[String(t.id)] || [])].filter(Boolean);
+  return [...new Set(base.map(w => w.replace(/^(1\. )?(FC|SV|VfL|VfB|TSG|SC|FSV|SpVgg|TSV) /, '').trim()).filter(w => w.length >= 3))];
+}
+const titleMentions = (n, words) => mentions({ title: n.title }, words);
+const mentions = (n, words) => { const hay = ' ' + [n.title, n.desc, ...(n.cats || [])].join(' ') + ' ';
+  return words.some(w => new RegExp(`(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`, 'iu').test(hay)); };
+
+const RUMOR = /gerücht|interesse an|interessiert|im visier|buhlt|angeblich|offenbar|liebäugel|heiß auf|kandidat|wechselabsichten|soll .{0,40}(wechseln|kommen|holen)|könnte .{0,30}(wechseln|kommen)|transfer (rumou?rs|talk)|rumou?r|linked with|target|eyeing|interest in|in talks/i;
+const DONE = /verpflichtet|unterschreibt|unterschrieben|wechselt (zu|nach|zum|zur|in)|transfer perfekt|ist perfekt|offiziell|leiht .{0,30}aus|ausgeliehen|vertrag verlängert|verlängert (seinen |den )?vertrag|neuzugang|ablösefrei|kauft|holt .{0,30}(von|aus)|sign(s|ed)? (a )?(new )?([\w'’.-]+ ){0,3}(contract|deal|extension)|sign(s|ed) (for|with)|completes? (a |his )?(move|transfer|signing)|joins|extends? contract|new contract/i;
+const TRANSFERISH = /transfer|wechsel|vertrag|verpflicht|leih|ablöse|klausel|neuzugang|abgang|unterschr|signs|signed|signing|joins|contract|loan|deal|move to|rumou?r|target|interess|visier|gerücht/i;
+function transferKind(n){
+  const t = n.title;                       // headline only – teasers mention "Neuzugang" etc. far too loosely
+  if (!TRANSFERISH.test(t)) return null;
+  if (RUMOR.test(t)) return 'rumor';
+  if (DONE.test(t)) return 'done';
+  return null;
+}
+function relTime(d){
+  const m = Math.round((Date.now() - d) / 60000);
+  if (!isFinite(m)) return '';
+  if (m < 1) return 'gerade eben'; if (m < 60) return `vor ${m} Min.`;
+  const h = Math.round(m / 60); if (h < 24) return `vor ${h} Std.`;
+  const dd = Math.round(h / 24); if (dd === 1) return 'gestern'; if (dd < 7) return `vor ${dd} Tagen`;
+  return d.toLocaleDateString('de-DE', { day:'numeric', month:'short' });
+}
+
+async function mergedSchedules(slugs, id){
+  const all = await Promise.allSettled(slugs.flatMap(sl => [
+    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`).then(d => ({ d, sl })),
+    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl })),
+  ]));
+  const ok = all.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (!ok.length) throw all[0]?.reason || new Error('Keine Spiele gefunden');
+  const evs = [...new Map(ok.flatMap(x => (x.d.events || []).map(e => [e.id, normEvent(e, x.sl)]))).values()]
+    .filter(m => m.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+  return {
+    last: [...evs].reverse().find(m => m.state === 'in') || [...evs].reverse().find(m => m.state === 'post'),
+    next: evs.find(m => m.state === 'pre' && m.name !== 'STATUS_POSTPONED' && new Date(m.date) > Date.now() - 3 * 3600e3),
+  };
+}
+
+const lgIcon = (logo, cls = 'lgw') => `<div class="${cls}"><img src="${esc(logo)}" alt="" onerror="this.style.visibility='hidden'"></div>`;
+function newsRow(n, kind){
+  const badge = kind === 'rumor' ? '<span class="badge rumor">Gerücht</span>' : kind === 'done' ? '<span class="badge done">Offiziell</span>' : '';
+  return `<a href="${esc(n.link)}" target="_blank" rel="noopener">
+    <div class="nb"><div class="nt">${esc(n.title)}</div>${n.desc && !kind ? `<div class="nd">${esc(n.desc)}</div>` : ''}
+      <div class="nm">${badge}<span class="badge src">${esc(n.source)}${n.lang === 'en' ? ' · EN' : ''}</span>${esc(relTime(n.date))}${n.about ? ' · ' + esc(n.about) : ''}</div></div>
+    ${n.img ? `<img class="th" src="${esc(n.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+  </a>`;
+}
+
+async function renderOverview(silent = false){
+  const my = ++token;
+  const pr = profile() || {};
+  const first = (pr.name || '').split(' ')[0];
+  const today = new Date().toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long' });
+  if (!pr.club){
+    view.innerHTML = `<div class="view">${navBar('Übersicht', { back:false })}<h1 class="large-title">Übersicht</h1>
+      ${emptyBox('⭐', 'Noch keine Favoriten', 'Wähle Verein, Liga und Nationalteam – dann siehst du hier alles auf einen Blick.')}
+      <div style="text-align:center"><button class="btn" id="ovSetup">Jetzt auswählen</button></div></div>`;
+    $('#ovSetup').onclick = () => startOnboarding(['club', 'league', 'nation', 'done']);
+    return;
+  }
+  const C = pr.club, N = pr.nation, L = pr.league;
+  if (!silent) view.innerHTML = `<div class="view">
+    ${navBar('Übersicht', { back:false })}
+    <div class="brand"><img class="brand-icon" src="assets/icon-rounded-256.png" alt=""><h1 class="large-title">Übersicht</h1></div>
+    <p class="subtitle" style="margin-top:8px">${first ? `Hallo ${esc(first)} · ` : ''}${esc(today)}</p>
+
+    <div class="trio">
+      <a class="glass flat press" href="#/team/${esc(C.slug)}/${esc(C.id)}"><div class="ico">${img(C.logo, 'club', C.name)}</div><small>Verein</small><span>${esc(C.name)}</span></a>
+      ${L ? `<a class="glass flat press" href="#/league/${esc(L.slug)}"><div class="ico">${lgIcon(L.logo)}</div><small>Liga</small><span>${esc(L.name)}</span></a>`
+          : `<a class="glass flat press" href="#/me"><div class="ico" style="font-size:28px">🏆</div><small>Liga</small><span>Auswählen</span></a>`}
+      ${N ? `<a class="glass flat press" href="#/team/nation/${esc(N.id)}"><div class="ico">${img(N.logo, 'nat', N.name)}</div><small>Nationalteam</small><span>${esc(N.name)}</span></a>`
+          : `<a class="glass flat press" href="#/me"><div class="ico" style="font-size:28px">🌍</div><small>Nationalteam</small><span>Auswählen</span></a>`}
+    </div>
+
+    <div class="ov-h">${img(C.logo, '', C.name)}<h2>${esc(C.name)}</h2><span class="pill" id="ovRank" style="display:none"></span></div>
+    <div class="ov-pair" id="ovClub">${skeleton(2, 92)}</div>
+
+    ${N ? `<div class="ov-h">${img(N.logo, 'nat', N.name)}<h2>${esc(N.name)}</h2></div>
+    <div class="ov-pair" id="ovNation">${skeleton(2, 92)}</div>` : ''}
+
+    ${L ? `<div class="ov-h">${lgIcon(L.logo)}<h2>${esc(L.name)}</h2><a class="more-link" href="#/league/${esc(L.slug)}">Tabelle</a></div>
+    <div id="ovLeague">${skeleton(1, 230)}</div>` : ''}
+
+    <div id="ovTransfers"></div>
+    <div id="ovNews"><div class="ov-h"><h2>News</h2></div>${skeleton(4, 78)}</div>
+  </div>`;
+
+  const pair = (sel, data) => {
+    const el = $(sel); if (!el || my !== token) return;
+    const block = (label, m) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true }) : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
+    el.innerHTML = block(data.last?.state === 'in' ? 'Läuft gerade' : 'Letztes Spiel', data.last) + block('Nächstes Spiel', data.next);
+  };
+  let live = false;
+  const jobs = [];
+
+  // club: league + domestic cups + European cups
+  jobs.push(mergedSchedules([C.slug, ...(CUPS[C.slug] || []), ...EURO_CUPS.filter(x => x !== C.slug)], C.id)
+    .then(d => { live ||= d.last?.state === 'in'; pair('#ovClub', d); })
+    .catch(() => { const el = $('#ovClub'); if (el && my === token) el.innerHTML = `<div class="ov-none glass flat">Spiele konnten nicht geladen werden</div>`; }));
+  // club rank in its league
+  jobs.push(standings(C.slug).then(gs => {
+    const e = gs.flatMap(g => g.entries).find(x => String(x.team.id) === String(C.id));
+    const el = $('#ovRank'); if (!e || !el || my !== token) return;
+    el.innerHTML = `<b>${esc(e.s.rank)}.</b> Platz · ${esc(e.s.points)} Pkt`; el.style.display = '';
+  }).catch(() => {}));
+  // national team
+  if (N) jobs.push(mergedSchedules(NATION_SCHEDULES, N.id)
+    .then(d => { live ||= d.last?.state === 'in'; pair('#ovNation', d); })
+    .catch(() => { const el = $('#ovNation'); if (el && my === token) el.innerHTML = `<div class="ov-none glass flat">Spiele konnten nicht geladen werden</div>`; }));
+  // league table snippet (around the club if it plays there, else top 5)
+  if (L) jobs.push(standings(L.slug).then(gs => {
+    const el = $('#ovLeague'); if (!el || my !== token) return;
+    const all = gs[0]?.entries || [];
+    if (!all.length){ el.innerHTML = `<div class="ov-none glass flat">Keine Tabelle verfügbar</div>`; return; }
+    let i = all.findIndex(e => String(e.team.id) === String(C.id));
+    const start = i < 0 ? 0 : Math.max(0, Math.min(i - 2, all.length - 5));
+    el.innerHTML = `<div class="table glass">
+      <div class="trow head"><span class="c">#</span><span>Team</span><span class="c">Sp</span><span class="c">TD</span><span class="c">Pkt</span></div>
+      ${all.slice(start, start + 5).map(e => `<a class="trow ${String(e.team.id) === String(C.id) ? 'hl' : ''}" href="#/team/${esc(L.slug)}/${esc(e.team.id)}">
+        ${e.note ? `<span class="zone" style="background:${esc(e.note.color)}"></span>` : ''}
+        <span class="rk">${esc(e.s.rank)}</span><span class="team">${img(e.team.logo, 'logo xs', e.team.name)}<span>${esc(e.team.name)}</span></span>
+        <span class="c">${esc(e.s.gamesPlayed)}</span><span class="c">${esc(e.s.pointDifferential)}</span><span class="pts">${esc(e.s.points)}</span></a>`).join('')}
+    </div>`;
+  }).catch(() => { const el = $('#ovLeague'); if (el && my === token) el.innerHTML = `<div class="ov-none glass flat">Tabelle konnte nicht geladen werden</div>`; }));
+
+  // ---- news & transfers ----
+  const cWords = teamWords(C), nWords = N ? [N.name, ...(TEAM_ALIASES[N.id] || [])] : [];
+  const tag = about => list => list.map(n => ({ ...n, about }));
+  const src = [];
+  if (KICKER_TEAM[C.id]){
+    src.push(kicker('team/' + KICKER_TEAM[C.id]).then(l => l.map(n => ({ ...n, about: C.name, trusted: true }))));
+    // ESPN covers transfer rumours well – use it for the Transfers section only, news stay German
+    src.push(espnNews(C.slug, C.id).then(l => l.filter(n => transferKind(n) && titleMentions(n, cWords)).map(n => ({ ...n, about: C.name }))));
+  }
+  else {
+    src.push(espnNews(C.slug, C.id).then(tag(C.name)));
+    src.push(kicker('news/internationaler-fussball').then(l => l.filter(n => mentions(n, cWords))).then(tag(C.name)));
+  }
+  src.push(transfermarkt().then(l => l.filter(n => mentions(n, cWords))).then(tag(C.name)));
+  if (N){
+    if (KICKER_NATION[N.id]) src.push(kicker('news/' + KICKER_NATION[N.id]).then(tag(N.name)));
+    else src.push(espnNews('fifa.world', N.id).then(tag(N.name)));
+  }
+  if (L) src.push((KICKER_LEAGUE[L.slug]
+      ? kicker('news/' + KICKER_LEAGUE[L.slug]).then(l => l.filter(n => n.cats.some(c => norm(c) === norm(KICKER_LEAGUE_CAT[L.slug]))))
+      : espnNews(L.slug)).then(tag(L.name)));
+
+  jobs.push(Promise.allSettled(src).then(res => {
+    if (my !== token) return;
+    const seen = new Set(), items = [];
+    res.filter(r => r.status === 'fulfilled').flatMap(r => r.value)
+      .filter(n => n.date instanceof Date && !isNaN(n.date) && Date.now() - n.date < 21 * 864e5)
+      .sort((a, b) => b.date - a.date)
+      .forEach(n => { const k = norm(n.title).slice(0, 60); if (!seen.has(k) && !seen.has(n.link)) { seen.add(k); seen.add(n.link); items.push(n); } });
+    // transfers: only items about the club (or national team players) that read like a transfer
+    const transfers = items.filter(n => transferKind(n) && (n.trusted || titleMentions(n, cWords))).slice(0, 8);
+    const tset = new Set(transfers);
+    const news = items.filter(n => !tset.has(n));
+    const tEl = $('#ovTransfers');
+    if (tEl) tEl.innerHTML = transfers.length ? `<div class="ov-h"><h2>Transfers</h2><span class="pill">${transfers.length}</span></div>
+      <div class="news glass">${transfers.map(n => newsRow(n, transferKind(n))).join('')}</div>` : '';
+    const nEl = $('#ovNews'); if (!nEl) return;
+    if (!news.length){ nEl.innerHTML = res.every(r => r.status === 'rejected') ? `<div class="ov-h"><h2>News</h2></div><div class="ov-none glass flat">News konnten nicht geladen werden</div>` : ''; return; }
+    const show = k => `<div class="ov-h"><h2>News</h2></div><div class="news glass">${news.slice(0, k).map(n => newsRow(n)).join('')}</div>
+      ${news.length > k ? `<button class="more glass flat press" id="newsMore">Weitere News anzeigen</button>` : ''}`;
+    nEl.innerHTML = show(8);
+    const more = () => { nEl.innerHTML = show(30); $('#newsMore')?.addEventListener('click', more); };
+    $('#newsMore')?.addEventListener('click', more);
+  }));
+
+  Promise.allSettled(jobs).then(() => { if (my === token) scheduleRefresh(live); });
+}
+
 /* ---------- Profile (incl. favourites) ---------- */
 function renderMe(){
   ++token;
@@ -1678,7 +1948,10 @@ function renderMe(){
         <div class="grow"><div class="t1">${esc(pr.club.name)}</div><div class="t2">Lieblingsverein · ${esc(leagueBy(pr.club.slug).name)}</div></div>${chev}</a>` : ''}
       ${pr.nation ? `<a class="row" href="#/team/nation/${esc(pr.nation.id)}">${img(pr.nation.logo, 'logo', pr.nation.name)}
         <div class="grow"><div class="t1">${esc(pr.nation.name)}</div><div class="t2">Nationalmannschaft</div></div>${chev}</a>` : ''}
+      ${pr.league ? `<a class="row" href="#/league/${esc(pr.league.slug)}"><div class="logo-wrap"><img class="logo" src="${esc(pr.league.logo)}" alt=""></div>
+        <div class="grow"><div class="t1">${esc(pr.league.name)}</div><div class="t2">Lieblingsliga · ${esc(pr.league.country || '')}</div></div>${chev}</a>` : ''}
       <button class="row" style="width:100%;text-align:left" id="chgClub"><div class="ph-logo">⇄</div><div class="grow"><div class="t1">Lieblingsverein ändern</div><div class="t2">Die App übernimmt die neuen Farben</div></div>${chev}</button>
+      <button class="row" style="width:100%;text-align:left" id="chgLeague"><div class="ph-logo">🏆</div><div class="grow"><div class="t1">Lieblingsliga ändern</div></div>${chev}</button>
       <button class="row" style="width:100%;text-align:left" id="chgNation"><div class="ph-logo">🌍</div><div class="grow"><div class="t1">Nationalmannschaft ändern</div></div>${chev}</button>
     </div>
 
@@ -1696,9 +1969,10 @@ function renderMe(){
   </div>`;
   $('#chgClub').onclick = () => startOnboarding(['club'], { edit:true });
   $('#chgNation').onclick = () => startOnboarding(['nation'], { edit:true });
+  $('#chgLeague').onclick = () => startOnboarding(['league'], { edit:true });
   $('#logout').onclick = () => {
     if (!confirm(Auth.cloud ? 'Wirklich abmelden?' : 'Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
-    Auth.signOut().then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'nation', 'done']); });
+    Auth.signOut().then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'league', 'nation', 'done']); });
   };
 }
 
@@ -1738,13 +2012,14 @@ function route(fresh = false, silent = false){
   if (silent) [...cache.keys()].forEach(k => /scoreboard|summary/.test(k) && cache.delete(k));
   if (!silent) window.scrollTo({ top: 0 });
   switch (r){
-    case 'today':  lastTab = 1; setTab(1); renderToday(silent); break;
-    case 'search': lastTab = 2; setTab(2); renderSearch(); break;
-    case 'me': case 'favs': lastTab = 3; setTab(3); renderMe(); break;
+    case 'leagues': lastTab = 1; setTab(1); renderHome(); break;
+    case 'today':  lastTab = 2; setTab(2); renderToday(silent); break;
+    case 'search': lastTab = 3; setTab(3); renderSearch(); break;
+    case 'me': case 'favs': lastTab = 4; setTab(4); renderMe(); break;
     case 'league': setTab(lastTab); renderLeague(a); break;
     case 'team':   setTab(lastTab); renderTeam(a, b); break;
     case 'match':  setTab(lastTab); renderMatch(a, b, silent); break;
-    default:       lastTab = 0; setTab(0); renderHome();
+    default:       lastTab = 0; setTab(0); renderOverview(silent);
   }
   bindChrome();
 }
@@ -1771,7 +2046,7 @@ async function buildNationIndex(){
   return nationIndex;
 }
 
-function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = {}){
+function startOnboarding(steps = ['register', 'club', 'league', 'nation', 'done'], opts = {}){
   const onb = $('#onb');
   const draft = { ...(profile() || {}) };
   let idx = 0;
@@ -1801,7 +2076,7 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
   };
   const next = () => { idx++; idx < steps.length ? show() : finish(); };
 
-  const show = () => ({ register: () => register(), club, nation, done, newpass })[steps[idx]]();
+  const show = () => ({ register: () => register(), club, league, nation, done, newpass })[steps[idx]]();
 
   /* --- 1. Account: register · login · forgot password --- */
   const ICON = `<img class="hero-icon" src="assets/icon-rounded-256.png" alt="Arenly">`;
@@ -1838,7 +2113,7 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
   const continueWith = pr => {
     Object.assign(draft, pr);
     if (pr?.theme) applyTheme(pr.theme);
-    const rest = ['club', 'nation'].filter(k => !pr?.[k]);
+    const rest = ['club', 'league', 'nation'].filter(k => !pr?.[k]);
     steps = [...steps.slice(0, idx + 1), ...rest, ...(rest.length ? ['done'] : [])];
     counted = steps.filter(s2 => s2 !== 'done' && s2 !== 'confirm');
     if (!rest.length) { toast(`Willkommen zurück, ${(pr.name || '').split(' ')[0]}!`); return finish(); }
@@ -2027,7 +2302,35 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
     load();
   }
 
-  /* --- 3. National team --- */
+  /* --- 3. Favourite league --- */
+  function league(){
+    const clubLeague = draft.club && LEAGUES.find(l => l.slug === draft.club.slug);
+    let sel = draft.league?.slug || clubLeague?.slug || null;
+    frame(`
+      <h1>Deine Lieblingsliga</h1>
+      <p class="lead">Tabelle und News dieser Liga erscheinen in deiner Übersicht.</p>
+      ${GROUPS.map(([g, title]) => {
+        const ls = LEAGUES.filter(l => l.group === g && !l.cup);
+        return ls.length ? `<div class="group-title" style="margin-top:6px">${esc(title)}</div>
+          <div class="pick-grid">${ls.map(l => `<button class="pick lg glass flat ${l.slug === sel ? 'sel' : ''}" data-slug="${l.slug}">
+            <div class="lgw"><img src="${LOGO(l.logo)}" alt="" loading="lazy"></div><span>${esc(l.name)}</span><small>${esc(l.country)}</small></button>`).join('')}</div>` : '';
+      }).join('')}
+      <div class="cta"><button class="btn block" id="lNext" ${sel ? '' : 'disabled'}>${opts.edit || steps.length === 1 ? 'Speichern' : 'Weiter'}</button></div>`, { step:'league' });
+    onb.querySelectorAll('.pick.lg').forEach(b => b.onclick = () => {
+      sel = b.dataset.slug;
+      onb.querySelectorAll('.pick.lg').forEach(x => x.classList.toggle('sel', x === b));
+      $('#lNext').disabled = false;
+    });
+    $('#lNext').onclick = () => {
+      const L = LEAGUES.find(l => l.slug === sel); if (!L) return;
+      draft.league = { slug: L.slug, name: L.name, country: L.country, logo: LOGO(L.logo) };
+      saveProfile({ ...(profile() || {}), ...draft });
+      if (opts.edit || steps.length === 1) toast('Lieblingsliga gespeichert');
+      next();
+    };
+  }
+
+  /* --- 4. National team --- */
   function nation(){
     let sel = draft.nation || null;
     frame(`
@@ -2071,7 +2374,7 @@ function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = 
       <div style="text-align:center;flex:1;display:flex;flex-direction:column">
         <div class="done-logos">${draft.club ? img(draft.club.logo, '', draft.club.name) : ''}${draft.nation ? img(draft.nation.logo, 'nat', draft.nation.name) : ''}</div>
         <h1>Hallo ${esc((draft.name || '').split(' ')[0])}!</h1>
-        <p class="lead">${esc(draft.club?.name || '')}${draft.nation ? ' und ' + esc(draft.nation.name) : ''} sind gespeichert.<br>Arenly trägt jetzt deine Vereinsfarben.</p>
+        <p class="lead">${esc([draft.club?.name, draft.league?.name, draft.nation?.name].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' und $1'))} sind gespeichert – alles zusammen in deiner Übersicht.<br>Arenly trägt jetzt deine Vereinsfarben.</p>
         ${currentTheme ? `<div class="swatch-row glass flat" style="justify-content:center;align-self:center">Deine Farben<span class="sw" style="margin-left:6px"><i style="background:${esc(currentTheme.p)}"></i><i style="background:${esc(currentTheme.s)}"></i></span></div>` : ''}
         <div class="cta"><button class="btn block" id="go">Los geht's</button></div>
       </div>`, { back:false, step:'done' });
@@ -2155,8 +2458,10 @@ const authReady = Auth.init()
 Promise.all([runIntro(), authReady]).then(() => {
   if (!$('#onb').hidden) return;                       // e.g. password-recovery screen already open
   const pr = profile();
-  if (!pr) startOnboarding(['register', 'club', 'nation', 'done']);
-  else if (!pr.club) startOnboarding(['club', 'nation', 'done']);
+  if (!pr) startOnboarding(['register', 'club', 'league', 'nation', 'done']);
+  else if (!pr.club) startOnboarding(['club', 'league', 'nation', 'done']);
+  else if (!pr.league && !pr.nation) startOnboarding(['league', 'nation', 'done']);
+  else if (!pr.league) startOnboarding(['league']);          // existing accounts: one new question
   else if (!pr.nation) startOnboarding(['nation', 'done']);
   else document.body.classList.remove('locked');
 });

@@ -6,11 +6,15 @@ create table if not exists public.profiles (
   name        text,
   club        jsonb,      -- { id, slug, name, logo }
   nation      jsonb,      -- { id, slug, name, logo }
+  league      jsonb,      -- { slug, name, country, logo }  (favourite league)
   theme       jsonb,      -- { p: '#rrggbb', s: '#rrggbb' }  (club colours)
   favs        jsonb not null default '[]'::jsonb,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- for databases created before the favourite-league step:
+alter table public.profiles add column if not exists league jsonb;
 
 alter table public.profiles enable row level security;
 

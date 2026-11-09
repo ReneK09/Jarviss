@@ -20,6 +20,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 
 | Bereich | Inhalt |
 |---|---|
+| **Übersicht** | Start-Tab mit Lieblingsverein, Lieblingsliga und Nationalteam auf einen Blick: letztes und nächstes Spiel (inkl. Pokal und Europapokal), Tabellenplatz, Tabellenausschnitt der Liga, **Transfers** (Gerüchte und offizielle Wechsel, nur wenn es welche gibt) und aktuelle **News** |
 | **Ligen** | Bundesliga, 2. Bundesliga, DFB-Pokal, Premier League, LaLiga, Serie A, Ligue 1, Champions/Europa/Conference League, Eredivisie, Primeira Liga, Süper Lig, Österreich, Schweiz, Schottland, Belgien, MLS |
 | **Liga** | Tabelle mit Europapokal- und Abstiegszonen, Spieltage mit Datumsauswahl, alle Teams |
 | **Team** | Platzierung und Bilanz, nächste Spiele, Ergebnisse, Kader nach Positionen, Spielerprofil als Sheet |
@@ -33,8 +34,9 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 1. **Intro-Video:** `assets/intro.mp4` (1080×1920, 5,2 s): Bälle verschiedener Sportarten verschmelzen zum Arenly-„A“. Es läuft beim Start im Vollbild. Hat ein Video eine Tonspur, erscheint oben links **„Ton an“**, da Browser nur stumm automatisch abspielen. Bei sehr langsamer Verbindung oder im Stromsparmodus erscheint nach 4 s das animierte Logo. Ein neues Video einfach als `assets/intro.mp4` ablegen (H.264, Hochformat).
 2. **Registrierung:** Name, E-Mail und Passwort, mit Prüfung der Eingaben.
 3. **Lieblingsverein:** Auswahl über Liga-Chips oder Suche. Die App übernimmt sofort die Vereinsfarben als Live-Vorschau.
-4. **Nationalmannschaft:** über 200 Länder, die beliebtesten oben, mit Suche.
-5. **Fertig:** Verein und Nationalteam landen unter „Meine Teams“. Im Tab **Profil** lassen sich beide ändern und man kann sich abmelden.
+4. **Lieblingsliga:** vorausgewählt ist die Liga des Vereins.
+5. **Nationalmannschaft:** über 200 Länder, die beliebtesten oben, mit Suche.
+6. **Fertig:** Verein und Nationalteam landen unter „Meine Teams“. Im Tab **Profil** lassen sich beide ändern und man kann sich abmelden.
 
 ### Vereinsfarben
 
@@ -55,6 +57,13 @@ Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, 
 **Funktionen:** Registrierung mit E-Mail-Bestätigung (inkl. „Erneut senden“), Anmeldung, „Passwort vergessen“ mit Link zum Festlegen eines neuen Passworts, Abmelden, Synchronisierung des Profils und deutsche Fehlermeldungen.
 
 **Mit Apple anmelden** (optional, erfordert einen Apple-Developer-Account, 99 $/Jahr): in Supabase unter *Authentication → Providers → Apple* einrichten, dann in `config.js` `appleSignIn: true` setzen.
+
+### News & Transfers
+
+- **kicker** (deutsch): eigener Feed für alle Vereine der 1. und 2. Bundesliga, für Bundesliga, 2. Bundesliga, DFB-Pokal, Champions League, Europa League und die deutsche Nationalmannschaft
+- **Transfermarkt** (deutsch): Meldungen, die den Verein in der Überschrift nennen
+- **ESPN** (englisch, mit „EN“ markiert): für Vereine und Ligen ohne kicker-Feed sowie als Quelle für Transfergerüchte
+- Transfers werden an der Überschrift erkannt (z. B. „verpflichtet“, „ist perfekt“, „im Visier“, „transfer rumors“) und als **Gerücht** oder **Offiziell** markiert. Angezeigt werden Meldungen der letzten 21 Tage, Doppelte werden zusammengefasst. Ein Tipp öffnet den Artikel beim Anbieter.
 
 ## Marke & Icon
 
