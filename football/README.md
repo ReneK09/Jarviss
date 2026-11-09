@@ -28,6 +28,22 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 | **Suche** | Teams (deutsch oder englisch) und Ligen |
 | **Favoriten** | Teams mit ★ markieren (wird lokal im Browser gespeichert) |
 
+## Start-Ablauf
+
+1. **Intro-Video:** `assets/intro.mp4` (optional zusätzlich `assets/intro.webm`) wird beim Start stumm und im Vollbild abgespielt und lässt sich überspringen. Solange es noch kein Video gibt, erscheint stattdessen das animierte Logo.
+2. **Registrierung:** Name, E-Mail und Passwort, mit Prüfung der Eingaben.
+3. **Lieblingsverein:** Auswahl über Liga-Chips oder Suche. Die App übernimmt sofort die Vereinsfarben als Live-Vorschau.
+4. **Nationalmannschaft:** über 200 Länder, die beliebtesten oben, mit Suche.
+5. **Fertig:** Verein und Nationalteam landen unter „Meine Teams“. Im Tab **Profil** lassen sich beide ändern und man kann sich abmelden.
+
+### Vereinsfarben
+
+Die Farben kommen aus ESPNs Vereinsfarbe, sofern sie eine echte Farbe ist (nicht nur Weiß), und aus den dominanten Farben des Wappens, die per Canvas ausgelesen werden. Ein Beispiel: Dortmund wird Gelb/Schwarz, Frankfurt Rot/Dunkelrot, Real Madrid Gold/Blau. Die Akzentfarbe wird für Hell- und Dunkelmodus automatisch so angepasst, dass sie lesbar bleibt.
+
+### Registrierung: noch lokal
+
+Konten werden derzeit **nur auf dem Gerät** gespeichert. Das Passwort wird dabei nicht gespeichert. Für echte Konten muss in `index.html` nur das `Auth`-Objekt (`register`, `signOut`) an einen Dienst angebunden werden, z. B. Supabase Auth oder Firebase Auth.
+
 ## Marke & Icon
 
 - **Name:** Arenly (von *Arena*): international aussprechbar und an keine Sportart gebunden

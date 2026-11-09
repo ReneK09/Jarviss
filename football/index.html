@@ -41,6 +41,7 @@
   --shadow-sm: 0 6px 20px -6px rgba(0,0,0,.45);
 
   --accent: #0a84ff;
+  --on-accent: #fff;
   --blob-1: #0a84ff;
   --blob-2: #bf5af2;
   --blob-3: #30d1a0;
@@ -196,14 +197,75 @@ img{ display:block; }
 .nav-brand{ width:28px; height:28px; border-radius:7px; }
 .foot img{ width:22px; height:22px; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:6px; opacity:.85; }
 
-/* launch splash */
-.splash{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; background: #0a0e22; transition: opacity .6s var(--ease) .1s, visibility 0s .7s; }
-.splash img{ width:112px; height:112px; border-radius:25px; box-shadow: 0 24px 60px -16px rgba(0,0,0,.7); animation: splashIn .7s var(--spring) both; }
-.splash span{ position:absolute; bottom: calc(18% + var(--safe-b)); font-weight:800; font-size:22px; letter-spacing:-.02em; color:#fff; opacity:0; animation: fadeUp .6s var(--ease) .25s forwards; }
-.splash.gone{ opacity:0; visibility:hidden; }
-.splash.gone img{ transform: scale(1.35); filter: blur(6px); transition: transform .6s var(--ease), filter .6s; }
+/* ============================================================
+   INTRO (video / animated fallback)
+   ============================================================ */
+body.locked{ overflow:hidden; }
+body.locked #app, body.locked .tabbar{ visibility:hidden; }
+.intro{ position:fixed; inset:0; z-index:300; background:#05060d; display:grid; place-items:center; transition: opacity .7s var(--ease), visibility 0s .7s; }
+.intro video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity .4s; }
+.intro video.playing{ opacity:1; }
+.intro .fallback{ display:grid; place-items:center; gap:18px; opacity:0; }
+.intro.fb .fallback{ opacity:1; }
+.intro .fallback img{ width:112px; height:112px; border-radius:25px; box-shadow: 0 24px 60px -16px rgba(0,0,0,.7); }
+.intro.fb .fallback img{ animation: splashIn .8s var(--spring) both; }
+.intro .fallback span{ font-weight:800; font-size:24px; letter-spacing:-.02em; color:#fff; opacity:0; }
+.intro.fb .fallback span{ animation: fadeUp .6s var(--ease) .3s forwards; }
+.intro .skip{ position:absolute; right:16px; top: calc(var(--safe-t) + 14px); padding: 9px 16px; border-radius:999px; font-size:14px; font-weight:650; color:#fff; background: rgba(255,255,255,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.6); z-index:2; }
+.intro.gone{ opacity:0; visibility:hidden; }
+.intro.gone .fallback img{ transform: scale(1.35); filter: blur(6px); transition: transform .6s var(--ease), filter .6s; }
 @keyframes splashIn{ from{ transform: scale(.6); opacity:0; } to{ transform:none; opacity:1; } }
-@keyframes fadeUp{ from{ transform: translateY(10px); opacity:0; } to{ transform:none; opacity:.9; } }
+@keyframes fadeUp{ from{ transform: translateY(10px); opacity:0; } to{ transform:none; opacity:.95; } }
+
+/* ============================================================
+   ONBOARDING  (register → club → national team → done)
+   ============================================================ */
+.onb{ position:fixed; inset:0; z-index:150; overflow-y:auto; -webkit-overflow-scrolling:touch; transition: opacity .5s var(--ease); }
+.onb.gone{ opacity:0; pointer-events:none; }
+.onb-inner{ max-width:540px; margin:0 auto; min-height:100%; display:flex; flex-direction:column; padding: calc(var(--safe-t) + 12px) 16px calc(var(--safe-b) + 20px); }
+.onb-top{ display:flex; align-items:center; gap:12px; height:48px; margin-bottom:10px; }
+.steps{ flex:1; display:flex; gap:6px; justify-content:center; }
+.steps i{ width:26px; height:5px; border-radius:3px; background: var(--glass-strong); transition: all .45s var(--spring); }
+.steps i.on{ background: var(--accent); width:46px; }
+.steps i.done{ background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.onb-step{ flex:1; display:flex; flex-direction:column; animation: viewIn .5s var(--ease) both; }
+.onb h1{ font-size:32px; font-weight:800; letter-spacing:-.035em; line-height:1.08; }
+.onb .lead{ color: var(--text-2); margin: 8px 0 22px; font-size:16px; }
+.onb .hero-icon{ width:84px; height:84px; border-radius:19px; margin: 18px 0 22px; box-shadow: 0 18px 40px -14px rgba(0,0,0,.6); animation: splashIn .7s var(--spring) both; }
+.field{ display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+.field > label{ font-size:13px; font-weight:650; color: var(--text-2); margin-left:16px; }
+.input{ display:flex; align-items:center; height:54px; border-radius:18px; padding:0 16px; gap:10px; transition: box-shadow .25s; }
+.input input{ flex:1; min-width:0; background:none; border:0; outline:0; color: var(--text); font: inherit; font-size:17px; }
+.input input::placeholder{ color: var(--text-3); }
+.input:focus-within{ box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-sm); }
+.input.invalid{ box-shadow: inset 0 0 0 1.5px var(--loss), var(--shadow-sm); }
+.input .eye{ color: var(--text-2); font-size:13px; font-weight:650; padding:6px; }
+.hint{ font-size:12px; color: var(--loss); margin-left:16px; min-height:16px; }
+.note{ font-size:12px; color: var(--text-3); text-align:center; margin-top:12px; }
+.cta{ margin-top:auto; padding-top:18px; position:sticky; bottom: calc(-1 * (var(--safe-b) + 20px)); padding-bottom: calc(var(--safe-b) + 20px); margin-bottom: calc(-1 * (var(--safe-b) + 20px));
+}
+.btn.block{ width:100%; height:54px; font-size:17px; margin-top:0; }
+.btn:disabled{ opacity:.4; box-shadow:none; cursor:default; }
+.pick-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(98px,1fr)); gap:10px; margin-bottom:12px; }
+.pick{ padding: 14px 6px 10px; border-radius:18px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; font-size:12.5px; font-weight:600; line-height:1.15; transition: transform .35s var(--spring), box-shadow .3s; }
+.pick img{ width:46px; height:46px; object-fit:contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.3)); }
+.pick.nat img{ width:52px; height:36px; object-fit:cover; border-radius:7px; filter:none; box-shadow: 0 4px 12px -4px rgba(0,0,0,.4), 0 0 0 .5px rgba(0,0,0,.2); }
+.pick.sel{ transform: scale(1.04); box-shadow: inset 0 0 0 2.5px var(--accent), 0 12px 28px -10px var(--accent); }
+.swatch-row{ display:flex; align-items:center; gap:10px; padding: 10px 14px; border-radius:999px; font-size:14px; font-weight:600; margin-bottom:12px; }
+.swatch-row img{ width:26px; height:26px; object-fit:contain; }
+.swatch-row .sw{ display:flex; gap:6px; margin-left:auto; }
+.swatch-row .sw i{ width:20px; height:20px; border-radius:50%; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55), 0 2px 6px rgba(0,0,0,.3); }
+.done-logos{ display:flex; justify-content:center; align-items:center; gap:22px; margin: 34px 0 22px; }
+.done-logos img{ width:110px; height:110px; object-fit:contain; filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--accent) 70%, transparent)); animation: float 6s ease-in-out infinite; }
+.done-logos img.nat{ width:76px; height:54px; object-fit:cover; border-radius:10px; animation-delay: -3s; }
+
+/* profile */
+.profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
+.avatar{ width:64px; height:64px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:24px; font-weight:800; color: var(--on-accent);
+  background: linear-gradient(140deg, var(--blob-1), var(--blob-2)); box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.7), 0 10px 24px -10px var(--accent); }
+.profile-card h2{ font-size:22px; font-weight:800; letter-spacing:-.02em; }
+.profile-card p{ color: var(--text-2); font-size:14px; }
+.row.danger .t1{ color: var(--loss); }
 
 /* list (inset grouped, glass) */
 .list{ border-radius: var(--r-lg); overflow:hidden; }
@@ -271,7 +333,7 @@ img{ display:block; }
 .chips::-webkit-scrollbar{ display:none; }
 .chip{ flex:none; padding: 8px 14px; border-radius:999px; font-size:14px; font-weight:600; color: var(--text-2); display:flex; flex-direction:column; align-items:center; min-width:62px; scroll-snap-align:center; transition: .3s var(--ease); }
 .chip small{ font-size:11px; font-weight:600; opacity:.75; text-transform:uppercase; letter-spacing:.04em; }
-.chip.on{ color: #fff; background: var(--accent); box-shadow: 0 8px 22px -6px var(--accent), inset 0 1px 1px -0.5px rgba(255,255,255,.7); }
+.chip.on{ color: var(--on-accent); background: var(--accent); box-shadow: 0 8px 22px -6px var(--accent), inset 0 1px 1px -0.5px rgba(255,255,255,.7); }
 .chip.on::after, .chip.on::before{ display:none; }
 
 /* ============================================================
@@ -395,7 +457,7 @@ img{ display:block; }
 .empty{ text-align:center; padding: 40px 24px; border-radius: var(--r-lg); color: var(--text-2); }
 .empty .em{ font-size:40px; margin-bottom:10px; }
 .empty b{ display:block; color: var(--text); font-size:17px; margin-bottom:4px; }
-.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding: 11px 20px; border-radius:999px; font-weight:650; margin-top:16px; background: var(--accent); color:#fff; box-shadow: 0 8px 22px -8px var(--accent), inset 0 1px 1px -0.5px rgba(255,255,255,.7); }
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding: 11px 20px; border-radius:999px; font-weight:650; margin-top:16px; background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 22px -8px var(--accent), inset 0 1px 1px -0.5px rgba(255,255,255,.7); }
 .btn.ghost{ background: var(--glass-strong); color: var(--text); box-shadow: inset 0 1px 1px -0.5px var(--rim-a); }
 .more{ display:block; width:100%; text-align:center; padding: 14px; margin-top:10px; border-radius: var(--r-md); font-weight:650; color: var(--accent); }
 
@@ -465,14 +527,23 @@ img{ display:block; }
 }
 </style>
 </head>
-<body>
+<body class="locked">
 
 <div class="backdrop" aria-hidden="true">
   <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
 </div>
 <div class="grain" aria-hidden="true"></div>
 
-<div class="splash" id="splash"><img src="assets/icon-rounded-256.png" alt=""><span>Arenly</span></div>
+<!-- Intro: put your video at assets/intro.mp4 (or .webm). Without it, an animated logo is shown. -->
+<div class="intro" id="intro">
+  <video id="introVideo" playsinline muted autoplay preload="auto">
+    <source src="assets/intro.webm" type="video/webm">
+    <source src="assets/intro.mp4" type="video/mp4">
+  </video>
+  <div class="fallback"><img src="assets/icon-rounded-256.png" alt=""><span>Arenly</span></div>
+  <button class="skip" id="introSkip">Überspringen</button>
+</div>
+<div class="onb" id="onb" hidden></div>
 
 <main id="app"><div id="view"></div></main>
 
@@ -490,9 +561,9 @@ img{ display:block; }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <span>Suche</span>
   </a>
-  <a class="tab" data-tab="3" href="#/favs">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9L12 3.5Z"/></svg>
-    <span>Favoriten</span>
+  <a class="tab" data-tab="3" href="#/me">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-3.7 4-5.5 7.5-5.5s6.3 1.8 7.5 5.5"/></svg>
+    <span>Profil</span>
   </a>
 </nav>
 
@@ -534,7 +605,14 @@ const GROUPS = [
   ['eu',  'Europapokal'],
   ['more','Weitere Ligen'],
 ];
-const leagueBy = slug => LEAGUES.find(l => l.slug === slug) || { slug, name: slug, country:'', logo: 0 };
+const leagueBy = slug => slug === 'nation'
+  ? { slug, name:'Nationalmannschaft', country:'International', logo: 4 }
+  : LEAGUES.find(l => l.slug === slug) || { slug, name: slug, country:'', logo: 0 };
+/* National teams: listed from these tables, schedules merged across these competitions */
+const NATION_LISTS = ['fifa.world', 'uefa.nations', 'fifa.worldq.uefa', 'fifa.worldq.conmebol', 'fifa.worldq.concacaf', 'fifa.worldq.caf', 'fifa.worldq.afc'];
+const NATION_SCHEDULES = ['fifa.world', 'uefa.nations', 'fifa.friendly', 'uefa.euro', 'fifa.worldq.uefa'];
+const NATION_ROSTERS = ['fifa.world', 'uefa.nations', 'fifa.friendly'];
+const POPULAR_NATIONS = ['Germany', 'Austria', 'Switzerland', 'Turkey', 'Türkiye', 'Italy', 'Spain', 'France', 'England', 'Netherlands', 'Portugal', 'Croatia', 'Poland', 'Brazil', 'Argentina'];
 
 /* ---------- fetch with small in-memory cache ---------- */
 const cache = new Map();
@@ -603,6 +681,18 @@ const COUNTRY_DE = {
   'DR Congo':'DR Kongo', Congo:'Kongo', 'Burkina Faso':'Burkina Faso', Gambia:'Gambia', Paraguay:'Paraguay', Chile:'Chile', Peru:'Peru',
   Venezuela:'Venezuela', Jamaica:'Jamaika', 'New Zealand':'Neuseeland', China:'China', Luxembourg:'Luxemburg', Montenegro:'Montenegro',
 };
+Object.assign(COUNTRY_DE, {
+  'Cape Verde':'Kap Verde', 'Cape Verde Islands':'Kap Verde', 'Saudi Arabia':'Saudi-Arabien', Qatar:'Katar', Jordan:'Jordanien',
+  Uzbekistan:'Usbekistan', 'South Africa':'Südafrika', Iraq:'Irak', 'Bosnia-Herzegovina':'Bosnien-Herzegowina', 'United Arab Emirates':'VAE',
+  Lithuania:'Litauen', Latvia:'Lettland', Estonia:'Estland', Belarus:'Belarus', Moldova:'Moldau', Armenia:'Armenien', Azerbaijan:'Aserbaidschan',
+  Kazakhstan:'Kasachstan', Cyprus:'Zypern', Malta:'Malta', Andorra:'Andorra', 'San Marino':'San Marino', Liechtenstein:'Liechtenstein',
+  'Faroe Islands':'Färöer', Gibraltar:'Gibraltar', Bolivia:'Bolivien', 'Costa Rica':'Costa Rica', Honduras:'Honduras', Angola:'Angola',
+  Zambia:'Sambia', Kenya:'Kenia', Uganda:'Uganda', Sudan:'Sudan', Libya:'Libyen', Ethiopia:'Äthiopien', Benin:'Benin', Gabon:'Gabun',
+  'Equatorial Guinea':'Äquatorialguinea', Mauritania:'Mauretanien', Madagascar:'Madagaskar', Namibia:'Namibia', Mozambique:'Mosambik',
+  Zimbabwe:'Simbabwe', Tanzania:'Tansania', Rwanda:'Ruanda', Togo:'Togo', 'Sierra Leone':'Sierra Leone', Niger:'Niger', Chad:'Tschad',
+  Indonesia:'Indonesien', Oman:'Oman', Bahrain:'Bahrain', Kuwait:'Kuwait', Syria:'Syrien', Lebanon:'Libanon', Palestine:'Palästina',
+  'North Korea':'Nordkorea', Vietnam:'Vietnam', Thailand:'Thailand', India:'Indien', 'Trinidad and Tobago':'Trinidad und Tobago',
+});
 const cn = s => COUNTRY_DE[s] || s;
 const POS = { Goalkeeper:'Torwart', Defender:'Abwehr', Midfielder:'Mittelfeld', Forward:'Sturm' };
 const POS_DETAIL = {
@@ -635,25 +725,140 @@ function toggleFav(team){
   return i < 0;
 }
 
-/* ---------- accent colour (tints the background blobs) ---------- */
+/* =============================================================
+   THEME ENGINE — the whole app wears the favourite club's colours
+   ============================================================= */
 const DEFAULT_ACCENT = ['#0a84ff', '#bf5af2', '#30d1a0', '#ff6b3d'];
-function setAccent(hex, hex2){
+const hexRgb = h => { const n = parseInt(String(h).replace('#','').padEnd(6,'0').slice(0,6), 16); return [(n>>16)&255, (n>>8)&255, n&255]; };
+const rgbHex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+function rgbHsl(r, g, b){
+  r/=255; g/=255; b/=255; const mx = Math.max(r,g,b), mn = Math.min(r,g,b); let h = 0, s2 = 0; const l = (mx+mn)/2;
+  if (mx !== mn){ const d = mx-mn; s2 = l > .5 ? d/(2-mx-mn) : d/(mx+mn);
+    h = mx === r ? (g-b)/d + (g<b?6:0) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4; h *= 60; }
+  return [h, s2, l];
+}
+function hslHex(h, s2, l){
+  const k = n => (n + h/30) % 12, a = s2 * Math.min(l, 1-l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n)-3, 9-k(n), 1));
+  return rgbHex(f(0)*255, f(8)*255, f(4)*255);
+}
+const lumOf = hex => { const [r,g,b] = hexRgb(hex); return (0.299*r + 0.587*g + 0.114*b) / 255; };
+const hueDist = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+
+/* Reads the dominant colours out of a crest (ESPN logos are served with CORS). */
+function logoColors(url){
+  return new Promise(resolve => {
+    if (!url) return resolve([]);
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => {
+      try{
+        const N = 56, c = document.createElement('canvas'); c.width = c.height = N;
+        const x = c.getContext('2d', { willReadFrequently:true }); x.drawImage(im, 0, 0, N, N);
+        const d = x.getImageData(0, 0, N, N).data, buckets = new Map(); let dark = 0, colourful = 0;
+        for (let i = 0; i < d.length; i += 4){
+          if (d[i+3] < 200) continue;
+          const [h, sat, l] = rgbHsl(d[i], d[i+1], d[i+2]);
+          if (l < .14 && sat < .5){ dark++; continue; }
+          if (sat < .28 || l > .9 || l < .12) continue;
+          colourful++;
+          const key = Math.round(h / 15) + ':' + Math.round(l * 5);
+          const w = sat * sat;                                   // pure colours win over anti-aliased edges
+          const bk = buckets.get(key) || { n:0, w:0, r:0, g:0, b:0, h };
+          bk.n++; bk.w += w; bk.r += d[i]*w; bk.g += d[i+1]*w; bk.b += d[i+2]*w; buckets.set(key, bk);
+        }
+        const list = [...buckets.values()].sort((a, b) => b.w - a.w)
+          .map(bk => ({ hex: rgbHex(bk.r/bk.w, bk.g/bk.w, bk.b/bk.w), h: bk.h, n: bk.n }));
+        const out = [];
+        for (const c2 of list){
+          if (c2.n < colourful * 0.10) break;
+          if (out.every(o => hueDist(o.h, c2.h) > 45)) out.push(c2);
+          if (out.length === 3) break;
+        }
+        const res = out.map(o => o.hex);
+        if (dark > colourful * 0.12) res.splice(1, 0, '#16161a');   // black is a real club colour (Frankfurt, Juventus …)
+        resolve(res);
+      } catch { resolve([]); }
+    };
+    im.onerror = () => resolve([]);
+    im.src = url;
+  });
+}
+const usable = hex => { if (!hex) return false; const [, sat, l] = rgbHsl(...hexRgb(hex)); return sat > .35 && l > .15 && l < .85; };
+
+/* Club colours = ESPN's colour (if it's a real colour) + colours read from the crest. */
+async function teamColors(team){
+  if (!team.color && team.slug && team.slug !== 'nation' && team.id){
+    try { team = { ...team, color: (await api(`site/v2/sports/soccer/${team.slug}/teams/${team.id}/schedule`)).team?.color }; } catch {}
+  }
+  const espn = team.color ? '#' + String(team.color).replace('#','') : null;
+  const fromLogo = await logoColors(team.logo);
+  const cols = [];
+  if (usable(espn)) cols.push(espn);
+  for (const c of fromLogo){
+    if (cols.length >= 2) break;
+    const [h] = rgbHsl(...hexRgb(c));
+    if (cols.every(x => hueDist(rgbHsl(...hexRgb(x))[0], h) > 45 || Math.abs(lumOf(x) - lumOf(c)) > .35)) cols.push(c);
+  }
+  if (!cols.length) return { p: '#b8bcc6', s: '#2c2c32' };            // monochrome crest → graphite
+  const [h0, s0] = rgbHsl(...hexRgb(cols[0]));
+  return { p: cols[0], s: cols[1] || hslHex(h0, Math.min(s0, .8), .2) };   // one-colour crest → deep shade of it
+}
+
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+let currentTheme = null;
+function applyTheme(theme){
+  currentTheme = theme || null;
   const r = document.documentElement.style;
-  if (!hex){
-    r.setProperty('--accent', DEFAULT_ACCENT[0]);
+  if (!theme){
+    r.setProperty('--accent', DEFAULT_ACCENT[0]); r.setProperty('--on-accent', '#fff');
     DEFAULT_ACCENT.forEach((c, i) => r.setProperty(`--blob-${i+1}`, c));
     return;
   }
-  const c = '#' + hex.replace('#','');
-  const c2 = hex2 ? '#' + hex2.replace('#','') : DEFAULT_ACCENT[1];
-  // too dark/light accents get a readable fallback for text
-  const lum = (() => { const n = parseInt(c.slice(1), 16); const R=(n>>16)&255,G=(n>>8)&255,B=n&255; return (0.299*R+0.587*G+0.114*B)/255; })();
-  r.setProperty('--accent', lum < 0.12 || lum > 0.9 ? DEFAULT_ACCENT[0] : c);
-  r.setProperty('--blob-1', c);
-  r.setProperty('--blob-2', c2);
-  r.setProperty('--blob-3', DEFAULT_ACCENT[0]);
-  r.setProperty('--blob-4', c);
+  const { p, s: sec } = theme;
+  const [h, sat, l] = rgbHsl(...hexRgb(p));
+  // UI accent must stay readable on the current background
+  let accent = p;
+  if (darkMQ.matches && l < .38) accent = hslHex(h, Math.max(sat, .5), .58);
+  if (!darkMQ.matches && l > .6) accent = hslHex(h, sat, .42);
+  if (sat < .15) accent = darkMQ.matches ? '#d1d1d6' : '#3a3a3c';
+  r.setProperty('--accent', accent);
+  r.setProperty('--on-accent', lumOf(accent) > .62 ? '#111' : '#fff');
+  const [h2, s2, l2] = rgbHsl(...hexRgb(sec));
+  const secBlob = l2 < .12 ? (darkMQ.matches ? hslHex(h, Math.min(sat, .6), .22) : '#2a2a30') : sec;
+  r.setProperty('--blob-1', p);
+  r.setProperty('--blob-2', secBlob);
+  r.setProperty('--blob-3', hslHex(h, Math.min(1, sat + .1), Math.min(.7, l + .12)));
+  r.setProperty('--blob-4', secBlob);
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = darkMQ.matches ? '#07090e' : '#eef1f7');
 }
+darkMQ.addEventListener?.('change', () => applyTheme(currentTheme));
+/* Pages no longer re-tint the whole app; only the hero of a viewed team takes its colour. */
+function setAccent(){}
+async function tintHero(el, team){
+  if (!el || !team) return;
+  const espn = team.color ? '#' + String(team.color).replace('#','') : null;
+  if (usable(espn)) { el.style.setProperty('--accent', espn); return; }
+  const t = await teamColors(team);
+  el.style.setProperty('--accent', t.p);
+}
+
+/* =============================================================
+   PROFILE & AUTH
+   ============================================================= */
+const profile = () => store.get('fb.profile', null);
+const saveProfile = pr => store.set('fb.profile', pr);
+/* Auth adapter. LOCAL MODE: the account lives only on this device and the password is
+   never stored. To make registration real, replace register/signOut with calls to a backend
+   (e.g. Supabase Auth or Firebase Auth) — the rest of the app only uses this interface. */
+const Auth = {
+  async register({ name, email }){
+    const pr = { name: name.trim(), email: email.trim().toLowerCase(), createdAt: new Date().toISOString() };
+    saveProfile(pr); return pr;
+  },
+  signOut(){
+    try { localStorage.removeItem('fb.profile'); localStorage.removeItem('fb.favs'); } catch {}
+  },
+};
 
 /* ---------- normalise an ESPN event ---------- */
 function normEvent(e, slug){
@@ -751,8 +956,8 @@ const state = { leagueTab: {}, teamTab: 'games', matchTab: 'events', todayOffset
 
 /* ---------- Home: leagues ---------- */
 function renderHome(){
-  setAccent();
-  const f = favs();
+  const pr0 = profile() || {};
+  const f = [pr0.club, pr0.nation, ...favs().filter(t => t.id !== pr0.club?.id && t.id !== pr0.nation?.id)].filter(Boolean);
   view.innerHTML = `<div class="view">
     ${navBar('Arenly', { back:false })}
     <div class="brand">
@@ -797,7 +1002,6 @@ async function standings(slug){
 
 async function renderLeague(slug){
   const L = leagueBy(slug);
-  setAccent();
   const my = ++token;
   const tabs = L.cup ? [['games','Spiele']] : [['table','Tabelle'], ['games','Spiele'], ['teams','Teams']];
   const tab = tabs.some(t => t[0] === state.leagueTab[slug]) ? state.leagueTab[slug] : tabs[0][0];
@@ -909,18 +1113,37 @@ async function paneLeague(slug, tab, my){
 }
 
 /* ---------- Team ---------- */
-async function renderTeam(slug, id){
-  const my = ++token;
-  view.innerHTML = `<div class="view">${navBar('')}<div id="tbody">${skeleton(1, 260)}${skeleton(5)}</div></div>`;
-  try{
+async function loadSchedules(slug, id){
+  if (slug !== 'nation'){
     const [results, fixtures] = await Promise.all([
       api(`site/v2/sports/soccer/${slug}/teams/${id}/schedule`),
       api(`site/v2/sports/soccer/${slug}/teams/${id}/schedule?fixture=true`).catch(() => ({ events: [] })),
     ]);
+    return { results, fixtures };
+  }
+  const tag = (d, sl) => (d.events || []).map(e => (e.__slug = sl, e));
+  const all = await Promise.allSettled(NATION_SCHEDULES.flatMap(sl => [
+    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`).then(d => ({ d, sl, fx:false })),
+    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl, fx:true })),
+  ]));
+  const ok = all.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (!ok.length) throw all[0].reason;
+  const team = ok.find(x => x.d.team)?.d.team || {};
+  const uniq = list => [...new Map(list.map(e => [e.id, e])).values()].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const evs = uniq(ok.flatMap(x => tag(x.d, x.sl)));
+  return {
+    results:  { team: { ...team, standingSummary: '', recordSummary: '' }, events: evs.filter(e => (e.competitions?.[0]?.status?.type?.state) !== 'pre') },
+    fixtures: { team, events: evs.filter(e => (e.competitions?.[0]?.status?.type?.state) === 'pre') },
+  };
+}
+
+async function renderTeam(slug, id){
+  const my = ++token;
+  view.innerHTML = `<div class="view">${navBar('')}<div id="tbody">${skeleton(1, 260)}${skeleton(5)}</div></div>`;
+  try{
+    const { results, fixtures } = await loadSchedules(slug, id);
     if (my !== token) return;
     const T = results.team || fixtures.team || {};
-    const color = T.color;
-    setAccent(color, T.alternateColor);
     T.displayName = tn(T.displayName); T.shortDisplayName = tn(T.shortDisplayName || T.displayName);
     const fav = { id: String(T.id || id), slug, name: T.shortDisplayName || T.displayName, logo: T.logo || T.logos?.[0]?.href };
     const rec = (T.recordSummary || '').split('-');
@@ -932,7 +1155,7 @@ async function renderTeam(slug, id){
 
     const L = leagueBy(slug);
     $('#tbody').innerHTML = `
-      <section class="hero glass">
+      <section class="hero glass" id="thero">
         <div class="glow"></div>
         ${img(fav.logo, 'big-logo', T.displayName)}
         <h1>${esc(T.displayName)}</h1>
@@ -946,8 +1169,9 @@ async function renderTeam(slug, id){
       ${seg('tseg', [['games','Spiele'], ['squad','Kader']], state.teamTab)}
       <div id="pane"></div>`;
 
-    const resultsList = (results.events || []).map(e => normEvent(e, slug)).filter(m => m.state !== 'pre').reverse();
-    const fixturesList = (fixtures.events || []).map(e => normEvent(e, slug)).filter(m => m.state !== 'post');
+    tintHero($('#thero'), { color: T.color, logo: fav.logo });
+    const resultsList = (results.events || []).map(e => normEvent(e, e.__slug || slug)).filter(m => m.state !== 'pre').reverse();
+    const fixturesList = (fixtures.events || []).map(e => normEvent(e, e.__slug || slug)).filter(m => m.state !== 'post');
 
     const pane = async k => {
       state.teamTab = k;
@@ -967,7 +1191,11 @@ async function renderTeam(slug, id){
       } else {
         p.innerHTML = skeleton(8, 56);
         try{
-          const r = await api(`site/v2/sports/soccer/${slug}/teams/${id}/roster`, { ttl: 30 * 60_000 });
+          let r = { athletes: [] };
+          for (const sl of (slug === 'nation' ? NATION_ROSTERS : [slug])){
+            try { r = await api(`site/v2/sports/soccer/${sl}/teams/${id}/roster`, { ttl: 30 * 60_000 }); } catch {}
+            if ((r.athletes || []).length) break;
+          }
           if (my !== token || state.teamTab !== 'squad') return;
           const ath = r.athletes || [];
           if (!ath.length){ p.innerHTML = emptyBox('👥', 'Kein Kader verfügbar'); return; }
@@ -1042,7 +1270,6 @@ async function renderMatch(slug, id, fresh = false){
     const m = normEvent({ id, date: comp?.date, competitions: [comp], status: comp?.status }, slug);
     m.home.logo ||= comp.competitors.find(c => c.homeAway === 'home')?.team?.logos?.[0]?.href;
     m.away.logo ||= comp.competitors.find(c => c.homeAway === 'away')?.team?.logos?.[0]?.href;
-    setAccent(m.home.color, m.away.color);
     $('.nav-title').textContent = `${m.home.name} – ${m.away.name}`;
     const st = statusLabel(m);
     const played = m.state !== 'pre';
@@ -1057,7 +1284,7 @@ async function renderMatch(slug, id, fresh = false){
     if (!tabs.some(t => t[0] === state.matchTab) && tabs.length) state.matchTab = tabs[0][0];
 
     $('#mbody').innerHTML = `
-      <section class="hero glass">
+      <section class="hero glass" id="mhero">
         <div class="glow"></div>
         <div style="font-size:12px;font-weight:700;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px">${esc(L.name)}</div>
         <div class="scoreboard">
@@ -1078,6 +1305,7 @@ async function renderMatch(slug, id, fresh = false){
       ${tabs.length > 1 ? seg('mseg', tabs, state.matchTab) : ''}
       <div id="pane"></div>`;
 
+    tintHero($('#mhero'), { color: m.home.color, logo: m.home.logo });
     const homeId = m.home.id;
     const pane = k => {
       state.matchTab = k;
@@ -1179,7 +1407,6 @@ function lineups(rosters){
 
 /* ---------- Today (all leagues) ---------- */
 async function renderToday(fresh = false){
-  setAccent();
   const my = ++token;
   const base = new Date(); base.setHours(12, 0, 0, 0);
   const days = Array.from({ length: 9 }, (_, i) => { const d = new Date(base); d.setDate(d.getDate() + i - 4); return d; });
@@ -1239,7 +1466,6 @@ async function buildIndex(){
   return teamIndex;
 }
 function renderSearch(){
-  setAccent();
   const my = ++token;
   view.innerHTML = `<div class="view">
     ${navBar('Suche', { back:false })}
@@ -1289,21 +1515,51 @@ function renderSearch(){
   buildIndex().catch(() => {}); // warm up
 }
 
-/* ---------- Favourites ---------- */
-function renderFavs(){
-  setAccent();
+/* ---------- Profile (incl. favourites) ---------- */
+function renderMe(){
   ++token;
-  const f = favs();
+  const pr = profile() || {};
+  const f = favs().filter(t => t.id !== pr.club?.id && t.id !== pr.nation?.id);
+  const initials = (pr.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   view.innerHTML = `<div class="view">
-    ${navBar('Favoriten', { back:false })}
-    <h1 class="large-title">Favoriten</h1>
-    <p class="subtitle">Deine Teams – tippe auf ★ auf einer Teamseite, um sie hier zu sammeln.</p>
+    ${navBar('Profil', { back:false })}
+    <h1 class="large-title" style="margin-bottom:16px">Profil</h1>
+    <div class="profile-card glass">
+      <div class="avatar">${esc(initials)}</div>
+      <div style="min-width:0"><h2>${esc(pr.name || 'Gast')}</h2><p>${esc(pr.email || '')}</p></div>
+    </div>
+    ${currentTheme ? `<div class="swatch-row glass flat" style="margin-top:12px">${pr.club ? img(pr.club.logo, '', pr.club.name) : ''}Deine App-Farben
+      <span class="sw"><i style="background:${esc(currentTheme.p)}"></i><i style="background:${esc(currentTheme.s)}"></i></span></div>` : ''}
+
+    <div class="section-h"><h2>Meine Teams</h2></div>
+    <div class="list glass">
+      ${pr.club ? `<a class="row" href="#/team/${esc(pr.club.slug)}/${esc(pr.club.id)}">${img(pr.club.logo, 'logo', pr.club.name)}
+        <div class="grow"><div class="t1">${esc(pr.club.name)}</div><div class="t2">Lieblingsverein · ${esc(leagueBy(pr.club.slug).name)}</div></div>${chev}</a>` : ''}
+      ${pr.nation ? `<a class="row" href="#/team/nation/${esc(pr.nation.id)}">${img(pr.nation.logo, 'logo', pr.nation.name)}
+        <div class="grow"><div class="t1">${esc(pr.nation.name)}</div><div class="t2">Nationalmannschaft</div></div>${chev}</a>` : ''}
+      <button class="row" style="width:100%;text-align:left" id="chgClub"><div class="ph-logo">⇄</div><div class="grow"><div class="t1">Lieblingsverein ändern</div><div class="t2">Die App übernimmt die neuen Farben</div></div>${chev}</button>
+      <button class="row" style="width:100%;text-align:left" id="chgNation"><div class="ph-logo">🌍</div><div class="grow"><div class="t1">Nationalmannschaft ändern</div></div>${chev}</button>
+    </div>
+
+    <div class="section-h"><h2>Favoriten</h2><span>${f.length || ''}</span></div>
     ${f.length ? `<div class="list glass">${f.map(t => `
       <a class="row" href="#/team/${esc(t.slug)}/${esc(t.id)}">${img(t.logo, 'logo', t.name)}
         <div class="grow"><div class="t1">${esc(t.name)}</div><div class="t2">${esc(leagueBy(t.slug).name)}</div></div>${chev}</a>`).join('')}</div>`
-      : `${emptyBox('⭐', 'Noch keine Favoriten', 'Suche dein Lieblingsteam und markiere es mit dem Stern.')}
-         <div style="text-align:center"><a class="btn" href="#/search">Team suchen</a></div>`}
+      : `<div class="empty glass" style="padding:24px">Weitere Teams mit ★ auf ihrer Teamseite markieren.</div>`}
+
+    <div class="section-h"><h2>Konto</h2></div>
+    <div class="list glass">
+      <button class="row danger" style="width:100%;text-align:left" id="logout"><div class="grow"><div class="t1">Abmelden</div><div class="t2">Profil und Favoriten auf diesem Gerät löschen</div></div></button>
+    </div>
+    <p class="foot"><img src="assets/icon-rounded-256.png" alt="">Arenly</p>
   </div>`;
+  $('#chgClub').onclick = () => startOnboarding(['club'], { edit:true });
+  $('#chgNation').onclick = () => startOnboarding(['nation'], { edit:true });
+  $('#logout').onclick = () => {
+    if (!confirm('Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
+    Auth.signOut(); applyTheme(null); location.hash = '#/';
+    startOnboarding(['register', 'club', 'nation', 'done']);
+  };
 }
 
 /* ---------- toast ---------- */
@@ -1344,7 +1600,7 @@ function route(fresh = false, silent = false){
   switch (r){
     case 'today':  lastTab = 1; setTab(1); renderToday(silent); break;
     case 'search': lastTab = 2; setTab(2); renderSearch(); break;
-    case 'favs':   lastTab = 3; setTab(3); renderFavs(); break;
+    case 'me': case 'favs': lastTab = 3; setTab(3); renderMe(); break;
     case 'league': setTab(lastTab); renderLeague(a); break;
     case 'team':   setTab(lastTab); renderTeam(a, b); break;
     case 'match':  setTab(lastTab); renderMatch(a, b, silent); break;
@@ -1359,8 +1615,267 @@ function bindChrome(){
 window.addEventListener('hashchange', () => route());
 window.addEventListener('scroll', () => { $('#nav')?.classList.toggle('scrolled', scrollY > 30); }, { passive:true });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+/* =============================================================
+   ONBOARDING
+   ============================================================= */
+let nationIndex = null;
+async function buildNationIndex(){
+  if (nationIndex) return nationIndex;
+  const res = await Promise.allSettled(NATION_LISTS.map(sl => api(`v2/sports/soccer/${sl}/standings`, { ttl: 60 * 60_000 })));
+  const seen = new Map();
+  res.filter(r => r.status === 'fulfilled').forEach(r => (r.value.children || []).forEach(g => (g.standings?.entries || []).forEach(e => {
+    const t = e.team; if (!seen.has(t.id)) seen.set(t.id, { id: t.id, en: t.displayName, name: cn(t.displayName), logo: t.logos?.[0]?.href });
+  })));
+  const rank = t => { const i = POPULAR_NATIONS.indexOf(t.en); return i < 0 ? 999 : i; };
+  nationIndex = [...seen.values()].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'de'));
+  return nationIndex;
+}
+
+function startOnboarding(steps = ['register', 'club', 'nation', 'done'], opts = {}){
+  const onb = $('#onb');
+  const draft = { ...(profile() || {}) };
+  let idx = 0;
+  document.body.classList.add('locked');
+  onb.hidden = false; onb.classList.remove('gone');
+  const counted = steps.filter(s2 => s2 !== 'done');
+
+  const finish = () => {
+    onb.classList.add('gone');
+    document.body.classList.remove('locked');
+    setTimeout(() => { onb.hidden = true; onb.innerHTML = ''; }, 500);
+    route();
+  };
+  const frame = (inner, { back = idx > 0 || opts.edit, step } = {}) => {
+    const si = counted.indexOf(step);
+    onb.innerHTML = `<div class="onb-inner">
+      <div class="onb-top">
+        ${back ? `<button class="icon-btn glass flat press" id="onbBack" aria-label="Zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>` : '<div class="nav-spacer"></div>'}
+        <div class="steps">${counted.length > 1 ? counted.map((_, i) => `<i class="${i === si ? 'on' : i < si ? 'done' : ''}"></i>`).join('') : ''}</div>
+        <div class="nav-spacer"></div>
+      </div>
+      <div class="onb-step">${inner}</div>
+    </div>`;
+    onb.scrollTop = 0;
+    const b = $('#onbBack');
+    if (b) b.onclick = () => { if (idx > 0) { idx--; show(); } else { applyTheme(profile()?.theme); finish(); } };
+  };
+  const next = () => { idx++; idx < steps.length ? show() : finish(); };
+
+  const show = () => ({ register, club, nation, done })[steps[idx]]();
+
+  /* --- 1. Registration --- */
+  function register(){
+    frame(`
+      <img class="hero-icon" src="assets/icon-rounded-256.png" alt="Arenly">
+      <h1>Willkommen bei Arenly</h1>
+      <p class="lead">Erstelle dein Konto, um Ligen, Teams und Spiele zu verfolgen.</p>
+      <form id="regForm" novalidate>
+        <div class="field"><label for="rName">Name</label>
+          <div class="input glass flat" id="wName"><input id="rName" autocomplete="name" placeholder="Max Mustermann" value="${esc(draft.name || '')}"></div>
+          <div class="hint" id="hName"></div></div>
+        <div class="field"><label for="rMail">E-Mail</label>
+          <div class="input glass flat" id="wMail"><input id="rMail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@beispiel.de" value="${esc(draft.email || '')}"></div>
+          <div class="hint" id="hMail"></div></div>
+        <div class="field"><label for="rPass">Passwort</label>
+          <div class="input glass flat" id="wPass"><input id="rPass" type="password" autocomplete="new-password" placeholder="Mindestens 8 Zeichen"><button type="button" class="eye" id="eye">Zeigen</button></div>
+          <div class="hint" id="hPass"></div></div>
+        <div class="cta"><button class="btn block" id="regBtn" type="submit">Konto erstellen</button>
+          <p class="note">Mit der Registrierung akzeptierst du die Nutzungsbedingungen und die Datenschutzerklärung.</p></div>
+      </form>`, { back:false, step:'register' });
+    const v = {
+      name: x => x.trim().length >= 2 || 'Bitte gib deinen Namen ein.',
+      mail: x => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x.trim()) || 'Bitte gib eine gültige E-Mail-Adresse ein.',
+      pass: x => x.length >= 8 && /\d|[^A-Za-z]/.test(x) || 'Mindestens 8 Zeichen, davon eine Zahl oder ein Sonderzeichen.',
+    };
+    const check = (k, show2) => {
+      const el = $('#r' + k[0].toUpperCase() + k.slice(1)), res = v[k](el.value);
+      if (show2){ $('#w' + k[0].toUpperCase() + k.slice(1)).classList.toggle('invalid', res !== true); $('#h' + k[0].toUpperCase() + k.slice(1)).textContent = res === true ? '' : res; }
+      return res === true;
+    };
+    ['name','mail','pass'].forEach(k => {
+      const el = $('#r' + k[0].toUpperCase() + k.slice(1));
+      el.addEventListener('blur', () => el.value && check(k, true));
+      el.addEventListener('input', () => { if ($('#w' + k[0].toUpperCase() + k.slice(1)).classList.contains('invalid')) check(k, true); });
+    });
+    $('#eye').onclick = () => { const p2 = $('#rPass'); p2.type = p2.type === 'password' ? 'text' : 'password'; $('#eye').textContent = p2.type === 'password' ? 'Zeigen' : 'Verbergen'; };
+    $('#regForm').onsubmit = async e => {
+      e.preventDefault();
+      const ok = ['name','mail','pass'].map(k => check(k, true)).every(Boolean);
+      if (!ok) return;
+      $('#regBtn').disabled = true; $('#regBtn').textContent = 'Wird erstellt …';
+      const pr = await Auth.register({ name: $('#rName').value, email: $('#rMail').value, password: $('#rPass').value });
+      Object.assign(draft, pr);
+      next();
+    };
+  }
+
+  /* --- 2. Favourite club --- */
+  function club(){
+    const leagues = LEAGUES.filter(l => !l.cup && l.group !== 'eu');
+    let league = draft.club?.slug && leagues.some(l => l.slug === draft.club.slug) ? draft.club.slug : 'ger.1';
+    let sel = draft.club || null, q = '';
+    frame(`
+      <h1>Dein Lieblingsverein</h1>
+      <p class="lead">Arenly übernimmt seine Vereinsfarben.</p>
+      <label class="search glass flat" id="cbox" style="margin:0 0 12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="cq" type="search" placeholder="Verein suchen" autocomplete="off">
+      </label>
+      <div class="chips" id="lchips">${leagues.map(l => `<button class="chip glass flat ${l.slug === league ? 'on' : ''}" data-l="${l.slug}"><small>${esc(l.country)}</small>${esc(l.name)}</button>`).join('')}</div>
+      <div id="cprev"></div>
+      <div id="cgrid">${skeleton(3, 110)}</div>
+      <div class="cta"><button class="btn block" id="cNext" ${sel ? '' : 'disabled'}>${opts.edit ? 'Speichern' : 'Weiter'}</button></div>`, { step:'club' });
+
+    const preview = async team => {
+      $('#cprev').innerHTML = `<div class="swatch-row glass flat">${img(team.logo, '', team.name)}${esc(team.name)}<span class="sw"><i style="background:var(--glass-strong)"></i></span></div>`;
+      const th = await teamColors(team);
+      if (sel?.id !== team.id) return;
+      draft.theme = th; applyTheme(th);
+      $('#cprev').innerHTML = `<div class="swatch-row glass flat">${img(team.logo, '', team.name)}${esc(team.name)}<span class="sw"><i style="background:${th.p}"></i><i style="background:${th.s}"></i></span></div>`;
+    };
+    const grid = teams => {
+      $('#cgrid').innerHTML = teams.length ? `<div class="pick-grid">${teams.map(t => `
+        <button class="pick glass flat ${sel?.id === t.id ? 'sel' : ''}" data-id="${esc(t.id)}">${img(t.logo, '', t.name)}<span>${esc(t.name)}</span></button>`).join('')}</div>`
+        : emptyBox('🔍', 'Kein Verein gefunden');
+      $('#cgrid').querySelectorAll('.pick').forEach(b => b.onclick = () => {
+        const t = teams.find(x => String(x.id) === b.dataset.id);
+        sel = { id: String(t.id), slug: t.slug, name: t.name, logo: t.logo };
+        $('#cgrid').querySelectorAll('.pick').forEach(x => x.classList.toggle('sel', x === b));
+        $('#cNext').disabled = false;
+        preview(sel);
+      });
+    };
+    const load = async () => {
+      $('#cgrid').innerHTML = skeleton(3, 110);
+      try{
+        if (q){
+          const s2 = norm(q);
+          const idx2 = await buildIndex();
+          if (norm($('#cq')?.value.trim() || '') !== s2) return;
+          grid(idx2.filter(t => t.L.group !== 'eu' && norm(t.full + ' ' + t.name + ' ' + t.en).includes(s2)).slice(0, 30).map(t => ({ ...t, slug: t.L.slug })));
+        } else {
+          const gs = await standings(league);
+          grid(gs.flatMap(g => g.entries.map(e => ({ ...e.team, slug: league }))).sort((a, b) => a.name.localeCompare(b.name, 'de')));
+        }
+      } catch(err){ $('#cgrid').innerHTML = errorBox(err, false); }
+    };
+    $('#lchips').onclick = e => {
+      const b = e.target.closest('.chip'); if (!b) return;
+      league = b.dataset.l; q = ''; $('#cq').value = '';
+      $('#lchips').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b));
+      load();
+    };
+    let deb; $('#cq').oninput = e => { clearTimeout(deb); deb = setTimeout(() => { q = e.target.value.trim(); load(); }, 180); };
+    $('#cNext').onclick = async () => {
+      if (!sel) return;
+      draft.club = sel;
+      draft.theme ||= await teamColors(sel);
+      const pr = { ...(profile() || {}), ...draft };
+      saveProfile(pr); applyTheme(pr.theme);
+      addFav(sel);
+      if (opts.edit) toast('Neue Vereinsfarben übernommen');
+      next();
+    };
+    if (sel) preview(sel);
+    load();
+  }
+
+  /* --- 3. National team --- */
+  function nation(){
+    let sel = draft.nation || null;
+    frame(`
+      <h1>Deine Nationalmannschaft</h1>
+      <p class="lead">Für Länderspiele, EM und WM.</p>
+      <label class="search glass flat" style="margin:0 0 14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="nq" type="search" placeholder="Land suchen" autocomplete="off">
+      </label>
+      <div id="ngrid">${skeleton(3, 100)}</div>
+      <div class="cta"><button class="btn block" id="nNext" ${sel ? '' : 'disabled'}>${opts.edit ? 'Speichern' : 'Weiter'}</button></div>`, { step:'nation' });
+    let all = [];
+    const grid = () => {
+      const s2 = norm($('#nq').value.trim());
+      const list = s2 ? all.filter(t => norm(t.name + ' ' + t.en).includes(s2)) : all;
+      $('#ngrid').innerHTML = list.length ? `<div class="pick-grid">${list.map(t => `
+        <button class="pick nat glass flat ${sel?.id === t.id ? 'sel' : ''}" data-id="${esc(t.id)}">${img(t.logo, '', t.name)}<span>${esc(t.name)}</span></button>`).join('')}</div>`
+        : emptyBox('🔍', 'Kein Land gefunden');
+      $('#ngrid').querySelectorAll('.pick').forEach(b => b.onclick = () => {
+        const t = all.find(x => x.id === b.dataset.id);
+        sel = { id: t.id, slug: 'nation', name: t.name, logo: t.logo };
+        $('#ngrid').querySelectorAll('.pick').forEach(x => x.classList.toggle('sel', x === b));
+        $('#nNext').disabled = false;
+      });
+    };
+    buildNationIndex().then(list => { all = list; grid(); }).catch(err => $('#ngrid').innerHTML = errorBox(err, false));
+    $('#nq').oninput = () => all.length && grid();
+    $('#nNext').onclick = () => {
+      if (!sel) return;
+      draft.nation = sel;
+      saveProfile({ ...(profile() || {}), ...draft });
+      addFav(sel);
+      if (opts.edit) toast('Nationalmannschaft gespeichert');
+      next();
+    };
+  }
+
+  /* --- 4. Done --- */
+  function done(){
+    frame(`
+      <div style="text-align:center;flex:1;display:flex;flex-direction:column">
+        <div class="done-logos">${draft.club ? img(draft.club.logo, '', draft.club.name) : ''}${draft.nation ? img(draft.nation.logo, 'nat', draft.nation.name) : ''}</div>
+        <h1>Hallo ${esc((draft.name || '').split(' ')[0])}!</h1>
+        <p class="lead">${esc(draft.club?.name || '')}${draft.nation ? ' und ' + esc(draft.nation.name) : ''} sind gespeichert.<br>Arenly trägt jetzt deine Vereinsfarben.</p>
+        ${currentTheme ? `<div class="swatch-row glass flat" style="justify-content:center;align-self:center">Deine Farben<span class="sw" style="margin-left:6px"><i style="background:${esc(currentTheme.p)}"></i><i style="background:${esc(currentTheme.s)}"></i></span></div>` : ''}
+        <div class="cta"><button class="btn block" id="go">Los geht's</button></div>
+      </div>`, { back:false, step:'done' });
+    $('#go').onclick = () => { location.hash = '#/'; finish(); };
+  }
+
+  show();
+}
+function addFav(t){ if (!isFav(t.id)) toggleFav(t); }
+
+/* =============================================================
+   INTRO  →  ONBOARDING / APP
+   ============================================================= */
+function runIntro(){
+  return new Promise(resolve => {
+    const intro = $('#intro'), vid = $('#introVideo');
+    let ended = false, fallbackTimer;
+    const end = () => {
+      if (ended) return; ended = true;
+      clearTimeout(fallbackTimer); clearTimeout(guard);
+      intro.classList.add('gone');
+      setTimeout(() => { try { vid.pause(); } catch {} intro.remove(); }, 800);
+      resolve();
+    };
+    const useFallback = () => {
+      if (ended || intro.classList.contains('fb')) return;
+      intro.classList.add('fb');
+      fallbackTimer = setTimeout(end, 1500);
+    };
+    $('#introSkip').onclick = end;
+    vid.addEventListener('playing', () => { clearTimeout(guard); vid.classList.add('playing'); });
+    vid.addEventListener('ended', end);
+    vid.addEventListener('error', useFallback, true);
+    vid.querySelectorAll('source').forEach((src, i, arr) => i === arr.length - 1 && src.addEventListener('error', useFallback));
+    const guard = setTimeout(() => { if (vid.paused || vid.readyState < 2) useFallback(); }, 1800);  // autoplay blocked / slow
+    // no intro video in assets/ yet → show the animated logo right away
+    Promise.all(['assets/intro.webm', 'assets/intro.mp4'].map(u => fetch(u, { method:'HEAD' }).then(r => r.ok).catch(() => false)))
+      .then(found => { if (!found.some(Boolean)) useFallback(); });
+    const pr = vid.play?.(); pr?.catch?.(useFallback);
+  });
+}
+
+applyTheme(profile()?.theme);
 route();
-setTimeout(() => { const s = $('#splash'); s.classList.add('gone'); setTimeout(() => s.remove(), 900); }, 650);
+runIntro().then(() => {
+  const pr = profile();
+  if (!pr) startOnboarding(['register', 'club', 'nation', 'done']);
+  else if (!pr.club) startOnboarding(['club', 'nation', 'done']);
+  else if (!pr.nation) startOnboarding(['nation', 'done']);
+  else document.body.classList.remove('locked');
+});
 </script>
 </body>
 </html>
