@@ -564,7 +564,6 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
     <source src="assets/intro.mp4" type="video/mp4">
   </video>
   <div class="fallback"><img src="assets/icon-rounded-256.png" alt=""><span>Arenly</span></div>
-  <button class="skip" id="introSkip">Überspringen</button>
   <button class="sound" id="introSound" hidden aria-label="Ton einschalten">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="w1" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="w2" d="M18.5 5.5a9 9 0 0 1 0 13"/><path class="x" d="m16 9 6 6m0-6-6 6"/></svg>
     <span>Ton an</span>
@@ -2111,7 +2110,6 @@ function runIntro(){
       snd.setAttribute('aria-label', on ? 'Ton ausschalten' : 'Ton einschalten');
       store.set('fb.introSound', on);
     };
-    $('#introSkip').onclick = end;
     snd.onclick = () => { setSound(vid.muted); if (vid.paused) vid.play().catch(() => {}); };
     vid.addEventListener('playing', () => {
       started = true; clearTimeout(guard); vid.classList.add('playing');

@@ -30,7 +30,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 
 ## Start-Ablauf
 
-1. **Intro-Video:** `assets/intro.mp4` (1080×1920, 5,2 s): Bälle verschiedener Sportarten verschmelzen zum Arenly-„A“. Es läuft beim Start im Vollbild und lässt sich oben rechts **überspringen**. Hat ein Video eine Tonspur, erscheint oben links **„Ton an“**, da Browser nur stumm automatisch abspielen. Bei sehr langsamer Verbindung oder im Stromsparmodus erscheint nach 4 s das animierte Logo. Ein neues Video einfach als `assets/intro.mp4` ablegen (H.264, Hochformat).
+1. **Intro-Video:** `assets/intro.mp4` (1080×1920, 5,2 s): Bälle verschiedener Sportarten verschmelzen zum Arenly-„A“. Es läuft beim Start im Vollbild. Hat ein Video eine Tonspur, erscheint oben links **„Ton an“**, da Browser nur stumm automatisch abspielen. Bei sehr langsamer Verbindung oder im Stromsparmodus erscheint nach 4 s das animierte Logo. Ein neues Video einfach als `assets/intro.mp4` ablegen (H.264, Hochformat).
 2. **Registrierung:** Name, E-Mail und Passwort, mit Prüfung der Eingaben.
 3. **Lieblingsverein:** Auswahl über Liga-Chips oder Suche. Die App übernimmt sofort die Vereinsfarben als Live-Vorschau.
 4. **Nationalmannschaft:** über 200 Länder, die beliebtesten oben, mit Suche.
