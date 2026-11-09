@@ -1,5 +1,5 @@
 ---
-name: apple-design
+name: apple-designe
 description: Gestaltet Oberflächen im Stil von Apple (Human Interface Guidelines, iOS/macOS/visionOS-Ästhetik). Verwenden, wann immer eine neue Idee, Seite, App, Komponente oder ein Redesign umgesetzt wird – auch ohne dass "Apple" erwähnt wird, sofern der Nutzer nichts anderes vorgibt. Triggers: "Apple-Look", "wie iOS", "clean", "minimalistisch", "neue Idee umsetzen", "UI bauen", "Design", "App", "Seite", "Redesign".
 ---
 
