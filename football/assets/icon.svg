@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Arenly app icon: a glass "A" (arena arch) circled by a stadium-oval orbit with a glowing ball.
+       Sport-agnostic: arch = arena/"A", oval = stadium/track, dot = ball/live. -->
+  <defs>
+    <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(230 180) scale(640)">
+      <stop offset="0" stop-color="#2f8bff"/><stop offset="1" stop-color="#2f8bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(900 420) scale(560)">
+      <stop offset="0" stop-color="#b44cf0"/><stop offset="1" stop-color="#b44cf0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(330 1000) scale(560)">
+      <stop offset="0" stop-color="#1fcf9a"/><stop offset="1" stop-color="#1fcf9a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <!-- glass body -->
+    <linearGradient id="glass" x1="250" y1="200" x2="780" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".92"/>
+      <stop offset=".5" stop-color="#e3ecff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#efe2ff" stop-opacity=".42"/>
+    </linearGradient>
+    <!-- specular rim -->
+    <linearGradient id="rim" x1="250" y1="200" x2="780" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".45" stop-color="#fff" stop-opacity=".35"/>
+      <stop offset=".75" stop-color="#fff" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="ringGlass" x1="180" y1="480" x2="850" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".85"/>
+      <stop offset=".55" stop-color="#fff" stop-opacity=".40"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".70"/>
+    </linearGradient>
+    <radialGradient id="ball" cx=".35" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff6c8"/>
+      <stop offset=".35" stop-color="#ffd23f"/>
+      <stop offset="1" stop-color="#ff6b3d"/>
+    </radialGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="60"/></filter>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#020414" flood-opacity=".55"/>
+    </filter>
+    <clipPath id="back"><rect x="0" y="0" width="1024" height="585"/></clipPath>
+    <clipPath id="front"><rect x="0" y="585" width="1024" height="439"/></clipPath>
+  </defs>
+
+  <!-- background -->
+  <rect width="1024" height="1024" fill="#0a0e22"/>
+  <g filter="url(#blur)">
+    <rect width="1024" height="1024" fill="url(#g1)"/>
+    <rect width="1024" height="1024" fill="url(#g2)"/>
+    <rect width="1024" height="1024" fill="url(#g3)"/>
+  </g>
+  <rect width="1024" height="1024" fill="url(#sheen)"/>
+
+  <g transform="rotate(-14 512 585)">
+    <!-- ring, back half (behind the A) -->
+    <g clip-path="url(#back)" opacity=".75">
+      <ellipse cx="512" cy="585" rx="338" ry="112" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="50"/>
+      <ellipse cx="512" cy="585" rx="338" ry="112" fill="none" stroke="url(#ringGlass)" stroke-width="44"/>
+    </g>
+  </g>
+
+  <!-- the A (arena arch) -->
+  <g filter="url(#shadow)">
+    <path d="M300 812 L512 238 L724 812" fill="none" stroke="url(#rim)" stroke-width="132" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M300 812 L512 238 L724 812" fill="none" stroke="url(#glass)" stroke-width="122" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- specular highlight on the left leg -->
+    <path d="M336 690 L478 306" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="9" stroke-linecap="round"/>
+  </g>
+
+  <g transform="rotate(-14 512 585)">
+    <!-- ring, front half (in front of the A) -->
+    <g clip-path="url(#front)" filter="url(#shadow)">
+      <ellipse cx="512" cy="585" rx="338" ry="112" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="50"/>
+            <ellipse cx="512" cy="585" rx="338" ry="112" fill="none" stroke="url(#ringGlass)" stroke-width="44"/>
+    </g>
+    <!-- the ball / live dot -->
+    <circle cx="771" cy="657" r="58" fill="#ff8a3d" opacity=".9" filter="url(#glow)"/>
+    <circle cx="771" cy="657" r="44" fill="url(#ball)"/>
+    <ellipse cx="757" cy="640" rx="16" ry="10" fill="#fff" opacity=".85"/>
+  </g>
+</svg>

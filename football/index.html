@@ -6,11 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fußball">
+<meta name="apple-mobile-web-app-title" content="Arenly">
 <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)">
-<title>Fußball</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<title>Arenly</title>
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -184,6 +187,23 @@ img{ display:block; }
 .section-h{ display:flex; align-items:baseline; justify-content:space-between; margin: 26px 8px 10px; }
 .section-h h2{ font-size: 21px; font-weight: 750; letter-spacing:-.02em; }
 .section-h span{ color: var(--text-3); font-size: 13px; font-weight:600; }
+
+/* brand */
+.brand{ display:flex; align-items:center; gap:14px; margin: 6px 4px 4px; }
+.brand-icon{ width:52px; height:52px; border-radius:12px; flex:none; box-shadow: 0 8px 22px -8px rgba(0,0,0,.55), inset 0 0 0 .5px rgba(255,255,255,.3); }
+.brand .large-title{ margin:0; }
+.brand-sport{ display:inline-flex; align-items:center; gap:6px; padding: 5px 12px; border-radius:999px; font-size:13px; font-weight:700; margin: 10px 4px 0; }
+.nav-brand{ width:28px; height:28px; border-radius:7px; }
+.foot img{ width:22px; height:22px; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:6px; opacity:.85; }
+
+/* launch splash */
+.splash{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; background: #0a0e22; transition: opacity .6s var(--ease) .1s, visibility 0s .7s; }
+.splash img{ width:112px; height:112px; border-radius:25px; box-shadow: 0 24px 60px -16px rgba(0,0,0,.7); animation: splashIn .7s var(--spring) both; }
+.splash span{ position:absolute; bottom: calc(18% + var(--safe-b)); font-weight:800; font-size:22px; letter-spacing:-.02em; color:#fff; opacity:0; animation: fadeUp .6s var(--ease) .25s forwards; }
+.splash.gone{ opacity:0; visibility:hidden; }
+.splash.gone img{ transform: scale(1.35); filter: blur(6px); transition: transform .6s var(--ease), filter .6s; }
+@keyframes splashIn{ from{ transform: scale(.6); opacity:0; } to{ transform:none; opacity:1; } }
+@keyframes fadeUp{ from{ transform: translateY(10px); opacity:0; } to{ transform:none; opacity:.9; } }
 
 /* list (inset grouped, glass) */
 .list{ border-radius: var(--r-lg); overflow:hidden; }
@@ -451,6 +471,8 @@ img{ display:block; }
   <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
 </div>
 <div class="grain" aria-hidden="true"></div>
+
+<div class="splash" id="splash"><img src="assets/icon-rounded-256.png" alt=""><span>Arenly</span></div>
 
 <main id="app"><div id="view"></div></main>
 
@@ -732,9 +754,13 @@ function renderHome(){
   setAccent();
   const f = favs();
   view.innerHTML = `<div class="view">
-    ${navBar('Fußball', { back:false })}
-    <h1 class="large-title">Fußball</h1>
-    <p class="subtitle">Ligen, Tabellen, Teams & Spiele</p>
+    ${navBar('Arenly', { back:false })}
+    <div class="brand">
+      <img class="brand-icon" src="assets/icon-rounded-256.png" alt="Arenly">
+      <h1 class="large-title">Arenly</h1>
+    </div>
+    <span class="brand-sport glass flat">⚽ Fußball</span>
+    <p class="subtitle" style="margin-top:10px">Ligen, Tabellen, Teams & Spiele</p>
     ${f.length ? `
       <div class="section-h"><h2>Meine Teams</h2><span>${f.length}</span></div>
       <div class="hscroll">${f.map(t => `
@@ -749,7 +775,7 @@ function renderHome(){
             <div><div class="tl-name">${esc(l.name)}</div><div class="tl-sub">${esc(l.country)}</div></div>
           </a>`).join('')}
       </div>`).join('')}
-    <p class="foot">Daten: ESPN · Aktualisiert live</p>
+    <p class="foot"><img src="assets/icon-rounded-256.png" alt="">Arenly · Daten: ESPN</p>
   </div>`;
 }
 
@@ -1334,6 +1360,7 @@ window.addEventListener('hashchange', () => route());
 window.addEventListener('scroll', () => { $('#nav')?.classList.toggle('scrolled', scrollY > 30); }, { passive:true });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 route();
+setTimeout(() => { const s = $('#splash'); s.classList.add('gone'); setTimeout(() => s.remove(), 900); }, 650);
 </script>
 </body>
 </html>

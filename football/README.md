@@ -1,6 +1,8 @@
-# ⚽ Fußball – Liquid Glass
+# Arenly
 
-Eine Fußball-Web-App im Stil von Apples *Liquid Glass*: alle großen Ligen, Tabellen, Teams, Kader und Spiele, live und ohne API-Key.
+<img src="assets/icon-rounded-256.png" width="96" alt="Arenly App-Icon">
+
+Eine Sport-Web-App (aktuell: Fußball) im Stil von Apples *Liquid Glass*: alle großen Ligen, Tabellen, Teams, Kader und Spiele, live und ohne API-Key.
 
 ## Starten
 
@@ -25,6 +27,13 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 | **Spiele** | Alle Ligen für einen Tag (−4 bis +4 Tage), Live-Zähler, deine Favoriten zuerst |
 | **Suche** | Teams (deutsch oder englisch) und Ligen |
 | **Favoriten** | Teams mit ★ markieren (wird lokal im Browser gespeichert) |
+
+## Marke & Icon
+
+- **Name:** Arenly (von *Arena*): international aussprechbar und an keine Sportart gebunden
+- **Icon** (`assets/icon.svg`): ein Glas-„A“ als Arena-Bogen, umkreist von einem Stadion-Oval mit leuchtendem Ball. Das Oval steht für Stadion und Laufbahn, der Ball für jede Sportart und für „live“.
+- **Exporte** in `assets/`: `icon-1024.png` (App Store), `icon-512/192.png`, `icon-maskable-512.png` (Android), `apple-touch-icon.png` (iOS-Home-Bildschirm), `favicon-64.png`, `icon-rounded-256.png` (in der App)
+- **In der App:** Favicon, Home-Bildschirm-Icon (`manifest.webmanifest`), Start-Splash, Marke auf der Startseite und im Footer
 
 ## Design
 
