@@ -521,7 +521,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .tm-tag.bot{ padding: 10px 6px 4px; }
 .tm-tag img{ width:22px; height:22px; object-fit:contain; }
 .tm-tag span{ margin-left:auto; color: var(--text-2); font-weight:700; font-size:13px; font-variant-numeric: tabular-nums; }
-.pl{ position:absolute; transform: translate(-50%, -50%); display:flex; flex-direction:column; align-items:center; width:70px; z-index:2;
+.pl{ position:absolute; transform: translate(-50%, -50%); display:flex; flex-direction:column; align-items:center; width: var(--pw, 70px); z-index:2;
   animation: plIn .5s var(--spring) both; cursor:pointer; }
 @keyframes plIn{ from{ opacity:0; transform: translate(-50%, -30%) scale(.6); } }
 .pl .ph{ position:relative; width:var(--ps, 38px); height:var(--ps, 38px); border-radius:50%;
@@ -540,7 +540,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .pl .bdg i.card{ min-width:11px; width:11px; height:15px; border-radius:2.5px; padding:0; }
 .pl .bdg i.y{ background:#ffd60a; } .pl .bdg i.r{ background:#ff3b30; }
 .pl .bdg i.out{ background:#ff453a; color:#fff; }
-.pl .pn{ margin-top:4px; max-width:70px; padding: 1px 5px; border-radius:6px; font-size:10.5px; font-weight:700; color:#fff; line-height:1.25;
+.pl .pn{ margin-top:4px; max-width:100%; padding: 1px 5px; border-radius:6px; font-size: var(--fs, 10.5px); height:15px; box-sizing:border-box; font-weight:700; color:#fff; line-height:1.25;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: rgba(0,0,0,.3); text-shadow: 0 1px 2px rgba(0,0,0,.4); }
 .av{ position:relative; width:38px; height:38px; border-radius:50%; flex:none; display:grid; place-items:center; overflow:hidden;
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--tc) 70%, #fff), var(--tc)); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6); }
@@ -688,7 +688,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-09T23:31';
+const APP_BUILD = '2026-11-09T23:47';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1501,7 +1501,7 @@ function openPlayer(a, team){
   ].filter(x => x[1]);
   $('#sheet').innerHTML = `<div class="grabber"></div>
     <div class="ply-hero">
-      <div class="av ply-photo"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(team.displayName || '')}"><b>${esc(a.jersey || '–')}</b></div>
+      <div class="av ply-photo"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(team.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc(a.jersey || '–')}</b></div>
       <div><h3>${esc(a.displayName)}</h3>
       <p>${a.flag?.href ? `<img class="flag" src="${esc(a.flag.href)}" alt="">` : ''}${esc(team.shortDisplayName || team.displayName || '')}</p></div>
     </div>
@@ -1666,41 +1666,70 @@ function statsView(teams, homeId, m){
 }
 
 /* ---------- player photos (TheSportsDB cut-outs, cached per ESPN athlete id) ---------- */
-const PHOTO_KEY = 'fb.photos';
+const PHOTO_KEY = 'fb.photos2';                     // v2: verified names + last-name fallback
 const photoMem = store.get(PHOTO_KEY, {});
-const photoQueue = [], photoStamps = [];
-let photoActive = 0, photoSaveT;
-function playerPhoto(id, name, team){
+const photoQueue = [];
+let photoWorkers = 0, photoSaveT, tsdbStamps = [];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fold = x => norm(String(x || '').replace(/ß/g, 'ss').replace(/[ðÐ]/g, 'd').replace(/[þÞ]/g, 'th').replace(/[øØ]/g, 'o').replace(/[æÆ]/g, 'ae'))
+  .replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+function samePerson(cand, name){
+  const a = fold(cand), b = fold(name); if (!a || !b) return false; if (a === b) return true;
+  const aw = a.split(' '), bw = b.split(' ');
+  return aw.includes(bw[bw.length - 1]) && (bw.length === 1 || aw.some(w => w[0] === bw[0][0]));
+}
+function sameTeam(cand, team){
+  const a = fold(cand); if (!a) return false;
+  const words = fold(team).split(' ').filter(w => w.length >= 4 && !/^(club|city|united|sport|verein|1846|1899|1904)$/.test(w));
+  return words.some(w => a.includes(w));
+}
+async function tsdbSearch(q){                       // free API: stay below ~30 requests per minute
+  for (;;){
+    const now = Date.now(); tsdbStamps = tsdbStamps.filter(t => now - t < 60000);
+    if (tsdbStamps.length < 25) break;
+    await sleep(60050 - (now - tsdbStamps[0]));
+  }
+  tsdbStamps.push(Date.now());
+  const r = await fetch(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${encodeURIComponent(q)}`);
+  if (r.status === 429){ for (let i = 0; i < 25; i++) tsdbStamps.push(Date.now()); return tsdbSearch(q); }
+  const d = await r.json();
+  return (d.player || []).filter(x => x.strSport === 'Soccer');
+}
+const tsdbImg = x => x && (x.strCutout || x.strThumb || x.strRender);
+async function lookupPhoto({ name, team, fallback }){
+  try{
+    const l1 = await tsdbSearch(name);
+    let hit = l1.find(x => tsdbImg(x) && samePerson(x.strPlayer, name));
+    if (!hit){                                       // spelling variants: search the surname, keep the one from this club
+      const last = fold(name).split(' ').pop();
+      if (last && last.length >= 3){
+        const l2 = await tsdbSearch(last);
+        hit = l2.find(x => tsdbImg(x) && sameTeam(x.strTeam, team) && fold(x.strPlayer).split(' ').includes(last))
+           || l2.find(x => tsdbImg(x) && samePerson(x.strPlayer, name));
+      }
+    }
+    return hit ? tsdbImg(hit) + '/small' : (fallback || null);
+  } catch { return fallback || null; }
+}
+function playerPhoto(id, name, team, fallback){
   const c = photoMem[id];
-  if (c && (c.u || Date.now() - c.t < 7 * 864e5)) return Promise.resolve(c.u || null);
-  return new Promise(res => { photoQueue.push({ id, name, team, res }); pumpPhotos(); });
+  if (c && (c.u || Date.now() - c.t < 7 * 864e5)) return Promise.resolve(c.u || fallback || null);
+  return new Promise(res => { photoQueue.push({ id, name, team, fallback, res }); pumpPhotos(); });
 }
 function pumpPhotos(){
-  while (photoActive < 3 && photoQueue.length){
-    const now = Date.now();
-    while (photoStamps.length && now - photoStamps[0] > 60000) photoStamps.shift();
-    if (photoStamps.length >= 25){ setTimeout(pumpPhotos, 60050 - (now - photoStamps[0])); return; }   // free API: ~30 requests / minute
-    const job = photoQueue.shift(); photoActive++; photoStamps.push(now);
-    fetch(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${encodeURIComponent(job.name)}`)
-      .then(r => { if (r.status === 429) throw 429; return r.json(); })
-      .then(d => {
-        const ps = (d.player || []).filter(x => x.strSport === 'Soccer');
-        const t = norm(job.team || '');
-        const pl = ps.find(x => t && (norm(x.strTeam).includes(t) || t.includes(norm(x.strTeam)))) || (ps.length === 1 ? ps[0] : ps[0]);
-        const raw = pl ? (pl.strCutout || pl.strThumb || pl.strRender) : null;
-        const u = raw ? raw + '/small' : null;
-        photoMem[job.id] = { u, t: Date.now() };
-        clearTimeout(photoSaveT); photoSaveT = setTimeout(() => store.set(PHOTO_KEY, photoMem), 800);
-        job.res(u);
-      })
-      .catch(e => { if (e === 429){ photoQueue.unshift(job); for (let i = 0; i < 25; i++) photoStamps.push(Date.now()); } else job.res(null); })
-      .finally(() => { photoActive--; setTimeout(pumpPhotos, 0); });
+  while (photoWorkers < 3 && photoQueue.length){
+    const job = photoQueue.shift(); photoWorkers++;
+    lookupPhoto(job).then(u => {
+      photoMem[job.id] = { u: u && u !== job.fallback ? u : null, t: Date.now() };
+      clearTimeout(photoSaveT); photoSaveT = setTimeout(() => store.set(PHOTO_KEY, photoMem), 800);
+      job.res(u);
+    }).finally(() => { photoWorkers--; pumpPhotos(); });
   }
 }
 /* fill every <img data-pid> inside root with the player's photo once it is known */
 function hydratePhotos(root){
   root.querySelectorAll('img[data-pid]').forEach(im => {
-    playerPhoto(im.dataset.pid, im.dataset.pname, im.dataset.pteam).then(u => {
+    playerPhoto(im.dataset.pid, im.dataset.pname, im.dataset.pteam, im.dataset.pfb).then(u => {
       if (!u || !im.isConnected) return;
       im.onload = () => im.classList.add('ok'); im.onerror = () => im.remove(); im.src = u;
     });
@@ -1780,27 +1809,54 @@ function lineups(rosters, keyEvents = [], m = null){
   if (Math.abs(lumOf(hc) - lumOf(ac)) < .12 && hueDist(rgbHsl(...hexRgb(hc))[0], rgbHsl(...hexRgb(ac))[0]) < 40) ac = lumOf(hc) > .5 ? '#1c1c1e' : '#f2f2f7';
 
   const teamName = r => tn(r.team?.displayName || '');
-  const player = (p, x, y, r, tc, size) => {
+  /* geometry in pixels so that circles and names can never overlap:
+     row gap ≥ block height (photo + name), column gap ≥ name width, nothing leaves the pitch */
+  const W = Math.max(260, Math.min(innerWidth, 760) - 32 - 20), NAME_H = 15 + 4, MIN_PS = 28;
+  const fit = (n, H, minPs = MIN_PS) => {
+    for (let ps = 42; ps >= minPs; ps--){
+      const block = ps + NAME_H;
+      const gkY = 100 - ((block / 2 + 6) / H) * 100;           // keeper fully inside the pitch
+      const gap = (gkY - 56) / Math.max(1, n);                 // front row stays at 56 % (opponent at 44 %)
+      if (gap / 100 * H >= block + 7) return { ps, gkY, gap };
+    }
+    return null;
+  };
+  // the pitch grows taller (instead of shrinking photos further) when a formation needs more rows than fit
+  const rowsOf = r => r ? formationLines(r.roster.filter(p => p.starter), r.formation).lines.length : 0;
+  const fitsAll = (H, minPs) => fit(rowsOf(home), H, minPs) && (!away || fit(rowsOf(away), H, minPs));
+  let H = W * 1.7;
+  // prefer big photos on a slightly taller pitch; shrink photos only when the pitch would get too long
+  for (const minPs of [38, 34, 30, MIN_PS]){
+    let h = W * 1.7;
+    while (!fitsAll(h, minPs) && h < W * (minPs === MIN_PS ? 3 : minPs === 34 ? 2.3 : 2.1)) h *= 1.03;
+    if (fitsAll(h, minPs)){ H = h; break; }
+  }
+  const geo = n => fit(n, H) || fit(n, H * 1.2);
+  const player = (p, x, y, r, tc, size, pw = 76) => {
     const a = p.athlete || {}, e = ev[a.id] || {};
     const b = [
       e.g ? `<i>⚽${e.g > 1 ? e.g : ''}</i>` : '', e.og ? `<i title="Eigentor">ET</i>` : '',
       e.r ? `<i class="card r"></i>` : e.y ? `<i class="card y"></i>` : '',
       p.subbedOut ? `<i class="out">↓</i>` : '',
     ].join('');
-    return `<div class="pl" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--tc:${tc};--tn:${readableOn(tc)};--ps:${size}px" data-ply="${esc(a.id)}">
-      <div class="ph"><div class="face"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}"></div>
+    return `<div class="pl" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--tc:${tc};--tn:${readableOn(tc)};--ps:${size}px;--pw:${pw.toFixed(0)}px;--fs:${pw < 58 ? 9.5 : 10.5}px" data-ply="${esc(a.id)}">
+      <div class="ph"><div class="face"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"></div>
         <span class="no">${esc(p.jersey || '')}</span><b class="num">${esc(p.jersey || '')}</b>${b ? `<span class="bdg">${b}</span>` : ''}</div>
       <div class="pn">${esc(shortName(a.displayName))}</div></div>`;
   };
   const half = (r, tc, top) => {
     const { keeper, lines } = formationLines(r.roster.filter(p => p.starter), r.formation);
-    const n = lines.length, size = n >= 5 ? 32 : 38;
+    const n = lines.length;
+    const widest = Math.max(1, ...lines.map(l => l.length));
+    const colGap = k => k > 1 ? Math.min(22, 80 / (k - 1)) : 0;
+    const g = geo(n);
+    const size = Math.min(g.ps, widest > 1 ? Math.floor(colGap(widest) / 100 * W) - 8 : 42);
     const place = (x, y) => top ? [100 - x, 100 - y] : [x, y];       // away team attacks downwards
-    let html = keeper ? player(keeper, ...place(50, 94.5), r, tc, size) : '';
+    let html = keeper ? player(keeper, ...place(50, g.gkY), r, tc, size, 84) : '';
     lines.forEach((line, i) => {
-      const y = n === 1 ? 70 : 84 - i * (28.5 / (n - 1));
-      const k = line.length, gap = k > 1 ? Math.min(21, 78 / (k - 1)) : 0;
-      line.forEach((p, j) => { html += player(p, ...place(50 + (j - (k - 1) / 2) * gap, y), r, tc, size); });
+      const y = g.gkY - (i + 1) * g.gap;
+      const k = line.length, gap = colGap(k), pw = k > 1 ? Math.min(84, gap / 100 * W - 4) : 84;
+      line.forEach((p, j) => { html += player(p, ...place(50 + (j - (k - 1) / 2) * gap, y), r, tc, size, pw); });
     });
     return html;
   };
@@ -1817,7 +1873,7 @@ function lineups(rosters, keyEvents = [], m = null){
       <div class="list glass">${list.sort((a, b) => (b.subbedIn ? 1 : 0) - (a.subbedIn ? 1 : 0)).map(p => {
         const a = p.athlete || {}, e = ev[a.id] || {};
         return `<div class="row" data-ply="${esc(a.id)}" style="cursor:pointer">
-          <div class="av" style="--tc:${tc};--tn:${readableOn(tc)}"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}"><b>${esc(p.jersey || '')}</b></div>
+          <div class="av" style="--tc:${tc};--tn:${readableOn(tc)}"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc(p.jersey || '')}</b></div>
           <div class="grow"><div class="t1">${esc(a.displayName)}</div><div class="t2">${esc(posDE(p.position))}</div></div>
           ${e.g ? `<span>⚽${e.g > 1 ? '×' + e.g : ''}</span>` : ''}${e.r ? '<span class="card-r"></span>' : e.y ? '<span class="card-y"></span>' : ''}
           ${p.subbedIn ? '<span class="sub-i" title="eingewechselt">↑</span>' : ''}
@@ -1826,7 +1882,7 @@ function lineups(rosters, keyEvents = [], m = null){
 
   return `<div class="pitch-wrap glass">
       ${away ? tag(away, 'top') : ''}
-      <div class="pitch">${lines}${away ? half(away, ac, true) : ''}${half(home, hc, false)}</div>
+      <div class="pitch" style="aspect-ratio:${W.toFixed(0)} / ${H.toFixed(0)}">${lines}${away ? half(away, ac, true) : ''}${half(home, hc, false)}</div>
       ${tag(home, 'bot')}
     </div>
     ${bench(home, hc)}${away ? bench(away, ac) : ''}`;
@@ -1844,7 +1900,7 @@ function openLineupPlayer(p, r, tc, e){
   ].filter(x => x[1]);
   $('#sheet').innerHTML = `<div class="grabber"></div>
     <div class="ply-hero">
-      <div class="av ply-photo" style="--tc:${tc};--tn:${readableOn(tc)}"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}"><b>${esc(p.jersey || '')}</b></div>
+      <div class="av ply-photo" style="--tc:${tc};--tn:${readableOn(tc)}"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(r.team?.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc(p.jersey || '')}</b></div>
       <div><h3>${esc(a.displayName)}</h3><p>${img(r.team?.logos?.[0]?.href, 'logo xs', '')}${esc(tn(r.team?.displayName || ''))}</p></div>
     </div>
     <div class="kv">${kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join('')}</div>

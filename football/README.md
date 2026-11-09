@@ -67,7 +67,16 @@ Arenly nutzt **Supabase** für Registrierung, Anmeldung und das Profil (Verein, 
 
 ### Spielerfotos
 
-Freigestellte Fotos von [TheSportsDB](https://www.thesportsdb.com) (kostenlose API, ca. 30 Anfragen pro Minute). Sie werden pro Spieler im Gerät zwischengespeichert, beim ersten Öffnen einer Aufstellung laden die Bank-Fotos daher etwas später. Fehlt ein Foto, erscheint die Rückennummer in den Vereinsfarben.
+Freigestellte Fotos von [TheSportsDB](https://www.thesportsdb.com) (kostenlose API, ca. 30 Anfragen pro Minute):
+
+- Suche nach vollem Namen; der Treffer wird gegen den Spielernamen geprüft (auch ß/Akzente), damit nie ein falsches Foto erscheint.
+- Bei abweichender Schreibweise wird nach dem Nachnamen gesucht und der Spieler über den Verein zugeordnet.
+- Als Reserve dient das ESPN-Foto, sonst die Rückennummer in den Vereinsfarben.
+- Abdeckung im Test: rund 92–100 % je nach Liga (Bundesliga 100 %). Die Startelf lädt zuerst, die Bank wegen des Limits innerhalb von 1–2 Minuten. Danach ist jedes Foto im Gerät gespeichert.
+
+### Spielfeld ohne Überlappung
+
+Fotogröße, Namensbreite und Reihenabstände werden pro Formation berechnet: Der Reihenabstand ist immer größer als Foto plus Name, der Spaltenabstand größer als die Namensbreite. Reicht der Platz nicht, wird das Feld höher, statt die Fotos zu verkleinern. Geprüft automatisch für 9 Formationen (u. a. 4-2-3-1, 4-3-3, 3-5-2, 5-3-2, 4-1-2-1-2) auf 320, 390 und 430 px Breite.
 
 ## Updates
 
