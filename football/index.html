@@ -594,6 +594,32 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .ply-photo{ width:86px; height:86px; --tc: var(--accent); --tn:#fff; }
 .ply-photo b{ font-size:26px; }
 
+/* ---------- player page ---------- */
+.ply-big{ width:118px; height:118px; margin: 0 auto 14px; --tn:#fff; box-shadow: 0 16px 40px -14px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.7); }
+.ply-big b{ font-size:36px; }
+.stat-tiles{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+.stat-tiles div{ padding: 14px 8px 12px; border-radius: var(--r-md); text-align:center; }
+.stat-tiles b{ display:block; font-size:26px; font-weight:800; letter-spacing:-.02em; font-variant-numeric: tabular-nums; }
+.stat-tiles small{ font-size:11px; font-weight:700; color: var(--text-2); text-transform:uppercase; letter-spacing:.05em; }
+.glog{ display:flex; align-items:center; gap:10px; padding: 11px 14px; position:relative; }
+.glog + .glog::before{ content:''; position:absolute; top:0; left:14px; right:14px; height:1px; background: var(--sep); }
+.glog .res{ width:26px; height:26px; border-radius:8px; display:grid; place-items:center; font-weight:800; font-size:12px; color:#fff; flex:none; }
+.glog .res.W{ background:#30d158; } .glog .res.D{ background:#8e8e93; } .glog .res.L{ background:#ff453a; }
+.glog .opp{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; }
+.glog .opp img{ width:22px; height:22px; object-fit:contain; flex:none; }
+.glog .opp span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; font-size:14px; }
+.glog .when{ font-size:11.5px; color: var(--text-3); }
+.glog .sc{ font-weight:800; font-variant-numeric: tabular-nums; font-size:14px; }
+.glog .chips{ display:flex; gap:4px; }
+.glog .chips i{ font-style:normal; font-size:11.5px; font-weight:800; padding: 3px 7px; border-radius:999px; background: var(--glass-strong); }
+.career{ border-radius: var(--r-lg); overflow:hidden; }
+.career .cr{ display:grid; grid-template-columns: 58px 1fr 34px 34px 34px; gap:6px; align-items:center; padding: 10px 14px; font-size:14px; font-variant-numeric: tabular-nums; position:relative; }
+.career .cr + .cr::before{ content:''; position:absolute; top:0; left:14px; right:14px; height:1px; background: var(--sep); }
+.career .cr.head{ font-size:11px; font-weight:700; color: var(--text-3); text-transform:uppercase; letter-spacing:.05em; }
+.career .cr .c{ text-align:center; } .career .cr .lg{ display:flex; align-items:center; gap:7px; min-width:0; }
+.career .cr .lg img{ width:20px; height:20px; object-fit:contain; flex:none; }
+.career .cr .lg span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
 /* search */
 .search{ display:flex; align-items:center; gap:10px; padding: 0 16px; height:50px; border-radius:999px; margin: 6px 0 16px; }
 .search svg{ width:18px; height:18px; color: var(--text-2); flex:none; }
@@ -731,7 +757,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T04:42';
+const APP_BUILD = '2026-11-10T06:00';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1453,7 +1479,7 @@ async function renderScorers(pane, slug, my){
       if (l.value !== lastVal){ rank = i + 1; lastVal = l.value; }
       const games = (String(l.displayValue).match(/Matches:\s*(\d+)/) || [])[1];
       const logo = t.logos?.[0]?.href || (t.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${t.id}.png` : '');
-      return `<a class="sc-row ${rank <= 3 ? 'top' : ''}" href="${t.id ? `#/team/${esc(slug)}/${esc(t.id)}` : '#'}">
+      return `<a class="sc-row ${rank <= 3 ? 'top' : ''}" href="#/player/${esc(a.id)}">
         <span class="rk">${rank}</span>
         <div class="av"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(t.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc((a.displayName || '?').split(' ').map(w => w[0]).join('').slice(0, 2))}</b></div>
         ${logo ? `<img class="tl" src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
@@ -1671,7 +1697,7 @@ async function renderTeam(slug, id){
                 ${a.flag?.href ? `<img class="flag" src="${esc(a.flag.href)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
                 ${chev}
               </button>`).join('')}</div>`).join('');
-          p.querySelectorAll('[data-ply]').forEach(b => b.onclick = () => openPlayer(ath[+b.dataset.ply], T));
+          p.querySelectorAll('[data-ply]').forEach(b => b.onclick = () => { location.hash = `#/player/${ath[+b.dataset.ply].id}`; });
         } catch(err){ p.innerHTML = errorBox(err); }
       }
     };
@@ -1679,6 +1705,113 @@ async function renderTeam(slug, id){
     pane(state.teamTab);
   } catch(err){
     if (my === token) $('#tbody').innerHTML = errorBox(err);
+  }
+}
+
+/* ---------- Player page ---------- */
+const ESPN_WEB = 'https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes';
+const webApi = async (url, ttl = 15 * 60_000) => {
+  const hit = cache.get(url); if (hit && Date.now() - hit.t < ttl) return hit.data;
+  const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json(); cache.set(url, { t: Date.now(), data }); return data;
+};
+/* ESPN league names → our slugs (for links from a player's game log) */
+const LEAGUE_BY_NAME = { 'German Bundesliga':'ger.1', 'German 2. Bundesliga':'ger.2', 'German Cup':'ger.dfb_pokal', 'English Premier League':'eng.1',
+  'English League Championship':'eng.2', 'Spanish LALIGA':'esp.1', 'Spanish LaLiga':'esp.1', 'Italian Serie A':'ita.1', 'French Ligue 1':'fra.1',
+  'Dutch Eredivisie':'ned.1', 'Portuguese Primeira Liga':'por.1', 'Turkish Super Lig':'tur.1', 'Austrian Bundesliga':'aut.1', 'Swiss Super League':'sui.1',
+  'Scottish Premiership':'sco.1', 'Belgian Pro League':'bel.1', 'MLS':'usa.1', 'UEFA Champions League':'uefa.champions', 'UEFA Europa League':'uefa.europa',
+  'UEFA Conference League':'uefa.europa.conf', 'UEFA Nations League':'uefa.nations', 'International Friendly':'fifa.friendly', 'FIFA World Cup':'fifa.world',
+  'English FA Cup':'eng.fa', 'English Carabao Cup':'eng.league_cup', 'Spanish Copa del Rey':'esp.copa_del_rey', 'Italian Coppa Italia':'ita.coppa_italia' };
+const SEASON_STAT_DE = { 'starts-subIns':'Einsätze', 'totalGoals':'Tore', 'goalAssists':'Vorlagen', 'totalShots':'Schüsse', 'shotsOnTarget':'aufs Tor',
+  'foulsCommitted':'Fouls', 'yellowCards':'Gelb', 'redCards':'Rot', 'saves':'Paraden', 'goalsConceded':'Gegentore', 'cleanSheet':'Zu Null', 'appearances':'Spiele' };
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+async function renderPlayer(id){
+  const my = ++token;
+  view.innerHTML = `<div class="view">${navBar('Spieler')}<div id="pbody">${skeleton(1, 280)}${skeleton(3, 80)}</div></div>`;
+  try{
+    const [bio, stats, glog] = await Promise.all([
+      webApi(`${ESPN_WEB}/${id}`),
+      webApi(`${ESPN_WEB}/${id}/stats`).catch(() => null),
+      webApi(`${ESPN_WEB}/${id}/gamelog`).catch(() => null),
+    ]);
+    if (my !== token) return;
+    const a = bio.athlete || bio, team = a.team || {};
+    const name = a.displayName || '';
+    $('.nav-title').textContent = name;
+    // colours of the player's club
+    const tc = '#' + String(team.color || '').replace('#', '');
+    const cm = (() => { const m = String(a.displayHeight || '').match(/(\d+)'\s*(\d+)/); return m ? Math.round((+m[1] * 12 + +m[2]) * 2.54) : null; })();
+    const kg = (() => { const m = String(a.displayWeight || '').match(/(\d+)/); return m ? Math.round(+m[1] * 0.4536) : null; })();
+    const born = (() => { const m = String(a.displayDOB || '').match(/(\d+)\/(\d+)\/(\d{4})/); return m ? `${+m[1]}. ${MONTHS_DE[+m[2] - 1]} ${m[3]}` : null; })();
+    const kv = [
+      ['Position', posDE(a.position)], ['Rückennummer', a.jersey], ['Alter', a.age ? `${a.age} Jahre` : null], ['Geboren', born],
+      ['Nationalität', cn(a.citizenship)], ['Größe', cm ? `${(cm / 100).toFixed(2).replace('.', ',')} m` : null], ['Gewicht', kg ? `${kg} kg` : null],
+    ].filter(x => x[1]);
+    const summary = (a.statsSummary?.statistics || []).map(x => [SEASON_STAT_DE[x.name] || x.shortDisplayName || x.displayName, x.displayValue]).slice(0, 6);
+    const seasonTitle = (a.statsSummary?.displayName || '').replace(/ Stats$/, '').replace(/^(\d{4})-(\d{2})/, '$1/$2');
+
+    // game log (newest first)
+    const gl = glog?.seasonTypes?.[0]?.categories?.[0]?.events || [];
+    const L = glog?.names || [];
+    const gi = n => L.indexOf(n);
+    const games = gl.map(g => ({ ...g, ev: glog.events?.[g.eventId] })).filter(g => g.ev)
+      .sort((x, y) => new Date(y.ev.gameDate) - new Date(x.ev.gameDate)).slice(0, 10);
+
+    // career table
+    const cat0 = stats?.categories?.[0], gkCat = stats?.categories?.find(c => (c.labels || []).includes('CS'));
+    const li = l => (cat0?.labels || []).indexOf(l);
+    const careerRows = (cat0?.statistics || []).slice(0, 12);
+    const teamSlug = LEAGUE_BY_NAME[(careerRows[0]?.season?.displayName || '').replace(/^\d{4}-\d{2} /, '')]
+      || LEAGUE_BY_NAME[games.find(g => String(g.ev.team?.id) === String(team.id))?.ev.leagueName] || 'ger.1';
+
+    $('#pbody').innerHTML = `
+      <section class="hero glass" id="phero" style="${team.color ? `--accent:${esc(tc)}` : ''}">
+        <div class="glow"></div>
+        <div class="av ply-big" style="--tc:${esc(team.color ? tc : '#8e8e93')}"><img alt="" data-pid="${esc(id)}" data-pname="${esc(name)}" data-pteam="${esc(team.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc(a.jersey || '')}</b></div>
+        <h1>${esc(name)}</h1>
+        <p style="display:flex;justify-content:center;align-items:center;gap:8px">${a.flag?.href ? `<img class="flag" src="${esc(a.flag.href)}" alt="">` : ''}${esc(posDE(a.position))}${a.jersey ? ' · #' + esc(a.jersey) : ''}</p>
+        ${team.id ? `<div class="pills"><a class="pill" href="#/team/${esc(teamSlug)}/${esc(team.id)}" style="display:flex;align-items:center;gap:7px">${img(team.logos?.[0]?.href || `https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png`, 'logo xs', '')}${esc(tn(team.displayName || ''))}</a></div>` : ''}
+      </section>
+
+      ${summary.length ? `<div class="section-h"><h2>Saison</h2><span>${esc(seasonTitle)}</span></div>
+        <div class="stat-tiles">${summary.map(([k, v]) => `<div class="glass flat"><b>${esc(v)}</b><small>${esc(k)}</small></div>`).join('')}</div>` : ''}
+
+      ${games.length ? `<div class="section-h"><h2>Letzte Spiele</h2></div>
+        <div class="list glass">${games.map(g => {
+          const e = g.ev, st = g.stats || [], goals = +st[gi('totalGoals')] || 0, ast = +st[gi('goalAssists')] || 0;
+          const yc = +st[gi('yellowCards')] || 0, rc = +st[gi('redCards')] || 0;
+          const sl = LEAGUE_BY_NAME[e.leagueName];
+          const r = { W:'S', D:'U', L:'N' }[e.gameResult] || '–';
+          const inner = `<span class="res ${esc(e.gameResult || '')}">${r}</span>
+            <div class="opp">${img(e.opponent?.logo, '', '')}<div style="min-width:0"><span style="display:block">${e.atVs === '@' ? 'bei ' : 'gg. '}${esc(cn(tn(e.opponent?.displayName || '')))}</span>
+              <div class="when">${esc(new Date(e.gameDate).toLocaleDateString('de-DE', { day:'numeric', month:'short' }))} · ${esc(compName(sl) || e.leagueShortName || '')}</div></div></div>
+            <span class="chips">${goals ? `<i>⚽ ${goals}</i>` : ''}${ast ? `<i>🅰️ ${ast}</i>` : ''}${rc ? '<i>🟥</i>' : yc ? '<i>🟨</i>' : ''}</span>
+            <span class="sc">${esc(e.homeTeamScore)}:${esc(e.awayTeamScore)}</span>`;
+          return sl ? `<a class="glog" href="#/match/${sl}/${esc(e.id)}">${inner}</a>` : `<div class="glog">${inner}</div>`;
+        }).join('')}</div>` : ''}
+
+      ${careerRows.length ? `<div class="section-h"><h2>Karriere</h2></div>
+        <div class="career glass">
+          <div class="cr head"><span>Saison</span><span>Wettbewerb</span><span class="c">Sp</span><span class="c">${gkCat ? 'ZN' : 'T'}</span><span class="c">${gkCat ? 'Par' : 'V'}</span></div>
+          ${careerRows.map((r, i) => {
+            const st = r.stats || [], gk = gkCat?.statistics?.[i]?.stats || [];
+            const gkI = l => (gkCat?.labels || []).indexOf(l);
+            const lgName = (r.season?.displayName || '').replace(/^\d{4}-\d{2} /, '');
+            return `<div class="cr"><span>${esc((r.season?.displayName || '').slice(0, 7).replace('-', '/'))}</span>
+              <span class="lg">${r.teamId ? img(`https://a.espncdn.com/i/teamlogos/soccer/500/${r.teamId}.png`, '', '') : ''}<span>${esc(compName(LEAGUE_BY_NAME[lgName]) || lgName)}</span></span>
+              <span class="c">${esc(st[li('STRT')] ?? '–')}</span>
+              <span class="c">${esc(gkCat ? (gk[gkI('CS')] ?? '–') : (st[li('G')] ?? '–'))}</span>
+              <span class="c">${esc(gkCat ? (gk[gkI('SV')] ?? '–') : (st[li('A')] ?? '–'))}</span></div>`;
+          }).join('')}
+        </div>
+        <p class="foot" style="margin-top:10px">Sp = Startelf-Einsätze · ${gkCat ? 'ZN = Zu Null · Par = Paraden' : 'T = Tore · V = Vorlagen'}</p>` : ''}
+
+      <div class="section-h"><h2>Steckbrief</h2></div>
+      <div class="kv">${kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join('')}</div>`;
+    hydratePhotos($('#pbody'));
+  } catch(err){
+    if (my === token) $('#pbody').innerHTML = errorBox(err);
   }
 }
 
@@ -1705,7 +1838,8 @@ function openPlayer(a, team){
       <p>${a.flag?.href ? `<img class="flag" src="${esc(a.flag.href)}" alt="">` : ''}${esc(team.shortDisplayName || team.displayName || '')}</p></div>
     </div>
     <div class="kv">${kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join('')}</div>
-    <button class="btn ghost" style="width:100%;margin-top:18px" onclick="closeSheet()">Schließen</button>`;
+    <a class="btn" style="width:100%;margin-top:18px" href="#/player/${esc(a.id)}">Spielerprofil öffnen</a>
+    <button class="btn ghost" style="width:100%;margin-top:10px" onclick="closeSheet()">Schließen</button>`;
   hydratePhotos($('#sheet'));
   $('#scrim').classList.add('on'); $('#sheet').classList.add('on');
 }
@@ -2644,6 +2778,7 @@ function route(fresh = false, silent = false){
     case 'league': setTab(lastTab); renderLeague(a); break;
     case 'team':   setTab(lastTab); renderTeam(a, b); break;
     case 'match':  setTab(lastTab); if (parts[3]) state.matchTab = parts[3]; renderMatch(a, b, silent); break;
+    case 'player': setTab(lastTab); renderPlayer(a); break;
     default:       lastTab = 0; setTab(0); renderOverview(silent);
   }
   bindChrome();
