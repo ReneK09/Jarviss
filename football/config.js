@@ -11,5 +11,6 @@
 window.ARENLY_CONFIG = {
   supabaseUrl: 'https://hyomumbaokxfqhhvrgpf.supabase.co',
   supabaseAnonKey: 'sb_publishable_XfrAXsi610cvNITj2x-ZOA_ZMz6aBn3',   // publishable (or legacy "anon public") key
-  appleSignIn: false,     // true once "Sign in with Apple" is set up in Supabase → Authentication → Providers
+  appleSignIn: false,
+  vapidPublicKey: 'BGUmH9FuUqR7h-infJko2XjmK6OTBlpqO8qwWzbvy0-bt4Vo8x_7tgkfqWj2tbm8sQlrHdUy5-Zr91DjFsPCkU4',   // Web Push (public half; the private key lives only in Supabase secrets)     // true once "Sign in with Apple" is set up in Supabase → Authentication → Providers
 };

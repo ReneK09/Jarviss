@@ -95,6 +95,15 @@ Auf der Spielseite steht bei anstehenden und laufenden Spielen, wo sie in Deutsc
 
 Für andere Wettbewerbe wird nichts angezeigt. Die Regeln stehen in `tvGermany()` in `index.html` und müssen bei neuen Rechteperioden angepasst werden (z. B. Champions League ab 2027/28 bei Paramount+, Europa/Conference League bei DAZN).
 
+### Push-Mitteilungen
+
+Tore (mit Torschütze), Anpfiff & Abpfiff und Aufstellung für Lieblingsverein und Nationalteam – einzeln schaltbar unter **Profil → Benachrichtigungen**. Auf dem iPhone nur, wenn Arenly auf dem Home-Bildschirm liegt (ab iOS 16.4).
+
+- `sw.js`: Service Worker, zeigt Mitteilungen an und öffnet beim Antippen das Spiel
+- `supabase/push.sql`: Tabellen `push_subscriptions` (Geräte, nur eigene Zeilen) und `push_state` (was schon gemeldet wurde) plus pg_cron-Job, der jede Minute die Edge Function aufruft
+- `supabase/functions/push-watch/`: Edge Function – liest die Spiele des Tages bei ESPN, entscheidet in `logic.ts`, was neu ist, und verschickt Web Push (VAPID). Schon gefallene Tore werden beim ersten Blick auf ein laufendes Spiel nicht nachträglich gemeldet.
+- Secrets der Edge Function: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET` (der private Schlüssel gehört nur dorthin, nie ins Repository); `verify_jwt` ist aus, geschützt wird über `CRON_SECRET`.
+
 ## Updates
 
 Die App prüft beim Start und bei jeder Rückkehr, ob online eine neuere Version liegt (`APP_BUILD` in `index.html`), und lädt sich dann einmal selbst neu. So bleiben auch App-Icons auf dem Home-Bildschirm aktuell. Vor jedem Veröffentlichen `tools/release.sh` ausführen, das setzt eine neue Build-Kennung.

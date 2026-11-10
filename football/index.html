@@ -324,6 +324,22 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .pick.lg .lgw img{ width:36px; height:36px; filter:none; }
 .pick small{ font-size:11px; color: var(--text-2); font-weight:550; margin-top:-4px; }
 
+.sw-row{ display:flex; align-items:center; gap:14px; padding: 12px 16px; min-height:56px; position:relative; }
+.sw-row + .sw-row::before, .list > .sw-row + .row::before{ content:""; position:absolute; top:0; left:16px; right:0; height:1px; background: var(--sep); }
+.sw-row .grow{ flex:1; min-width:0; }
+.sw-row .t1{ font-weight:600; font-size:16px; }
+.sw-row .t2{ color: var(--text-2); font-size:13px; margin-top:1px; }
+.switch{ position:relative; width:51px; height:31px; flex:none; }
+.switch input{ position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; z-index:2; }
+.switch i{ position:absolute; inset:0; border-radius:999px; background: var(--glass-strong); box-shadow: inset 0 0 0 1px var(--sep); transition: background .25s; }
+.switch i::after{ content:""; position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%; background:#fff;
+  box-shadow: 0 3px 8px rgba(0,0,0,.25), 0 1px 1px rgba(0,0,0,.12); transition: transform .35s var(--spring); }
+.switch input:checked + i{ background: var(--win); }
+.switch input:checked + i::after{ transform: translateX(20px); }
+.switch input:disabled + i{ opacity:.45; }
+.push-hint{ padding: 14px 16px; font-size:14px; color: var(--text-2); line-height:1.45; }
+.push-hint b{ color: var(--text); }
+
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
 .avatar{ width:64px; height:64px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:24px; font-weight:800; color: var(--on-accent);
@@ -715,7 +731,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T04:33';
+const APP_BUILD = '2026-11-10T04:42';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1009,7 +1025,7 @@ async function tintHero(el, team){
    PROFILE & AUTH
    ============================================================= */
 const profile = () => store.get('fb.profile', null);
-const saveProfile = pr => { store.set('fb.profile', pr); Auth.syncSoon(); };
+const saveProfile = pr => { store.set('fb.profile', pr); Auth.syncSoon(); if (typeof Push !== 'undefined') Push.resyncSoon(); };
 
 /* =============================================================
    AUTH — Supabase (cloud) with a local fallback
@@ -2436,6 +2452,101 @@ async function renderOverview(silent = false){
   Promise.allSettled(jobs).then(() => { if (my === token) scheduleRefresh(live); });
 }
 
+/* ---------- Push notifications (Web Push via service worker + Supabase) ---------- */
+const PUSH_PREFS_KEY = 'fb.pushPrefs';
+const Push = {
+  supported: () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window,
+  ios: /iPhone|iPad|iPod/.test(navigator.userAgent),
+  standalone: () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches,
+  prefs: () => ({ goals: true, matchday: true, lineup: true, ...store.get(PUSH_PREFS_KEY, {}) }),
+  key(){
+    const b = (CFG.vapidPublicKey || '').replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b + '='.repeat((4 - b.length % 4) % 4));
+    return Uint8Array.from(raw, ch => ch.charCodeAt(0));
+  },
+  async registration(){ return navigator.serviceWorker.register('sw.js'); },
+  async current(){
+    if (!this.supported()) return null;
+    const r = await navigator.serviceWorker.getRegistration();
+    return r ? r.pushManager.getSubscription() : null;
+  },
+  async enable(){
+    if (!Auth.sb || !Auth.user) throw new Error('Bitte melde dich zuerst an.');
+    if (!CFG.vapidPublicKey) throw new Error('Push ist noch nicht eingerichtet.');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') throw new Error(perm === 'denied'
+      ? 'Mitteilungen sind blockiert. Erlaube sie in den iPhone-Einstellungen unter Mitteilungen → Arenly.' : 'Ohne Erlaubnis keine Mitteilungen.');
+    const reg = await this.registration(); await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this.key() });
+    await this.save(sub);
+  },
+  async save(sub){
+    sub ||= await this.current(); if (!sub || !Auth.sb || !Auth.user) return;
+    const j = sub.toJSON(), pr = profile() || {};
+    const { error } = await Auth.sb.from('push_subscriptions').upsert({
+      endpoint: j.endpoint, user_id: Auth.user.id, p256dh: j.keys.p256dh, auth: j.keys.auth,
+      club_id: pr.club?.id || null, club_slug: pr.club?.slug || null, nation_id: pr.nation?.id || null,
+      prefs: this.prefs(), app_url: location.origin + location.pathname, updated_at: new Date().toISOString(),
+    });
+    if (error) throw new Error(/push_subscriptions/.test(error.message) ? 'Die Datenbank ist für Push noch nicht eingerichtet.' : error.message);
+  },
+  async disable(){
+    const sub = await this.current(); if (!sub) return;
+    try { await Auth.sb?.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); } catch {}
+    try { await sub.unsubscribe(); } catch {}
+  },
+  _t: null,
+  resyncSoon(){ clearTimeout(this._t); this._t = setTimeout(() => this.current().then(s => s && this.save(s)).catch(() => {}), 900); },
+  async test(){
+    const reg = await navigator.serviceWorker.ready;
+    const pr = profile() || {};
+    await reg.showNotification('⚽ TOR für ' + (pr.club?.name || 'dein Team') + '!', {
+      body: 'So sieht eine Arenly-Mitteilung aus.', icon: 'assets/icon-192.png', badge: 'assets/icon-192.png', tag: 'arenly-test', data: { url: './' } });
+  },
+};
+// keep the service worker registered once notifications are allowed
+if (Push.supported() && Notification.permission === 'granted') Push.registration().catch(() => {});
+
+function pushSection(){
+  const pr = profile() || {};
+  const who = [pr.club?.name, pr.nation?.name].filter(Boolean).join(' & ') || 'deine Teams';
+  if (!Push.supported() || (Push.ios && !Push.standalone())){
+    return `<div class="list glass"><div class="push-hint">${Push.ios && !Push.standalone()
+      ? '📲 Mitteilungen gibt es auf dem iPhone nur, wenn Arenly auf dem <b>Home-Bildschirm</b> liegt (ab iOS 16.4): in Safari <b>Teilen → Zum Home-Bildschirm</b>, dann Arenly von dort öffnen.'
+      : 'Dein Browser unterstützt keine Push-Mitteilungen.'}</div></div>`;
+  }
+  if (!Auth.cloud || !Auth.user) return `<div class="list glass"><div class="push-hint">Melde dich an, um Mitteilungen zu erhalten.</div></div>`;
+  const p = Push.prefs();
+  const sw = (id, on, dis = false) => `<label class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}><i></i></label>`;
+  return `<div class="list glass" id="pushBox">
+    <div class="sw-row"><div class="grow"><div class="t1">Mitteilungen</div><div class="t2" id="pushState">für ${esc(who)}</div></div>${sw('pushOn', false)}</div>
+    <div id="pushOpts" style="display:none">
+      <div class="sw-row"><div class="grow"><div class="t1">⚽ Tore</div><div class="t2">mit Torschütze und Spielstand</div></div>${sw('pfGoals', p.goals)}</div>
+      <div class="sw-row"><div class="grow"><div class="t1">🟢 Anpfiff & 🏁 Abpfiff</div><div class="t2">inklusive Endergebnis</div></div>${sw('pfMatchday', p.matchday)}</div>
+      <div class="sw-row"><div class="grow"><div class="t1">📋 Aufstellung</div><div class="t2">etwa eine Stunde vor dem Spiel</div></div>${sw('pfLineup', p.lineup)}</div>
+      <button class="row" style="width:100%;text-align:left" id="pushTest"><div class="grow"><div class="t1" style="color:var(--accent)">Test-Mitteilung senden</div></div></button>
+    </div>
+  </div>`;
+}
+async function bindPushSection(){
+  const on = $('#pushOn'); if (!on) return;
+  const opts = $('#pushOpts'), stateEl = $('#pushState');
+  const show = active => { on.checked = active; opts.style.display = active ? '' : 'none'; };
+  show(!!(await Push.current().catch(() => null)) && Notification.permission === 'granted');
+  on.onchange = async () => {
+    on.disabled = true;
+    try {
+      if (on.checked){ await Push.enable(); show(true); toast('Mitteilungen aktiviert'); }
+      else { await Push.disable(); show(false); toast('Mitteilungen deaktiviert'); }
+    } catch (err){ show(false); stateEl.textContent = err.message; stateEl.style.color = 'var(--loss)'; }
+    on.disabled = false;
+  };
+  [['pfGoals', 'goals'], ['pfMatchday', 'matchday'], ['pfLineup', 'lineup']].forEach(([id, k]) => {
+    $('#' + id).onchange = e => { store.set(PUSH_PREFS_KEY, { ...Push.prefs(), [k]: e.target.checked }); Push.resyncSoon(); };
+  });
+  $('#pushTest').onclick = () => Push.test().catch(err => toast(err.message));
+}
+
 /* ---------- Profile (incl. favourites) ---------- */
 function renderMe(){
   ++token;
@@ -2471,6 +2582,9 @@ function renderMe(){
         <div class="grow"><div class="t1">${esc(t.name)}</div><div class="t2">${esc(leagueBy(t.slug).name)}</div></div>${chev}</a>`).join('')}</div>`
       : `<div class="empty glass" style="padding:24px">Weitere Teams mit ★ auf ihrer Teamseite markieren.</div>`}
 
+    <div class="section-h"><h2>Benachrichtigungen</h2></div>
+    ${pushSection()}
+
     <div class="section-h"><h2>Konto</h2></div>
     <div class="list glass">
       <button class="row danger" style="width:100%;text-align:left" id="logout"><div class="grow"><div class="t1">Abmelden</div><div class="t2">${Auth.cloud ? 'Dein Profil bleibt in deinem Konto gespeichert' : 'Profil und Favoriten auf diesem Gerät löschen'}</div></div></button>
@@ -2480,9 +2594,10 @@ function renderMe(){
   $('#chgClub').onclick = () => startOnboarding(['club'], { edit:true });
   $('#chgNation').onclick = () => startOnboarding(['nation'], { edit:true });
   $('#chgLeague').onclick = () => startOnboarding(['league'], { edit:true });
+  bindPushSection();
   $('#logout').onclick = () => {
     if (!confirm(Auth.cloud ? 'Wirklich abmelden?' : 'Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
-    Auth.signOut().then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'league', 'nation', 'done']); });
+    Push.disable().catch(() => {}).then(() => Auth.signOut()).then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'league', 'nation', 'done']); });
   };
 }
 
@@ -2528,7 +2643,7 @@ function route(fresh = false, silent = false){
     case 'me': case 'favs': lastTab = 4; setTab(4); renderMe(); break;
     case 'league': setTab(lastTab); renderLeague(a); break;
     case 'team':   setTab(lastTab); renderTeam(a, b); break;
-    case 'match':  setTab(lastTab); renderMatch(a, b, silent); break;
+    case 'match':  setTab(lastTab); if (parts[3]) state.matchTab = parts[3]; renderMatch(a, b, silent); break;
     default:       lastTab = 0; setTab(0); renderOverview(silent);
   }
   bindChrome();
