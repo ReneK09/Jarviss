@@ -108,6 +108,15 @@ Tore (mit Torschütze), Anpfiff & Abpfiff und Aufstellung für Lieblingsverein u
 
 Die App prüft beim Start und bei jeder Rückkehr, ob online eine neuere Version liegt (`APP_BUILD` in `index.html`), und lädt sich dann einmal selbst neu. So bleiben auch App-Icons auf dem Home-Bildschirm aktuell. Vor jedem Veröffentlichen `tools/release.sh` ausführen, das setzt eine neue Build-Kennung.
 
+## Weitere Sportarten
+
+Auf der Ligen-Seite oben die Sportart wählen: ⚽ Fußball · 🏀 Basketball (NBA, WNBA) · 🏒 Eishockey (NHL) · 🏈 Football (NFL) · ⚾ Baseball (MLB) · 🏎️ Formel 1.
+
+- Tabellen mit passenden Spalten (Siege/Niederlagen/Quote/Serie, beim Eishockey OT und Punkte), Spiele, Teams, Teamseiten mit Kader und Fotos
+- Spielseite: Ergebnis pro Viertel/Drittel/Inning, Team-Statistik, Top-Spieler
+- Formel 1: Fahrer-WM, Konstrukteurs-WM, Rennkalender; pro Grand Prix Training, Qualifying, Sprint und Rennen
+- Ligen anderer Sportarten haben Kennungen wie `basketball:nba`; deutsche Ligen (BBL, DEL, Handball) bietet die Datenquelle nicht an
+
 ## Marke & Icon
 
 - **Name:** Arenly (von *Arena*): international aussprechbar und an keine Sportart gebunden

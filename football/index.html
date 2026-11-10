@@ -811,12 +811,22 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T06:11';
+const APP_BUILD = '2026-11-10T06:19';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
 const API = 'https://site.api.espn.com/apis';
-const LOGO = id => `https://a.espncdn.com/i/leaguelogos/soccer/500/${id}.png`;
+const LOGO = id => typeof id === 'string' ? id : `https://a.espncdn.com/i/leaguelogos/soccer/500/${id}.png`;
+/* multi-sport: non-football leagues use "sport:league" slugs, e.g. basketball:nba */
+const sportOf = slug => String(slug || '').includes(':') ? String(slug).split(':')[0] : 'soccer';
+const leagueOf = slug => String(slug || '').includes(':') ? String(slug).split(':')[1] : slug;
+const sp = slug => `${sportOf(slug)}/${leagueOf(slug)}`;
+const isSoccer = slug => sportOf(slug) === 'soccer';
+const SPORTS = [
+  ['soccer', '⚽', 'Fußball'], ['basketball', '🏀', 'Basketball'], ['hockey', '🏒', 'Eishockey'],
+  ['football', '🏈', 'Football'], ['baseball', '⚾', 'Baseball'], ['racing', '🏎️', 'Formel 1'],
+];
+const LG = n => `https://a.espncdn.com/i/teamlogos/leagues/500/${n}.png`;
 
 const LEAGUES = [
   { slug:'ger.1',            name:'Bundesliga',        country:'Deutschland', logo:10,    group:'de' },
@@ -838,6 +848,12 @@ const LEAGUES = [
   { slug:'sco.1',            name:'Premiership',       country:'Schottland',  logo:45,    group:'more' },
   { slug:'bel.1',            name:'Pro League',        country:'Belgien',     logo:6,     group:'more' },
   { slug:'usa.1',            name:'MLS',               country:'USA',         logo:19,    group:'more' },
+  { slug:'basketball:nba',   name:'NBA',               country:'USA',         logo:LG('nba'),  group:'basketball', sport:'basketball' },
+  { slug:'basketball:wnba',  name:'WNBA',              country:'USA',         logo:LG('wnba'), group:'basketball', sport:'basketball' },
+  { slug:'hockey:nhl',       name:'NHL',               country:'USA & Kanada', logo:LG('nhl'), group:'hockey',     sport:'hockey' },
+  { slug:'football:nfl',     name:'NFL',               country:'USA',         logo:LG('nfl'),  group:'football',   sport:'football' },
+  { slug:'baseball:mlb',     name:'MLB',               country:'USA & Kanada', logo:LG('mlb'), group:'baseball',   sport:'baseball' },
+  { slug:'racing:f1',        name:'Formel 1',          country:'Weltmeisterschaft', logo:LG('f1'), group:'racing', sport:'racing' },
 ];
 const GROUPS = [
   ['de',  'Deutschland'],
@@ -857,7 +873,7 @@ const NATION_UEFA  = ['uefa.nations', 'uefa.euro', 'uefa.euroq', 'fifa.worldq.ue
 const NATION_OTHER = ['conmebol.america', 'fifa.worldq.conmebol', 'concacaf.gold', 'concacaf.nations.league', 'fifa.worldq.concacaf',
                       'caf.nations', 'fifa.worldq.caf', 'afc.asian.cup', 'fifa.worldq.afc'];
 async function nationSlugs(id){
-  const uefa = await Promise.allSettled(NATION_UEFA.map(sl => api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`)));
+  const uefa = await Promise.allSettled(NATION_UEFA.map(sl => api(`site/v2/sports/${sp(sl)}/teams/${id}/schedule`)));
   const european = uefa.some(r => r.status === 'fulfilled' && (r.value.events || []).length);
   return [...NATION_BASE, ...(european ? NATION_UEFA : NATION_OTHER)];
 }
@@ -1047,7 +1063,7 @@ const usable = hex => { if (!hex) return false; const [, sat, l] = rgbHsl(...hex
 /* Club colours = ESPN's colour (if it's a real colour) + colours read from the crest. */
 async function teamColors(team){
   if (!team.color && team.slug && team.slug !== 'nation' && team.id){
-    try { team = { ...team, color: (await api(`site/v2/sports/soccer/${team.slug}/teams/${team.id}/schedule`)).team?.color }; } catch {}
+    try { team = { ...team, color: (await api(`site/v2/sports/${sp(team.slug)}/teams/${team.id}/schedule`)).team?.color }; } catch {}
   }
   const espn = team.color ? '#' + String(team.color).replace('#','') : null;
   const fromLogo = await logoColors(team.logo);
@@ -1260,7 +1276,17 @@ function normEvent(e, slug){
     clock: status.displayClock,
     home: team(pick('home')), away: team(pick('away')),
     venue: c.venue?.fullName || e.venue?.displayName,
+    sport: sportOf(slug),
+    lines: { home: (pick('home').linescores || []).map(l => l.displayValue ?? l.value), away: (pick('away').linescores || []).map(l => l.displayValue ?? l.value) },
   };
+}
+const PERIOD_DE = { basketball:'Viertel', football:'Viertel', hockey:'Drittel', baseball:'Inning' };
+function usLive(m){
+  const d = String(m.detail || '');
+  if (/half/i.test(d) && m.sport !== 'hockey') return 'Halbzeit';
+  if (/end of/i.test(d)) return d.replace(/End of (\d)\w* .*/i, 'Ende $1. ' + (PERIOD_DE[m.sport] || 'Abschnitt'));
+  const per = d.match(/(\d)(?:st|nd|rd|th)/i);
+  return (m.clock && m.sport !== 'baseball' ? m.clock + ' · ' : '') + (per ? per[1] + '. ' + (PERIOD_DE[m.sport] || '') : (/OT/.test(d) ? 'Verlängerung' : d));
 }
 /* ---------- Where is it on TV? (Germany, rights 2026/27) ----------
    Derived from who owns which rights package, by competition, weekday and kick-off time (Berlin).
@@ -1299,6 +1325,7 @@ function statusLabel(m){
   if (m.name === 'STATUS_POSTPONED') return { txt:'Verlegt' };
   if (m.name === 'STATUS_CANCELED') return { txt:'Abgesagt' };
   if (m.state === 'in'){
+    if (m.sport && m.sport !== 'soccer') return { txt: usLive(m), live:true };
     if (m.name === 'STATUS_HALFTIME') return { txt:'Halbzeit', live:true };
     return { txt: m.clock || 'Live', live:true };
   }
@@ -1422,14 +1449,13 @@ function renderHome(){
       <img class="brand-icon" src="assets/icon-rounded-256.png" alt="Arenly">
       <h1 class="large-title">Arenly</h1>
     </div>
-    <span class="brand-sport glass flat">⚽ Fußball</span>
-    <p class="subtitle" style="margin-top:10px">Ligen, Tabellen, Teams & Spiele</p>
+    <div class="chips" id="sportchips" style="margin-top:10px">${SPORTS.map(([k, ic, nm]) => `<button class="chip glass flat ${k === sportSel() ? 'on' : ''}" data-s="${k}" style="flex-direction:row;gap:6px;min-width:0">${ic} ${esc(nm)}</button>`).join('')}</div>
     ${f.length ? `
       <div class="section-h"><h2>Meine Teams</h2><span>${f.length}</span></div>
       <div class="hscroll">${f.map(t => `
         <a class="fav-chip glass flat press" href="#/team/${esc(t.slug)}/${esc(t.id)}">${img(t.logo, '', t.name)}<span>${esc(t.name)}</span></a>`).join('')}
       </div>` : ''}
-    ${GROUPS.map(([g, title]) => `
+    ${(sportSel() === 'soccer' ? GROUPS : SPORTS.filter(x => x[0] === sportSel()).map(x => [x[0], x[2]])).map(([g, title]) => `
       <div class="section-h"><h2>${title}</h2></div>
       <div class="grid">
         ${LEAGUES.filter(l => l.group === g).map(l => `
@@ -1440,11 +1466,14 @@ function renderHome(){
       </div>`).join('')}
     <p class="foot"><img src="assets/icon-rounded-256.png" alt="">Arenly · Daten: ESPN</p>
   </div>`;
+  $('#sportchips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; store.set('fb.sport', b.dataset.s); renderHome(); };
+  $('#sportchips .chip.on')?.scrollIntoView({ inline:'center', block:'nearest' });
 }
+const sportSel = () => store.get('fb.sport', 'soccer');
 
 /* ---------- League ---------- */
 async function standings(slug){
-  const d = await api(`v2/sports/soccer/${slug}/standings`, { ttl: 5 * 60_000 });
+  const d = await api(`v2/sports/${sp(slug)}/standings`, { ttl: 5 * 60_000 });
   const groups = (d.children || (d.standings ? [d] : [])).map(g => ({
     name: g.name,
     entries: (g.standings?.entries || []).map(e => {
@@ -1453,15 +1482,44 @@ async function standings(slug){
         team: { id: e.team.id, name: tn(e.team.shortDisplayName || e.team.displayName), full: tn(e.team.displayName), en: e.team.displayName, logo: e.team.logos?.[0]?.href },
         s, note: e.note,
       };
-    }).sort((a, b) => (+a.s.rank || 99) - (+b.s.rank || 99)),
+    }).sort(standingSort(slug)),
   })).filter(g => g.entries.length);
   return groups;
+}
+function standingSort(slug){
+  const n = v => parseFloat(String(v ?? '').replace('+', '')) || 0;
+  switch (sportOf(slug)){
+    case 'soccer': return (a, b) => (+a.s.rank || 99) - (+b.s.rank || 99);
+    case 'hockey': return (a, b) => n(b.s.points) - n(a.s.points) || n(a.s.gamesPlayed) - n(b.s.gamesPlayed) || n(b.s.wins) - n(a.s.wins);
+    default:       return (a, b) => n(b.s.winPercent) - n(a.s.winPercent) || n(b.s.wins) - n(a.s.wins);
+  }
+}
+/* table columns for the other sports: [header, stat name, width] */
+const US_COLS = {
+  basketball: [['S', 'wins', '30px'], ['N', 'losses', '30px'], ['Quote', 'winPercent', '48px'], ['GB', 'gamesBehind', '36px'], ['Serie', 'streak', '42px']],
+  baseball:   [['S', 'wins', '30px'], ['N', 'losses', '30px'], ['Quote', 'winPercent', '48px'], ['GB', 'gamesBehind', '36px'], ['Serie', 'streak', '42px']],
+  football:   [['S', 'wins', '28px'], ['N', 'losses', '28px'], ['U', 'ties', '24px'], ['Quote', 'winPercent', '48px'], ['Serie', 'streak', '42px']],
+  hockey:     [['Sp', 'gamesPlayed', '30px'], ['S', 'wins', '28px'], ['N', 'losses', '28px'], ['OT', 'otLosses', '28px'], ['Pkt', 'points', '34px']],
+};
+const deStreak = v => String(v || '').replace(/^W/, 'S').replace(/^L/, 'N').replace(/^T/, 'U');
+function usTable(groups, slug){
+  const cols = US_COLS[sportOf(slug)] || US_COLS.basketball;
+  const grid = `grid-template-columns: 24px 1fr ${cols.map(c => c[2]).join(' ')}`;
+  return groups.map(g => `<div class="group-title">${esc(de(g.name).replace('Conference', 'Conference'))}</div>
+    <div class="table glass">
+      <div class="trow head" style="${grid}"><span class="c">#</span><span>Team</span>${cols.map(c => `<span class="c">${c[0]}</span>`).join('')}</div>
+      ${g.entries.map((e, i) => `<a class="trow" style="${grid}" href="#/team/${esc(slug)}/${esc(e.team.id)}">
+        <span class="rk">${i + 1}</span><span class="team">${img(e.team.logo, 'logo xs', e.team.name)}<span>${esc(e.team.name)}</span></span>
+        ${cols.map(c => `<span class="${c[1] === 'points' ? 'pts' : 'c'}">${esc(c[1] === 'streak' ? deStreak(e.s[c[1]]) : (e.s[c[1]] ?? '–'))}</span>`).join('')}</a>`).join('')}
+    </div>`).join('');
 }
 
 async function renderLeague(slug){
   const L = leagueBy(slug);
   const my = ++token;
-  const tabs = L.cup ? [['games','Spiele'], ['scorers','Torjäger']] : [['table','Tabelle'], ['games','Spiele'], ['scorers','Torjäger'], ['teams','Teams']];
+  const tabs = L.sport === 'racing' ? [['drivers','Fahrer'], ['constructors','Teams'], ['races','Rennen']]
+    : L.sport ? [['table','Tabelle'], ['games','Spiele'], ['teams','Teams']]
+    : L.cup ? [['games','Spiele'], ['scorers','Torjäger']] : [['table','Tabelle'], ['games','Spiele'], ['scorers','Torjäger'], ['teams','Teams']];
   const tab = tabs.some(t => t[0] === state.leagueTab[slug]) ? state.leagueTab[slug] : tabs[0][0];
 
   view.innerHTML = `<div class="view">
@@ -1486,7 +1544,7 @@ async function leagueForm(slug){
     for (let i = 0; i < 3; i++){                      // current month, then go back until every team has 5 games
       const x = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mo = `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, '0')}`;
-      const d = await api(`site/v2/sports/soccer/${slug}/scoreboard?dates=${mo}&limit=500`, { ttl: 15 * 60_000 }).catch(() => null);
+      const d = await api(`site/v2/sports/${sp(slug)}/scoreboard?dates=${mo}&limit=500`, { ttl: 15 * 60_000 }).catch(() => null);
       (d?.events || []).forEach(e => evs.set(e.id, normEvent(e, slug)));
       const n = new Map();
       [...evs.values()].filter(m => m.state === 'post').forEach(m => [m.home.id, m.away.id].forEach(id => n.set(id, (n.get(id) || 0) + 1)));
@@ -1519,7 +1577,7 @@ function fillForm(root, slug){
 
 /* ---------- top scorers & assists ---------- */
 async function renderScorers(pane, slug, my){
-  const d = await api(`site/v2/sports/soccer/${slug}/statistics`, { ttl: 30 * 60_000 });
+  const d = await api(`site/v2/sports/${sp(slug)}/statistics`, { ttl: 30 * 60_000 });
   if (my !== token) return;
   const cats = d.stats || [];
   const goals = cats.find(c => /goal/i.test(c.name)), assists = cats.find(c => /assist/i.test(c.name));
@@ -1555,12 +1613,19 @@ async function paneLeague(slug, tab, my){
   const pane = $('#pane');
   pane.innerHTML = skeleton(6, tab === 'teams' ? 110 : 52);
   try{
+    if (tab === 'drivers' || tab === 'constructors' || tab === 'races'){ await renderF1(pane, tab, my); return; }
+    if (tab === 'table' && !isSoccer(slug)){
+      const groups = await standings(slug);
+      if (my !== token) return;
+      pane.innerHTML = groups.length ? usTable(groups, slug) : emptyBox('📋', 'Keine Tabelle verfügbar');
+      return;
+    }
     if (tab === 'table'){
       let groups = await standings(slug);
       if (my !== token) return;
       if (!groups.length){ pane.innerHTML = emptyBox('📋', 'Keine Tabelle verfügbar'); return; }
       // running matches → live table
-      const today = await api(`site/v2/sports/soccer/${slug}/scoreboard`, { ttl: 25_000 }).catch(() => null);
+      const today = await api(`site/v2/sports/${sp(slug)}/scoreboard`, { ttl: 25_000 }).catch(() => null);
       const liveMs = (today?.events || []).map(e => normEvent(e, slug)).filter(m => m.state === 'in');
       if (liveMs.length) groups = applyLive(groups, liveMs);
       if (my !== token) return;
@@ -1610,7 +1675,7 @@ async function paneLeague(slug, tab, my){
     }
 
     if (tab === 'games'){
-      const base = await api(`site/v2/sports/soccer/${slug}/scoreboard`);
+      const base = await api(`site/v2/sports/${sp(slug)}/scoreboard`);
       if (my !== token) return;
       let cal = base.leagues?.[0]?.calendar || [];
       cal = cal.flatMap(c => typeof c === 'string' ? [c] : (c.entries || []).map(x => x.startDate || x.value)).filter(Boolean);
@@ -1634,7 +1699,7 @@ async function paneLeague(slug, tab, my){
         const list = $('#dlist'); if (!list) return;
         list.innerHTML = skeleton(4);
         try{
-          const data = d ? await api(`site/v2/sports/soccer/${slug}/scoreboard?dates=${d.replace(/-/g, '')}`) : base;
+          const data = d ? await api(`site/v2/sports/${sp(slug)}/scoreboard?dates=${d.replace(/-/g, '')}`) : base;
           if (my !== token) return;
           const ms = (data.events || []).map(e => normEvent(e, slug)).sort((a, b) => new Date(a.date) - new Date(b.date));
           list.innerHTML = ms.length ? `<div class="matches">${ms.map(m => matchCard(m)).join('')}</div>` : emptyBox('🗓️', 'Keine Spiele an diesem Tag');
@@ -1659,15 +1724,15 @@ async function paneLeague(slug, tab, my){
 async function loadSchedules(slug, id){
   if (slug !== 'nation'){
     const [results, fixtures] = await Promise.all([
-      api(`site/v2/sports/soccer/${slug}/teams/${id}/schedule`),
-      api(`site/v2/sports/soccer/${slug}/teams/${id}/schedule?fixture=true`).catch(() => ({ events: [] })),
+      api(`site/v2/sports/${sp(slug)}/teams/${id}/schedule`),
+      api(`site/v2/sports/${sp(slug)}/teams/${id}/schedule?fixture=true`).catch(() => ({ events: [] })),
     ]);
     return { results, fixtures };
   }
   const tag = (d, sl) => (d.events || []).map(e => (e.__slug = sl, e));
   const all = await Promise.allSettled((await nationSlugs(id)).flatMap(sl => [
-    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`).then(d => ({ d, sl, fx:false })),
-    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl, fx:true })),
+    api(`site/v2/sports/${sp(sl)}/teams/${id}/schedule`).then(d => ({ d, sl, fx:false })),
+    api(`site/v2/sports/${sp(sl)}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl, fx:true })),
   ]));
   const ok = all.filter(r => r.status === 'fulfilled').map(r => r.value);
   if (!ok.length) throw all[0].reason;
@@ -1703,7 +1768,9 @@ async function renderTeam(slug, id){
         ${img(fav.logo, 'big-logo', T.displayName)}
         <h1>${esc(T.displayName)}</h1>
         <p>${esc(T.standingSummary ? T.standingSummary.replace(/(\d+)(st|nd|rd|th) in /, '$1. Platz · ').replace(/German Bundesliga|English Premier League|Spanish LALIGA|Italian Serie A|French Ligue 1|German 2\. Bundesliga/, L.name) : L.name)}</p>
-        ${rec.length === 3 ? `<div class="pills">
+        ${rec.length === 2 ? `<div class="pills"><span class="pill"><b>${esc(rec[0])}</b> Siege</span><span class="pill"><b>${esc(rec[1])}</b> Niederl.</span></div>` : ''}
+        ${rec.length === 3 && !isSoccer(slug) ? `<div class="pills"><span class="pill"><b>${esc(rec[0])}</b> S</span><span class="pill"><b>${esc(rec[1])}</b> N</span><span class="pill"><b>${esc(rec[2])}</b> ${sportOf(slug) === 'hockey' ? 'OT' : 'U'}</span></div>` : ''}
+        ${rec.length === 3 && isSoccer(slug) ? `<div class="pills">
           <span class="pill"><b>${esc(rec[0])}</b> Siege</span>
           <span class="pill"><b>${esc(rec[1])}</b> Remis</span>
           <span class="pill"><b>${esc(rec[2])}</b> Niederl.</span>
@@ -1738,11 +1805,11 @@ async function renderTeam(slug, id){
         try{
           let r = { athletes: [] };
           for (const sl of (slug === 'nation' ? NATION_ROSTERS : [slug])){
-            try { r = await api(`site/v2/sports/soccer/${sl}/teams/${id}/roster`, { ttl: 30 * 60_000 }); } catch {}
+            try { r = await api(`site/v2/sports/${sp(sl)}/teams/${id}/roster`, { ttl: 30 * 60_000 }); } catch {}
             if ((r.athletes || []).length) break;
           }
           if (my !== token || state.teamTab !== 'squad') return;
-          const ath = r.athletes || [];
+          const ath = (r.athletes || []).flatMap(a => a.items ? a.items : [a]);   // NFL groups players by unit
           if (!ath.length){ p.innerHTML = emptyBox('👥', 'Kein Kader verfügbar'); return; }
           window.__roster = ath;
           const byPos = {};
@@ -1758,7 +1825,7 @@ async function renderTeam(slug, id){
                 ${a.flag?.href ? `<img class="flag" src="${esc(a.flag.href)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
                 ${chev}
               </button>`).join('')}</div>`).join('');
-          p.querySelectorAll('[data-ply]').forEach(b => b.onclick = () => { location.hash = `#/player/${ath[+b.dataset.ply].id}`; });
+          p.querySelectorAll('[data-ply]').forEach(b => b.onclick = () => { const a = ath[+b.dataset.ply]; isSoccer(slug) ? (location.hash = `#/player/${a.id}`) : openPlayer(a, T); });
         } catch(err){ p.innerHTML = errorBox(err); }
       }
     };
@@ -1918,7 +1985,7 @@ async function renderMatch(slug, id, fresh = false){
   const my = ++token;
   if (!fresh) view.innerHTML = `<div class="view">${navBar('Spiel')}<div id="mbody">${skeleton(1, 230)}${skeleton(6, 48)}</div></div>`;
   try{
-    const d = await api(`site/v2/sports/soccer/${slug}/summary?event=${id}`, { fresh, ttl: 20_000 });
+    const d = await api(`site/v2/sports/${sp(slug)}/summary?event=${id}`, { fresh, ttl: 20_000 });
     if (my !== token) return;
     const comp = d.header?.competitions?.[0];
     const m = normEvent({ id, date: comp?.date, competitions: [comp], status: comp?.status }, slug);
@@ -1931,6 +1998,7 @@ async function renderMatch(slug, id, fresh = false){
     const gi = d.gameInfo || {};
     const ref = gi.officials?.find(o => o.position?.name === 'Referee')?.displayName;
 
+    if (!isSoccer(slug)) return renderUsMatch(d, m, slug, comp, my);
     const hasEvents = (d.keyEvents || []).length > 0;
     const hasStats = m.state !== 'pre' && (d.boxscore?.teams || []).some(t => (t.statistics || []).some(x => parseFloat(x.displayValue) > 0));
     const hasLineups = (d.rosters || []).some(r => (r.roster || []).length);
@@ -2251,6 +2319,7 @@ async function lookupPhoto({ name, team, fallback }){
   } catch { return fallback || null; }
 }
 function playerPhoto(id, name, team, fallback){
+  if (fallback && /\/headshots\/(?!soccer)/.test(fallback)) return Promise.resolve(fallback);
   const c = photoMem[id];
   if (c && (c.u || Date.now() - c.t < 7 * 864e5)) return Promise.resolve(c.u || fallback || null);
   return new Promise(res => { photoQueue.push({ id, name, team, fallback, res }); pumpPhotos(); });
@@ -2448,6 +2517,119 @@ function openLineupPlayer(p, r, tc, e){
   $('#scrim').classList.add('on'); $('#sheet').classList.add('on');
 }
 
+/* ---------- match page: basketball, ice hockey, American football, baseball ---------- */
+function renderUsMatch(d, m, slug, comp, my){
+  const L = leagueBy(slug), st = statusLabel(m), played = m.state !== 'pre';
+  const per = PERIOD_DE[m.sport] || 'Abschnitt';
+  const lh = m.lines.home, la = m.lines.away;
+  const n = Math.max(lh.length, la.length);
+  const head = Array.from({ length: n }, (_, i) => i < (m.sport === 'baseball' ? 9 : m.sport === 'hockey' ? 3 : 4) ? String(i + 1) : (m.sport === 'baseball' ? String(i + 1) : 'OT'));
+  const box = n ? `<div class="section-h"><h2>${per === 'Inning' ? 'Innings' : per}</h2></div>
+    <div class="career glass" style="overflow-x:auto"><div style="min-width:${120 + n * 34}px">
+      <div class="cr head" style="grid-template-columns: 1fr ${'30px '.repeat(n)}40px"><span>Team</span>${head.map(h => `<span class="c">${h}</span>`).join('')}<span class="c">Ges.</span></div>
+      ${[[m.home, lh], [m.away, la]].map(([t, l]) => `<div class="cr" style="grid-template-columns: 1fr ${'30px '.repeat(n)}40px"><span class="lg">${img(t.logo, '', '')}<span>${esc(t.name)}</span></span>${Array.from({ length: n }, (_, i) => `<span class="c">${esc(l[i] ?? '')}</span>`).join('')}<span class="c" style="font-weight:800">${esc(t.score ?? '')}</span></div>`).join('')}
+    </div></div>` : '';
+  // team stats
+  const teams = d.boxscore?.teams || [];
+  const H = teams.find(t => String(t.team?.id) === String(m.home.id)) || teams[0], A = teams.find(t => t !== H);
+  const US_STAT_DE = { 'FG':'Würfe', 'Field Goal %':'Wurfquote %', '3PT':'Dreier', 'Three Point %':'Dreierquote %', 'FT':'Freiwürfe', 'Free Throw %':'Freiwurfquote %',
+    'Rebounds':'Rebounds', 'Offensive Rebounds':'Off. Rebounds', 'Defensive Rebounds':'Def. Rebounds', 'Assists':'Assists', 'Steals':'Steals', 'Blocks':'Blocks',
+    'Turnovers':'Ballverluste', 'Fouls':'Fouls', 'Points in Paint':'Punkte in der Zone', 'Fast Break Points':'Fastbreak-Punkte', 'Largest Lead':'Größte Führung',
+    'Shots':'Schüsse', 'Power Play Goals':'Powerplay-Tore', 'Power Play Opportunities':'Powerplay-Chancen', 'Hits':'Checks', 'Faceoffs Won':'Gewonnene Bullys',
+    'Faceoff Win Percentage':'Bullyquote %', 'Penalty Minutes':'Strafminuten', 'Blocked Shots':'Geblockte Schüsse', 'Giveaways':'Puckverluste', 'Takeaways':'Puckgewinne',
+    '1st Downs':'First Downs', 'Total Yards':'Raumgewinn (Yards)', 'Passing':'Pass-Yards', 'Rushing':'Lauf-Yards', 'Penalties':'Strafen', 'Possession':'Ballbesitz',
+    '3rd down efficiency':'3rd-Down-Quote', '4th down efficiency':'4th-Down-Quote', 'Total Plays':'Spielzüge', 'Interceptions thrown':'Interceptions',
+    'Hits_mlb':'Hits', 'Runs':'Runs', 'Errors':'Fehler', 'Home Runs':'Home Runs', 'Strikeouts':'Strikeouts', 'Walks':'Walks' };
+  const stats = (H?.statistics || []).map(x => [US_STAT_DE[x.label] || x.label || x.name, x.displayValue, A?.statistics?.find(y => y.name === x.name)?.displayValue]).filter(r => r[1] != null && r[2] != null).slice(0, 12);
+  const statHtml = stats.length ? `<div class="section-h"><h2>Statistik</h2></div><div class="stats glass">${stats.map(([k, a, b]) => {
+    const av = parseFloat(a), bv = parseFloat(b), tot = (av || 0) + (bv || 0) || 1;
+    return `<div class="stat"><div class="top"><span>${esc(a)}</span><span>${esc(k)}</span><span>${esc(b)}</span></div>
+      ${isNaN(av) || isNaN(bv) ? '' : `<div class="bars"><div><i class="hb" style="width:${av / tot * 100}%"></i></div><div><i class="ab" style="width:${bv / tot * 100}%"></i></div></div>`}</div>`; }).join('')}</div>` : '';
+  // top performers
+  const LEAD_DE = { points:'Punkte', rebounds:'Rebounds', assists:'Assists', passingYards:'Pass-Yards', rushingYards:'Lauf-Yards', receivingYards:'Fang-Yards',
+    goals:'Tore', assists_h:'Assists', saves:'Paraden', battingAverage:'Schlagquote', homeRuns:'Home Runs', RBIs:'RBIs' };
+  const leaders = (d.leaders || []).map(t => ({ team: t.team, cats: (t.leaders || []).slice(0, 3) })).filter(t => t.cats.length);
+  const leadHtml = leaders.length ? `<div class="section-h"><h2>Top-Spieler</h2></div>${leaders.map(t => `
+    <div class="lineup-head">${img(t.team?.logo || t.team?.logos?.[0]?.href, 'logo sm', '')}${esc(tn(t.team?.displayName || ''))}</div>
+    <div class="list glass">${t.cats.map(c => { const l = c.leaders?.[0]; if (!l) return ''; const a = l.athlete || {};
+      return `<div class="row"><div class="av" style="--tc:#8e8e93;--tn:#fff"><img alt="" class="ok" src="${esc(a.headshot?.href || '')}" onerror="this.remove()"><b>${esc((a.displayName || '?').split(' ').map(w => w[0]).join('').slice(0, 2))}</b></div>
+        <div class="grow"><div class="t1">${esc(a.displayName || '')}</div><div class="t2">${esc(LEAD_DE[c.name] || c.displayName || c.name)}: ${esc(l.displayValue || '')}</div></div></div>`; }).join('')}</div>`).join('')}` : '';
+  $('#mbody').innerHTML = `
+    <section class="hero glass" id="mhero"><div class="glow"></div>
+      <div style="font-size:12px;font-weight:700;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px">${esc(L.name)}</div>
+      <div class="scoreboard">
+        <a class="tm" href="#/team/${esc(slug)}/${esc(m.home.id)}">${img(m.home.logo, '', m.home.name)}<span>${esc(m.home.full || m.home.name)}</span></a>
+        <div class="res">${played ? `<div class="num">${esc(m.home.score ?? 0)}:${esc(m.away.score ?? 0)}</div>` : `<div class="num pre">${fmtTime(m.date)}</div>`}
+          <div class="stt ${st.live ? 'live' : ''}">${st.live ? '<span class="pulse"></span>' : ''}${esc(played ? st.txt : fmtDay(m.date))}</div></div>
+        <a class="tm" href="#/team/${esc(slug)}/${esc(m.away.id)}">${img(m.away.logo, '', m.away.name)}<span>${esc(m.away.full || m.away.name)}</span></a>
+      </div>
+      <div class="info">${d.gameInfo?.venue?.fullName ? `<span>🏟 ${esc(d.gameInfo.venue.fullName)}</span>` : ''}${played ? `<span>🗓 ${esc(fmtDay(m.date))}, ${fmtTime(m.date)}</span>` : ''}</div>
+    </section>
+    ${played ? box + statHtml + leadHtml : emptyBox('⏳', 'Das Spiel hat noch nicht begonnen')}`;
+  tintHero($('#mhero'), { color: m.home.color, logo: m.home.logo });
+  scheduleRefresh(m.state === 'in');
+}
+
+/* ---------- Formula 1 ---------- */
+async function renderF1(pane, tab, my){
+  if (tab === 'races') return renderF1Races(pane, my);
+  const d = await api('v2/sports/racing/f1/standings', { ttl: 30 * 60_000 });
+  if (my !== token) return;
+  const grp = (d.children || []).find(c => tab === 'drivers' ? /Driver/i.test(c.name) : /Constructor/i.test(c.name));
+  const rows = (grp?.standings?.entries || []).map(e => {
+    const s = {}; (e.stats || []).forEach(x => s[x.name] = x.displayValue);
+    return { name: (e.athlete || e.team || {}).displayName, flag: e.athlete?.flag?.href, logo: e.team?.logos?.[0]?.href, rank: +s.rank || 99, pts: s.championshipPts ?? s.points ?? '0' };
+  }).sort((a, b) => a.rank - b.rank);
+  if (!rows.length){ pane.innerHTML = emptyBox('🏁', 'Keine Wertung verfügbar'); return; }
+  pane.innerHTML = `<div class="list glass">${rows.map(r => `<div class="lb ${r.rank <= 3 ? '' : ''}"><span class="rk">${r.rank}</span>
+    ${r.flag ? `<img class="flag" src="${esc(r.flag)}" alt="">` : r.logo ? img(r.logo, 'logo xs', '') : ''}
+    <div class="nm2">${esc(r.name)}</div><span class="pt">${esc(r.pts)}</span></div>`).join('')}</div>
+    <p class="foot" style="margin-top:10px">${tab === 'drivers' ? 'Fahrer-WM' : 'Konstrukteurs-WM'} · Punkte</p>`;
+}
+async function renderF1Races(pane, my){
+  const d = await api('site/v2/sports/racing/f1/scoreboard', { ttl: 30 * 60_000 });
+  if (my !== token) return;
+  const cal = (d.leagues?.[0]?.calendar || []).filter(c => c.startDate);
+  const now = Date.now();
+  pane.innerHTML = `<div class="list glass">${cal.map((c, i) => {
+    const end = new Date(c.endDate || c.startDate), past = end < now, next = !past && (i === 0 || new Date(cal[i - 1].endDate || cal[i - 1].startDate) < now);
+    const label = String(c.label || '').replace(/^.*?(\\S+ Grand Prix)$/, '$1').replace('Grand Prix', 'GP');
+    const evId = String(c.event?.$ref || '').match(/events\/(\d+)/)?.[1] || '';
+    return `<a class="row" href="#/gp/${esc(new Date(c.startDate).getUTCFullYear())}/${esc(evId)}"><div class="ph-logo" style="font-size:11px;font-weight:800">${i + 1}</div>
+      <div class="grow"><div class="t1">${esc(c.label || label)}</div><div class="t2">${esc(new Date(c.startDate).toLocaleDateString('de-DE', { day:'numeric', month:'short' }))} – ${esc(end.toLocaleDateString('de-DE', { day:'numeric', month:'short' }))}${next ? ' · <b>nächstes Rennen</b>' : past ? ' · Ergebnis' : ''}</div></div>${chev}</a>`;
+  }).join('')}</div>`.replace('· <b>nächstes Rennen</b>', '· nächstes Rennen');
+}
+async function renderGP(year, evId){
+  const my = ++token;
+  view.innerHTML = `<div class="view">${navBar('Grand Prix')}<div id="gpbody">${skeleton(1, 160)}${skeleton(8, 48)}</div></div>`;
+  try{
+    const d = await api(`site/v2/sports/racing/f1/scoreboard?dates=${year}`, { ttl: 10 * 60_000 });
+    if (my !== token) return;
+    const e = (d.events || []).find(x => String(x.id) === String(evId));
+    if (!e){ $('#gpbody').innerHTML = emptyBox('🏁', 'Keine Daten zu diesem Rennen'); return; }
+    $('.nav-title').textContent = e.name;
+    const SES = { FP1:'Training 1', FP2:'Training 2', FP3:'Training 3', Qual:'Qualifying', SS:'Sprint-Quali', Sprint:'Sprint', Race:'Rennen' };
+    const comps = (e.competitions || []).map(c => ({ key: c.type?.abbreviation, name: SES[c.type?.abbreviation] || c.type?.abbreviation, c }));
+    let sel = comps.find(x => x.key === 'Race' && x.c.status?.type?.state !== 'pre') ? 'Race' : (comps.filter(x => x.c.status?.type?.state !== 'pre').pop()?.key || 'Race');
+    const show = () => {
+      const x = comps.find(y => y.key === sel), c = x?.c;
+      const done = c && c.status?.type?.state !== 'pre';
+      const rows = (c?.competitors || []).slice().sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+      $('#gplist').innerHTML = !c ? '' : !done
+        ? emptyBox('🗓️', `${x.name}: ${new Date(c.date).toLocaleString('de-DE', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })} Uhr`)
+        : `<div class="list glass">${rows.map(r => `<div class="lb"><span class="rk">${esc(r.order ?? '')}</span>
+            ${r.athlete?.flag?.href ? `<img class="flag" src="${esc(r.athlete.flag.href)}" alt="">` : ''}<div class="nm2">${esc(r.athlete?.displayName || '')}</div>
+            ${r.order <= 3 ? `<span>${['🥇','🥈','🥉'][r.order - 1]}</span>` : ''}</div>`).join('')}</div>`;
+    };
+    $('#gpbody').innerHTML = `<section class="hero glass"><div class="glow"></div><div style="font-size:44px">🏁</div><h1>${esc(e.name)}</h1>
+        <p>${esc(e.circuit?.fullName || '')}${e.circuit?.address?.country ? ' · ' + esc(cn(e.circuit.address.country)) : ''}</p></section>
+      <div class="chips" id="seschips">${comps.map(x => `<button class="chip glass flat ${x.key === sel ? 'on' : ''}" data-k="${esc(x.key)}">${esc(x.name)}</button>`).join('')}</div>
+      <div id="gplist"></div>`;
+    $('#seschips').onclick = ev => { const b = ev.target.closest('.chip'); if (!b) return; sel = b.dataset.k; $('#seschips').querySelectorAll('.chip').forEach(y => y.classList.toggle('on', y === b)); show(); };
+    show();
+  } catch(err){ if (my === token) $('#gpbody').innerHTML = errorBox(err); }
+}
+
 /* ---------- Today (all leagues) ---------- */
 async function renderToday(fresh = false){
   const my = ++token;
@@ -2472,8 +2654,8 @@ async function renderToday(fresh = false){
     $('#tchips .chip.on')?.scrollIntoView({ inline:'center', block:'nearest' });
   }
   const key = ymd(sel);
-  const results = await Promise.allSettled(LEAGUES.map(L =>
-    api(`site/v2/sports/soccer/${L.slug}/scoreboard?dates=${key}`, { fresh }).then(d => ({ L, ms: (d.events || []).map(e => normEvent(e, L.slug)) }))
+  const results = await Promise.allSettled(LEAGUES.filter(L => L.sport !== 'racing').map(L =>
+    api(`site/v2/sports/${sp(L.slug)}/scoreboard?dates=${key}`, { fresh }).then(d => ({ L, ms: (d.events || []).map(e => normEvent(e, L.slug)) }))
   ));
   if (my !== token) return;
   const ok = results.filter(r => r.status === 'fulfilled').map(r => r.value).filter(x => x.ms.length);
@@ -2499,7 +2681,7 @@ async function renderToday(fresh = false){
 let teamIndex = null;
 async function buildIndex(){
   if (teamIndex) return teamIndex;
-  const res = await Promise.allSettled(LEAGUES.filter(l => !l.cup).map(L => standings(L.slug).then(gs => ({ L, gs }))));
+  const res = await Promise.allSettled(LEAGUES.filter(l => !l.cup && l.sport !== 'racing').map(L => standings(L.slug).then(gs => ({ L, gs }))));
   const seen = new Map();
   res.filter(r => r.status === 'fulfilled').forEach(({ value: { L, gs } }) => gs.forEach(g => g.entries.forEach(e => {
     // domestic league wins over European cup as "home" league
@@ -2594,7 +2776,7 @@ function parseRss(xml, source){
 }
 const kicker = path => getText(`https://newsfeed.kicker.de/${path}`).then(x => parseRss(x, 'kicker'));
 const transfermarkt = () => getText('https://www.transfermarkt.de/rss/news').then(x => parseRss(x, 'Transfermarkt'));
-const espnNews = (slug, team) => api(`site/v2/sports/soccer/${slug}/news?limit=12${team ? '&team=' + team : ''}`, { ttl: 10 * 60_000 })
+const espnNews = (slug, team) => api(`site/v2/sports/${sp(slug)}/news?limit=12${team ? '&team=' + team : ''}`, { ttl: 10 * 60_000 })
   .then(d => (d.articles || []).map(a => ({ title: a.headline, link: a.links?.web?.href, date: new Date(a.published), desc: a.description || '',
     img: a.images?.[0]?.url, cats: (a.categories || []).map(c => c.description).filter(Boolean), source:'ESPN', lang:'en' })).filter(n => n.link));
 
@@ -2627,8 +2809,8 @@ function relTime(d){
 
 async function mergedSchedules(slugs, id){
   const all = await Promise.allSettled(slugs.flatMap(sl => [
-    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule`).then(d => ({ d, sl })),
-    api(`site/v2/sports/soccer/${sl}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl })),
+    api(`site/v2/sports/${sp(sl)}/teams/${id}/schedule`).then(d => ({ d, sl })),
+    api(`site/v2/sports/${sp(sl)}/teams/${id}/schedule?fixture=true`).then(d => ({ d, sl })),
   ]));
   const ok = all.filter(r => r.status === 'fulfilled').map(r => r.value);
   if (!ok.length) throw all[0]?.reason || new Error('Keine Spiele gefunden');
@@ -2910,7 +3092,7 @@ async function resultsFor(tips){                       // event id → normalise
   tips.forEach(t => { const d = new Date(t.kickoff); const mo = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`; (need.get(t.slug) || need.set(t.slug, new Set()).get(t.slug)).add(mo); });
   const out = new Map();
   await Promise.all([...need].flatMap(([slug, mos]) => [...mos].map(mo =>
-    api(`site/v2/sports/soccer/${slug}/scoreboard?dates=${mo}&limit=500`, { ttl: 5 * 60_000 })
+    api(`site/v2/sports/${sp(slug)}/scoreboard?dates=${mo}&limit=500`, { ttl: 5 * 60_000 })
       .then(d => (d.events || []).forEach(e => out.set(String(e.id), normEvent(e, slug)))).catch(() => {}))));
   return out;
 }
@@ -2934,7 +3116,7 @@ async function renderTipp(sub){
 async function tipMatches(my, L){
   const pane = $('#pane'); pane.innerHTML = skeleton(4, 110);
   try{
-    const base = await api(`site/v2/sports/soccer/${L.slug}/scoreboard`);
+    const base = await api(`site/v2/sports/${sp(L.slug)}/scoreboard`);
     let cal = (base.leagues?.[0]?.calendar || []).flatMap(c => typeof c === 'string' ? [c] : (c.entries || []).map(x => x.startDate || x.value)).filter(Boolean);
     const mds = matchdays(cal), todayKey = new Date().toISOString().slice(0, 10);
     let idx = mds.findIndex(g => g[g.length - 1] >= todayKey); if (idx < 0) idx = mds.length - 1;
@@ -2957,7 +3139,7 @@ async function tipMatches(my, L){
       $('#mdchips').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); loadMd(+b.dataset.i); };
     const loadMd = async i => {
       const list = $('#mdlist'); list.innerHTML = skeleton(4, 110);
-      const evs = (await Promise.all(mds[i].map(d => api(`site/v2/sports/soccer/${L.slug}/scoreboard?dates=${d.replace(/-/g, '')}`).catch(() => ({ events: [] })))))
+      const evs = (await Promise.all(mds[i].map(d => api(`site/v2/sports/${sp(L.slug)}/scoreboard?dates=${d.replace(/-/g, '')}`).catch(() => ({ events: [] })))))
         .flatMap(d => d.events || []).map(e => normEvent(e, L.slug)).sort((a, b) => new Date(a.date) - new Date(b.date));
       if (my !== token) return;
       list.innerHTML = evs.length ? `<div class="matches">${evs.map(m => tipCard(m, myTips.get(String(m.id)))).join('')}</div>` : emptyBox('🗓️', 'Keine Spiele');
@@ -3181,6 +3363,7 @@ function route(fresh = false, silent = false){
     case 'match':  setTab(lastTab); if (parts[3]) state.matchTab = parts[3]; renderMatch(a, b, silent); break;
     case 'player': setTab(lastTab); renderPlayer(a); break;
     case 'tipp':   lastTab = 0; setTab(0); renderTipp(a); break;
+    case 'gp':     setTab(lastTab); renderGP(a, b); break;
     default:       lastTab = 0; setTab(0); renderOverview(silent);
   }
   bindChrome();
@@ -3198,7 +3381,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet()
 let nationIndex = null;
 async function buildNationIndex(){
   if (nationIndex) return nationIndex;
-  const res = await Promise.allSettled(NATION_LISTS.map(sl => api(`v2/sports/soccer/${sl}/standings`, { ttl: 60 * 60_000 })));
+  const res = await Promise.allSettled(NATION_LISTS.map(sl => api(`v2/sports/${sp(sl)}/standings`, { ttl: 60 * 60_000 })));
   const seen = new Map();
   res.filter(r => r.status === 'fulfilled').forEach(r => (r.value.children || []).forEach(g => (g.standings?.entries || []).forEach(e => {
     const t = e.team; if (!seen.has(t.id)) seen.set(t.id, { id: t.id, en: t.displayName, name: cn(t.displayName), logo: t.logos?.[0]?.href });
@@ -3395,7 +3578,7 @@ function startOnboarding(steps = ['register', 'club', 'league', 'nation', 'done'
 
   /* --- 2. Favourite club --- */
   function club(){
-    const leagues = LEAGUES.filter(l => !l.cup && l.group !== 'eu');
+    const leagues = LEAGUES.filter(l => !l.cup && l.group !== 'eu' && !l.sport);
     let league = draft.club?.slug && leagues.some(l => l.slug === draft.club.slug) ? draft.club.slug : 'ger.1';
     let sel = draft.club || null, q = '';
     frame(`
@@ -3436,7 +3619,7 @@ function startOnboarding(steps = ['register', 'club', 'league', 'nation', 'done'
           const s2 = norm(q);
           const idx2 = await buildIndex();
           if (norm($('#cq')?.value.trim() || '') !== s2) return;
-          grid(idx2.filter(t => t.L.group !== 'eu' && norm(t.full + ' ' + t.name + ' ' + t.en).includes(s2)).slice(0, 30).map(t => ({ ...t, slug: t.L.slug })));
+          grid(idx2.filter(t => t.L.group !== 'eu' && !t.L.sport && norm(t.full + ' ' + t.name + ' ' + t.en).includes(s2)).slice(0, 30).map(t => ({ ...t, slug: t.L.slug })));
         } else {
           const gs = await standings(league);
           grid(gs.flatMap(g => g.entries.map(e => ({ ...e.team, slug: league }))).sort((a, b) => a.name.localeCompare(b.name, 'de')));
@@ -3472,7 +3655,7 @@ function startOnboarding(steps = ['register', 'club', 'league', 'nation', 'done'
       <h1>Deine Lieblingsliga</h1>
       <p class="lead">Tabelle und News dieser Liga erscheinen in deiner Übersicht.</p>
       ${GROUPS.map(([g, title]) => {
-        const ls = LEAGUES.filter(l => l.group === g && !l.cup);
+        const ls = LEAGUES.filter(l => l.group === g && !l.cup && !l.sport);
         return ls.length ? `<div class="group-title" style="margin-top:6px">${esc(title)}</div>
           <div class="pick-grid">${ls.map(l => `<button class="pick lg glass flat ${l.slug === sel ? 'sel' : ''}" data-slug="${l.slug}">
             <div class="lgw"><img src="${LOGO(l.logo)}" alt="" loading="lazy"></div><span>${esc(l.name)}</span><small>${esc(l.country)}</small></button>`).join('')}</div>` : '';
