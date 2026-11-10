@@ -340,6 +340,42 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .push-hint{ padding: 14px 16px; font-size:14px; color: var(--text-2); line-height:1.45; }
 .push-hint b{ color: var(--text); }
 
+/* ============================================================
+   TIPPSPIEL
+   ============================================================ */
+.tipcard{ padding: 12px 14px; border-radius: var(--r-md); }
+.tiprow{ display:flex; align-items:center; gap:10px; min-height:40px; }
+.tiprow .tn{ flex:1; min-width:0; display:flex; align-items:center; gap:10px; font-weight:650; font-size:15px; }
+.tiprow .tn span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stepper{ display:flex; align-items:center; gap:6px; flex:none; }
+.stepper button{ width:34px; height:34px; border-radius:50%; font-size:20px; font-weight:700; line-height:1; background: var(--glass-strong);
+  box-shadow: inset 0 1px 1px -0.5px var(--rim-a); transition: transform .25s var(--spring); }
+.stepper button:active{ transform: scale(.88); }
+.stepper b{ width:30px; text-align:center; font-size:22px; font-weight:800; font-variant-numeric: tabular-nums; }
+.stepper b.unset{ color: var(--text-3); }
+.tipcard .res{ width:34px; text-align:center; font-size:20px; font-weight:800; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tipcard .lockedtip{ width:46px; text-align:center; font-size:20px; font-weight:800; font-variant-numeric: tabular-nums; }
+.tipmeta{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:12px; color: var(--text-3); font-weight:600; }
+.tipmeta .saved{ color: var(--win); }
+.ptsb{ padding: 3px 9px; border-radius:999px; font-size:12px; font-weight:800; }
+.ptsb.p4{ background:#30d158; color:#fff; } .ptsb.p3{ background:#64d2ff; color:#003; } .ptsb.p2{ background:#ffd60a; color:#222; } .ptsb.p0{ background: var(--glass-strong); color: var(--text-2); }
+.tip-head{ display:flex; gap:10px; margin-bottom:14px; }
+.tip-head div{ flex:1; padding: 12px; border-radius: var(--r-md); text-align:center; }
+.tip-head b{ display:block; font-size:24px; font-weight:800; font-variant-numeric: tabular-nums; }
+.tip-head small{ font-size:11px; font-weight:700; color: var(--text-2); text-transform:uppercase; letter-spacing:.05em; }
+.lb{ display:flex; align-items:center; gap:12px; padding: 12px 16px; position:relative; }
+.lb + .lb::before{ content:''; position:absolute; top:0; left:16px; right:16px; height:1px; background: var(--sep); }
+.lb .rk{ width:24px; text-align:center; font-weight:800; color: var(--text-2); }
+.lb.me{ background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.lb .nm2{ flex:1; min-width:0; font-weight:650; }
+.lb .nm2 small{ display:block; font-weight:500; color: var(--text-2); font-size:12px; }
+.lb .pt{ font-size:20px; font-weight:800; font-variant-numeric: tabular-nums; }
+.codebox{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 12px 14px; border-radius: var(--r-md); margin-bottom:12px; }
+.codebox code{ font-size:20px; font-weight:800; letter-spacing:.18em; font-family: ui-monospace, Menlo, monospace; }
+.ov-tip{ display:flex; align-items:center; gap:14px; padding: 14px 16px; border-radius: var(--r-lg); margin-top:12px; }
+.ov-tip .em{ font-size:30px; }
+.ov-tip .grow{ flex:1; } .ov-tip b{ display:block; font-size:16px; } .ov-tip small{ color: var(--text-2); font-size:13px; }
+
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
 .avatar{ width:64px; height:64px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:24px; font-weight:800; color: var(--on-accent);
@@ -775,7 +811,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T06:06';
+const APP_BUILD = '2026-11-10T06:11';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -2639,6 +2675,8 @@ async function renderOverview(silent = false){
           : `<a class="glass flat press" href="#/me"><div class="ico" style="font-size:28px">🌍</div><small>Nationalteam</small><span>Auswählen</span></a>`}
     </div>
 
+    ${Auth.cloud ? `<a class="ov-tip glass press" href="#/tipp"><span class="em">🎯</span><div class="grow"><b>Tippspiel</b><small>Tippe den nächsten Spieltag und miss dich mit Freunden</small></div>${chev}</a>` : ''}
+
     <div class="ov-h">${img(C.logo, '', C.name)}<h2>${esc(C.name)}</h2><span class="pill" id="ovRank" style="display:none"></span></div>
     <div class="ov-pair" id="ovClub">${skeleton(2, 92)}</div>
 
@@ -2847,6 +2885,203 @@ async function bindPushSection(){
   $('#pushTest').onclick = () => Push.test().catch(err => toast(err.message));
 }
 
+/* ---------- Tippspiel ---------- */
+function tipPoints(t, hs, as){
+  if (t.home === hs && t.away === as) return 4;
+  const td = t.home - t.away, rd = hs - as;
+  if (Math.sign(td) !== Math.sign(rd)) return 0;
+  return rd !== 0 && td === rd ? 3 : 2;
+}
+const tipCounts = (t, m) => m && m.state === 'post' && new Date(t.updated_at) < new Date(m.date);   // saved before the real kick-off
+function matchdays(cal){
+  const days = [...new Set(cal.map(c => c.slice(0, 10)))].sort();
+  const groups = [];
+  for (const d of days){
+    const last = groups[groups.length - 1];
+    if (last && (new Date(d) - new Date(last[last.length - 1])) / 864e5 <= 3) last.push(d); else groups.push([d]);
+  }
+  return groups;
+}
+const mdLabel = g => { const f = d => new Date(d + 'T12:00:00'); const a = f(g[0]), b = f(g[g.length - 1]);
+  return g.length === 1 ? a.toLocaleDateString('de-DE', { weekday:'short', day:'numeric', month:'short' })
+    : `${a.getDate()}.${a.getMonth() !== b.getMonth() ? (a.getMonth() + 1) + '.' : ''}–${b.toLocaleDateString('de-DE', { day:'numeric', month:'short' })}`; };
+async function resultsFor(tips){                       // event id → normalised match (from monthly scoreboards)
+  const need = new Map();
+  tips.forEach(t => { const d = new Date(t.kickoff); const mo = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`; (need.get(t.slug) || need.set(t.slug, new Set()).get(t.slug)).add(mo); });
+  const out = new Map();
+  await Promise.all([...need].flatMap(([slug, mos]) => [...mos].map(mo =>
+    api(`site/v2/sports/soccer/${slug}/scoreboard?dates=${mo}&limit=500`, { ttl: 5 * 60_000 })
+      .then(d => (d.events || []).forEach(e => out.set(String(e.id), normEvent(e, slug)))).catch(() => {}))));
+  return out;
+}
+const tipNeedsSetup = err => /tip_|tips|create_tip_group|join_tip_group|schema cache/i.test(err?.message || '');
+const tipSetupBox = () => emptyBox('🛠️', 'Tippspiel noch nicht eingerichtet', 'Das Datenbank-Skript supabase/tipp.sql muss einmal in Supabase ausgeführt werden.');
+
+async function renderTipp(sub){
+  const my = ++token;
+  const pr = profile() || {};
+  const L = pr.league || { slug: 'ger.1', name: 'Bundesliga' };
+  view.innerHTML = `<div class="view">${navBar('Tippspiel')}
+    <h1 class="large-title">Tippspiel</h1>
+    <p class="subtitle">${esc(L.name)} · 4 Punkte exakt · 3 Tordifferenz · 2 Tendenz</p>
+    ${seg('tipseg', [['tip','Tippen'], ['rank','Rangliste']], sub === 'rangliste' ? 'rank' : 'tip')}
+    <div id="pane">${skeleton(4, 110)}</div></div>`;
+  bindSeg('tipseg', k => { history.replaceState(null, '', k === 'rank' ? '#/tipp/rangliste' : '#/tipp'); k === 'rank' ? tipRanking(my) : tipMatches(my, L); });
+  if (!Auth.cloud || !Auth.user){ $('#pane').innerHTML = emptyBox('🔐', 'Bitte anmelden', 'Das Tippspiel braucht ein Arenly-Konto.'); return; }
+  sub === 'rangliste' ? tipRanking(my) : tipMatches(my, L);
+}
+
+async function tipMatches(my, L){
+  const pane = $('#pane'); pane.innerHTML = skeleton(4, 110);
+  try{
+    const base = await api(`site/v2/sports/soccer/${L.slug}/scoreboard`);
+    let cal = (base.leagues?.[0]?.calendar || []).flatMap(c => typeof c === 'string' ? [c] : (c.entries || []).map(x => x.startDate || x.value)).filter(Boolean);
+    const mds = matchdays(cal), todayKey = new Date().toISOString().slice(0, 10);
+    let idx = mds.findIndex(g => g[g.length - 1] >= todayKey); if (idx < 0) idx = mds.length - 1;
+    if (state.tipMd != null && mds[state.tipMd]) idx = state.tipMd;
+    const { data: mine, error } = await Auth.sb.from('tips').select('*').eq('user_id', Auth.user.id);
+    if (error) throw error;
+    if (my !== token) return;
+    const myTips = new Map((mine || []).map(t => [String(t.event_id), t]));
+    // season points
+    const res = await resultsFor(mine || []);
+    let pts = 0, exact = 0, counted = 0;
+    (mine || []).forEach(t => { const m = res.get(String(t.event_id)); if (tipCounts(t, m)){ const p = tipPoints(t, +m.home.score, +m.away.score); pts += p; exact += p === 4; counted++; } });
+    if (my !== token) return;
+    pane.innerHTML = `
+      <div class="tip-head"><div class="glass flat"><b>${pts}</b><small>Punkte</small></div><div class="glass flat"><b>${exact}</b><small>Volltreffer</small></div><div class="glass flat"><b>${counted}</b><small>gewertet</small></div></div>
+      <div class="chips" id="mdchips">${mds.map((g, i) => `<button class="chip glass flat ${i === idx ? 'on' : ''}" data-i="${i}"><small>Spieltag</small>${esc(mdLabel(g))}</button>`).join('')}</div>
+      <div id="mdlist">${skeleton(4, 110)}</div>`;
+    $('#mdchips .chip.on')?.scrollIntoView({ inline:'center', block:'nearest' });
+    $('#mdchips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; state.tipMd = +b.dataset.i;
+      $('#mdchips').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); loadMd(+b.dataset.i); };
+    const loadMd = async i => {
+      const list = $('#mdlist'); list.innerHTML = skeleton(4, 110);
+      const evs = (await Promise.all(mds[i].map(d => api(`site/v2/sports/soccer/${L.slug}/scoreboard?dates=${d.replace(/-/g, '')}`).catch(() => ({ events: [] })))))
+        .flatMap(d => d.events || []).map(e => normEvent(e, L.slug)).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (my !== token) return;
+      list.innerHTML = evs.length ? `<div class="matches">${evs.map(m => tipCard(m, myTips.get(String(m.id)))).join('')}</div>` : emptyBox('🗓️', 'Keine Spiele');
+      list.querySelectorAll('.tipcard[data-open]').forEach(card => bindTipCard(card, evs.find(m => String(m.id) === card.dataset.ev), myTips));
+    };
+    loadMd(idx);
+  } catch(err){ if (my === token) pane.innerHTML = tipNeedsSetup(err) ? tipSetupBox() : errorBox(err); }
+}
+function tipCard(m, t){
+  const open = m.state === 'pre' && new Date(m.date) > Date.now();
+  const when = new Date(m.date).toLocaleDateString('de-DE', { weekday:'short', day:'numeric', month:'short' }) + ', ' + fmtTime(m.date);
+  const team = (x) => `<span class="tn">${img(x.logo, 'logo sm', x.name)}<span>${esc(x.name)}</span></span>`;
+  if (open){
+    const st = (side, v) => `<div class="stepper" data-side="${side}"><button data-d="-1" aria-label="weniger">−</button><b class="${v == null ? 'unset' : ''}">${v ?? '–'}</b><button data-d="1" aria-label="mehr">+</button></div>`;
+    return `<div class="tipcard glass flat" data-ev="${esc(m.id)}" data-open="1">
+      <div class="tiprow">${team(m.home)}${st('home', t?.home)}</div>
+      <div class="tiprow">${team(m.away)}${st('away', t?.away)}</div>
+      <div class="tipmeta"><span>${esc(when)}</span><span class="tst ${t ? 'saved' : ''}">${t ? '✓ getippt' : 'noch nicht getippt'}</span></div></div>`;
+  }
+  const played = m.state !== 'pre' && m.home.score != null;
+  const valid = t && tipCounts(t, m), p = valid ? tipPoints(t, +m.home.score, +m.away.score) : null;
+  const late = t && m.state === 'post' && !valid;
+  return `<a class="tipcard glass flat" href="#/match/${esc(m.slug)}/${esc(m.id)}">
+    <div class="tiprow">${team(m.home)}<span class="lockedtip">${t ? esc(t.home) : '–'}</span><span class="res">${played ? esc(m.home.score) : ''}</span></div>
+    <div class="tiprow">${team(m.away)}<span class="lockedtip">${t ? esc(t.away) : '–'}</span><span class="res">${played ? esc(m.away.score) : ''}</span></div>
+    <div class="tipmeta"><span>${m.state === 'in' ? '<span style="color:var(--live)">● läuft</span>' : esc(when)} · Tipp | Ergebnis</span>
+      ${p != null ? `<span class="ptsb p${p}">+${p}</span>` : late ? '<span class="ptsb p0">zu spät</span>' : t ? '<span>gesperrt</span>' : '<span>nicht getippt</span>'}</div></a>`;
+}
+function bindTipCard(card, m, myTips){
+  let saveT;
+  const val = side => { const b = card.querySelector(`.stepper[data-side="${side}"] b`); return b.classList.contains('unset') ? null : +b.textContent; };
+  const set = (side, v) => { const b = card.querySelector(`.stepper[data-side="${side}"] b`); b.textContent = v; b.classList.remove('unset'); };
+  card.querySelectorAll('.stepper button').forEach(btn => btn.onclick = () => {
+    const side = btn.closest('.stepper').dataset.side, other = side === 'home' ? 'away' : 'home';
+    const cur = val(side);
+    set(side, Math.max(0, Math.min(15, (cur ?? (+btn.dataset.d > 0 ? 0 : 1)) + +btn.dataset.d)));
+    if (val(other) == null) set(other, 0);
+    const stEl = card.querySelector('.tst'); stEl.textContent = 'speichert …'; stEl.classList.remove('saved');
+    clearTimeout(saveT);
+    saveT = setTimeout(async () => {
+      if (new Date(m.date) <= Date.now()){ stEl.textContent = 'Anpfiff – gesperrt'; return; }
+      const row = { user_id: Auth.user.id, event_id: String(m.id), slug: m.slug, kickoff: new Date(m.date).toISOString(), home: val('home'), away: val('away') };
+      const { data, error } = await Auth.sb.from('tips').upsert(row).select().single();
+      if (error){ stEl.textContent = tipNeedsSetup(error) ? 'Tippspiel nicht eingerichtet' : 'Fehler beim Speichern'; return; }
+      myTips.set(String(m.id), data || row); stEl.textContent = '✓ gespeichert'; stEl.classList.add('saved');
+    }, 650);
+  });
+}
+
+async function tipRanking(my){
+  const pane = $('#pane'); pane.innerHTML = skeleton(4, 64);
+  try{
+    const { data: mem, error } = await Auth.sb.from('tip_members').select('group_id, display_name, tip_groups(id, name, code, league, owner)').eq('user_id', Auth.user.id);
+    if (error) throw error;
+    if (my !== token) return;
+    const groups = (mem || []).map(x => x.tip_groups).filter(Boolean);
+    const actions = `<div style="display:flex;gap:10px;margin-top:16px"><button class="btn" style="flex:1;margin:0" id="tgNew">＋ Tipprunde erstellen</button><button class="btn ghost" style="flex:1;margin:0" id="tgJoin">Mit Code beitreten</button></div>`;
+    if (!groups.length){
+      pane.innerHTML = emptyBox('🏆', 'Noch keine Tipprunde', 'Erstelle eine Runde und lade Freunde mit dem Code ein – oder tritt mit einem Code bei.') + actions;
+    } else {
+      const gi = Math.max(0, groups.findIndex(g => g.id === state.tipGroup));
+      const g = groups[gi]; state.tipGroup = g.id;
+      pane.innerHTML = `${groups.length > 1 ? `<div class="chips" id="tgchips">${groups.map(x => `<button class="chip glass flat ${x.id === g.id ? 'on' : ''}" data-id="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</div>` : ''}
+        <div class="codebox glass flat"><div><div style="font-size:12px;color:var(--text-2);font-weight:600">${esc(g.name)} · Einladungscode</div><code>${esc(g.code)}</code></div>
+          <button class="btn" style="margin:0;padding:9px 16px" id="tgShare">Teilen</button></div>
+        <div id="lb">${skeleton(4, 56)}</div>${actions}
+        <button class="more glass flat press" id="tgLeave" style="color:var(--loss)">Tipprunde verlassen</button>`;
+      $('#tgchips')?.addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ state.tipGroup = b.dataset.id; tipRanking(my); } });
+      $('#tgShare').onclick = async () => {
+        const text = `Tipp mit mir in Arenly! Tipprunde „${g.name}“ – Code: ${g.code}\n${location.origin + location.pathname}#/tipp/rangliste`;
+        try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast('Einladung kopiert'); } } catch {}
+      };
+      $('#tgLeave').onclick = async () => {
+        if (!confirm(`„${g.name}“ wirklich verlassen?`)) return;
+        await Auth.sb.from('tip_members').delete().eq('group_id', g.id).eq('user_id', Auth.user.id);
+        state.tipGroup = null; tipRanking(my);
+      };
+      // leaderboard
+      const { data: members } = await Auth.sb.from('tip_members').select('user_id, display_name').eq('group_id', g.id);
+      const ids = (members || []).map(x => x.user_id);
+      const { data: tips } = await Auth.sb.from('tips').select('*').in('user_id', ids);
+      const res = await resultsFor((tips || []).filter(t => t.slug === g.league || true));
+      if (my !== token) return;
+      const rows = (members || []).map(x => {
+        let pts = 0, exact = 0, n = 0;
+        (tips || []).filter(t => t.user_id === x.user_id).forEach(t => { const m = res.get(String(t.event_id)); if (tipCounts(t, m)){ const p = tipPoints(t, +m.home.score, +m.away.score); pts += p; exact += p === 4; n++; } });
+        return { ...x, pts, exact, n };
+      }).sort((a, b) => b.pts - a.pts || b.exact - a.exact);
+      let rank = 0, last = null;
+      $('#lb').innerHTML = `<div class="list glass">${rows.map((r, i) => { if (r.pts !== last){ rank = i + 1; last = r.pts; }
+        return `<div class="lb ${r.user_id === Auth.user.id ? 'me' : ''}"><span class="rk">${rank}</span>
+          <div class="nm2">${esc(r.display_name || 'Tipper')}${r.user_id === Auth.user.id ? ' (du)' : ''}<small>${r.exact} Volltreffer · ${r.n} gewertete Tipps</small></div>
+          <span class="pt">${r.pts}</span></div>`; }).join('')}</div>
+        <p class="foot" style="margin-top:10px">Tipps der anderen sind erst ab Anpfiff sichtbar.</p>`;
+    }
+    $('#tgNew').onclick = () => tipDialog('new', my);
+    $('#tgJoin').onclick = () => tipDialog('join', my);
+  } catch(err){ if (my === token) pane.innerHTML = tipNeedsSetup(err) ? tipSetupBox() : errorBox(err); }
+}
+function tipDialog(kind, my){
+  const pr = profile() || {}, me = (pr.name || '').split(' ')[0] || 'Tipper';
+  $('#sheet').innerHTML = `<div class="grabber"></div>
+    <h3 style="font-size:22px;font-weight:800;margin-bottom:6px">${kind === 'new' ? 'Neue Tipprunde' : 'Tipprunde beitreten'}</h3>
+    <p style="color:var(--text-2);margin-bottom:16px">${kind === 'new' ? `Gespielt wird in der ${esc(pr.league?.name || 'Bundesliga')}. Danach bekommst du einen Code zum Einladen.` : 'Gib den 6-stelligen Code ein, den du bekommen hast.'}</p>
+    <div class="form-error" id="formErr"></div>
+    <div class="field"><label for="tgIn">${kind === 'new' ? 'Name der Runde' : 'Code'}</label>
+      <div class="input glass flat"><input id="tgIn" ${kind === 'new' ? 'placeholder="z. B. Büro-Tipprunde" maxlength="40"' : 'placeholder="ABC123" maxlength="6" autocapitalize="characters" style="letter-spacing:.2em;font-weight:700"'}></div></div>
+    <div class="field"><label for="tgMe">Dein Name in der Rangliste</label><div class="input glass flat"><input id="tgMe" value="${esc(me)}" maxlength="24"></div></div>
+    <button class="btn block" id="tgGo" style="margin-top:14px">${kind === 'new' ? 'Erstellen' : 'Beitreten'}</button>
+    <button class="btn ghost block" style="margin-top:10px" onclick="closeSheet()">Abbrechen</button>`;
+  $('#scrim').classList.add('on'); $('#sheet').classList.add('on');
+  $('#tgGo').onclick = async () => {
+    const v = $('#tgIn').value.trim(), name = $('#tgMe').value.trim() || me;
+    if (kind === 'new' ? v.length < 2 : v.length !== 6){ $('#formErr').textContent = kind === 'new' ? 'Bitte einen Namen eingeben.' : 'Der Code hat 6 Zeichen.'; $('#formErr').classList.add('on'); return; }
+    $('#tgGo').disabled = true;
+    const { data, error } = kind === 'new'
+      ? await Auth.sb.rpc('create_tip_group', { p_name: v, p_display: name, p_league: pr.league?.slug || 'ger.1' })
+      : await Auth.sb.rpc('join_tip_group', { p_code: v, p_display: name });
+    if (error){ $('#formErr').textContent = tipNeedsSetup(error) ? 'Tippspiel ist noch nicht eingerichtet.' : (error.message || 'Fehler'); $('#formErr').classList.add('on'); $('#tgGo').disabled = false; return; }
+    closeSheet(); state.tipGroup = data?.id; toast(kind === 'new' ? `Tipprunde erstellt – Code ${data?.code}` : `Willkommen in „${data?.name}“`);
+    tipRanking(my);
+  };
+}
+
 /* ---------- Profile (incl. favourites) ---------- */
 function renderMe(){
   ++token;
@@ -2945,6 +3180,7 @@ function route(fresh = false, silent = false){
     case 'team':   setTab(lastTab); renderTeam(a, b); break;
     case 'match':  setTab(lastTab); if (parts[3]) state.matchTab = parts[3]; renderMatch(a, b, silent); break;
     case 'player': setTab(lastTab); renderPlayer(a); break;
+    case 'tipp':   lastTab = 0; setTab(0); renderTipp(a); break;
     default:       lastTab = 0; setTab(0); renderOverview(silent);
   }
   bindChrome();
