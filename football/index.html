@@ -156,6 +156,21 @@ img{ display:block; }
    ============================================================ */
 #app{ position:relative; z-index:1; max-width: 760px; margin: 0 auto; padding: calc(var(--safe-t) + 8px) 16px calc(120px + var(--safe-b)); }
 .view{ animation: viewIn .45s var(--ease) both; }
+html.vt .view{ animation: none; }
+
+/* ---------- iOS-style page transitions (View Transitions API) ---------- */
+.tabbar{ view-transition-name: tabbar; }
+::view-transition-old(root), ::view-transition-new(root){ animation-duration: .42s; animation-timing-function: cubic-bezier(.32,.72,0,1); }
+html[data-dir=forward]::view-transition-old(root){ animation-name: vt-out-left; }
+html[data-dir=forward]::view-transition-new(root){ animation-name: vt-in-right; box-shadow: -12px 0 40px rgba(0,0,0,.35); }
+html[data-dir=back]::view-transition-old(root){ animation-name: vt-out-right; z-index: 2; box-shadow: -12px 0 40px rgba(0,0,0,.35); }
+html[data-dir=back]::view-transition-new(root){ animation-name: vt-in-left; }
+html[data-dir=fade]::view-transition-old(root), html[data-dir=fade]::view-transition-new(root){ animation-duration: .22s; }
+::view-transition-group(hero-logo){ animation-duration: .5s; animation-timing-function: cubic-bezier(.32,.72,0,1); z-index: 5; }
+@keyframes vt-in-right{ from{ transform: translateX(100%); } }
+@keyframes vt-out-left{ to{ transform: translateX(-28%); opacity: .55; } }
+@keyframes vt-out-right{ to{ transform: translateX(100%); } }
+@keyframes vt-in-left{ from{ transform: translateX(-28%); opacity: .55; } }
 @keyframes viewIn{ from{ opacity:0; transform: translateY(14px) scale(.99); filter: blur(4px);} to{ opacity:1; transform:none; filter:none; } }
 
 /* nav bar (iOS style: large title collapses into a glass bar) */
@@ -375,6 +390,43 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .ov-tip{ display:flex; align-items:center; gap:14px; padding: 14px 16px; border-radius: var(--r-lg); margin-top:12px; }
 .ov-tip .em{ font-size:30px; }
 .ov-tip .grow{ flex:1; } .ov-tip b{ display:block; font-size:16px; } .ov-tip small{ color: var(--text-2); font-size:13px; }
+
+/* ---------- Matchday card ---------- */
+.md-card{ display:block; padding: 16px 16px 14px; border-radius: var(--r-xl); margin: 8px 0 6px; overflow:hidden; }
+.md-card .md-top{ display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; color: var(--text-2); letter-spacing:.04em; text-transform:uppercase; }
+.md-card .md-top .live{ color: var(--live); display:flex; align-items:center; gap:6px; }
+.md-mid{ display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap:6px; margin: 14px 0 10px; }
+.md-team{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; min-width:0; }
+.md-team img{ width:66px; height:66px; object-fit:contain; filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)); }
+.md-team span{ font-weight:750; font-size:14px; line-height:1.15; }
+.md-ring{ position:relative; width:112px; height:112px; display:grid; place-items:center; }
+.md-ring svg{ position:absolute; inset:0; transform: rotate(-90deg); }
+.md-ring .trk{ stroke: var(--sep); } .md-ring .val{ stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s var(--ease); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent)); }
+.md-ring .in{ text-align:center; line-height:1.05; }
+.md-ring .in b{ display:block; font-size:24px; font-weight:800; letter-spacing:-.02em; font-variant-numeric: tabular-nums; }
+.md-ring .in small{ font-size:11px; font-weight:700; color: var(--text-2); text-transform:uppercase; letter-spacing:.05em; }
+.md-ring .in b.score{ font-size:32px; }
+.md-bot{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+.md-bot .pill{ font-size:12.5px; }
+.md-bot .cal{ padding: 7px 13px; border-radius:999px; font-size:13px; font-weight:700; background: var(--accent); color: var(--on-accent); box-shadow: 0 6px 16px -6px var(--accent); }
+.fav-row{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; margin: 10px -16px 0; padding: 2px 16px 6px; }
+.fav-row::-webkit-scrollbar{ display:none; }
+.fav-row a{ flex:none; display:flex; align-items:center; gap:8px; padding: 7px 13px 7px 8px; border-radius:999px; font-size:13.5px; font-weight:650; }
+.fav-row img{ width:24px; height:24px; object-fit:contain; }
+.fav-row img.nat{ width:26px; height:18px; object-fit:cover; border-radius:4px; }
+.fav-row .lgw{ width:24px; height:24px; border-radius:7px; background: rgba(255,255,255,.94); display:grid; place-items:center; }
+.fav-row .lgw img{ width:18px; height:18px; }
+
+/* ---------- goal celebration ---------- */
+.goal-burst{ position:fixed; inset:0; z-index:400; pointer-events:none; display:grid; place-items:center; }
+.goal-burst canvas{ position:absolute; inset:0; width:100%; height:100%; }
+.goal-burst .gb{ position:relative; text-align:center; animation: gbIn .6s var(--spring) both, gbOut .5s var(--ease) 2.4s forwards; }
+.goal-burst .gb b{ display:block; font-size: 88px; font-weight: 900; letter-spacing:-.04em; line-height:1; color:#fff;
+  text-shadow: 0 6px 30px var(--accent), 0 2px 0 rgba(0,0,0,.25); }
+.goal-burst .gb span{ display:inline-block; margin-top:12px; padding: 8px 16px; border-radius:999px; font-weight:800; font-size:16px; color:#fff;
+  background: rgba(0,0,0,.35); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+@keyframes gbIn{ from{ transform: scale(.3) rotate(-8deg); opacity:0; } }
+@keyframes gbOut{ to{ transform: scale(1.15); opacity:0; } }
 
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
@@ -705,6 +757,11 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
   display:grid; grid-template-columns: repeat(5,1fr);
   padding: 6px; border-radius: 999px;
 }
+.tabbar{ transition: width .55s var(--spring), left .55s var(--spring), transform .55s var(--spring); }
+.tabbar.mini{ width: 74px; left: 16px; transform: none; grid-template-columns: 1fr; }
+.tabbar.mini .tab:not(.on){ display:none; }
+.tabbar.mini .tab span{ display:none; }
+.tabbar.mini .lens{ width: calc(100% - 12px); transform: none !important; }
 .tabbar .lens{
   position:absolute; top:6px; bottom:6px; left:6px;
   width: calc((100% - 12px) / 5);
@@ -811,7 +868,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T06:19';
+const APP_BUILD = '2026-11-10T18:06';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1747,7 +1804,10 @@ async function loadSchedules(slug, id){
 
 async function renderTeam(slug, id){
   const my = ++token;
-  view.innerHTML = `<div class="view">${navBar('')}<div id="tbody">${skeleton(1, 260)}${skeleton(5)}</div></div>`;
+  const hero = pendingHero && pendingHero.href === location.hash ? pendingHero.src : null;
+  view.innerHTML = `<div class="view">${navBar('')}<div id="tbody">${hero
+    ? `<section class="hero glass"><div class="glow"></div><img class="big-logo" src="${esc(hero)}" alt="" style="view-transition-name:hero-logo;animation:none"><h1>&nbsp;</h1><p>&nbsp;</p></section>`
+    : skeleton(1, 260)}${skeleton(5)}</div></div>`;
   try{
     const { results, fixtures } = await loadSchedules(slug, id);
     if (my !== token) return;
@@ -2034,6 +2094,7 @@ async function renderMatch(slug, id, fresh = false){
       <div id="pane"></div>`;
 
     tintHero($('#mhero'), { color: m.home.color, logo: m.home.logo });
+    goalWatch(m);
     const homeId = m.home.id;
     const pane = k => {
       state.matchTab = k;
@@ -2849,12 +2910,11 @@ async function renderOverview(silent = false){
     <div class="brand"><img class="brand-icon" src="assets/icon-rounded-256.png" alt=""><h1 class="large-title">Übersicht</h1></div>
     <p class="subtitle" style="margin-top:8px">${first ? `Hallo ${esc(first)} · ` : ''}${esc(today)}</p>
 
-    <div class="trio">
-      <a class="glass flat press" href="#/team/${esc(C.slug)}/${esc(C.id)}"><div class="ico">${img(C.logo, 'club', C.name)}</div><small>Verein</small><span>${esc(C.name)}</span></a>
-      ${L ? `<a class="glass flat press" href="#/league/${esc(L.slug)}"><div class="ico">${lgIcon(L.logo)}</div><small>Liga</small><span>${esc(L.name)}</span></a>`
-          : `<a class="glass flat press" href="#/me"><div class="ico" style="font-size:28px">🏆</div><small>Liga</small><span>Auswählen</span></a>`}
-      ${N ? `<a class="glass flat press" href="#/team/nation/${esc(N.id)}"><div class="ico">${img(N.logo, 'nat', N.name)}</div><small>Nationalteam</small><span>${esc(N.name)}</span></a>`
-          : `<a class="glass flat press" href="#/me"><div class="ico" style="font-size:28px">🌍</div><small>Nationalteam</small><span>Auswählen</span></a>`}
+    <div id="ovHero">${skeleton(1, 250)}</div>
+    <div class="fav-row">
+      <a class="glass flat press" href="#/team/${esc(C.slug)}/${esc(C.id)}">${img(C.logo, '', C.name)}${esc(C.name)}</a>
+      ${L ? `<a class="glass flat press" href="#/league/${esc(L.slug)}">${lgIcon(L.logo)}${esc(L.name)}</a>` : `<a class="glass flat press" href="#/me">🏆 Liga wählen</a>`}
+      ${N ? `<a class="glass flat press" href="#/team/nation/${esc(N.id)}">${img(N.logo, 'nat', N.name)}${esc(N.name)}</a>` : `<a class="glass flat press" href="#/me">🌍 Nationalteam wählen</a>`}
     </div>
 
     ${Auth.cloud ? `<a class="ov-tip glass press" href="#/tipp"><span class="em">🎯</span><div class="grow"><b>Tippspiel</b><small>Tippe den nächsten Spieltag und miss dich mit Freunden</small></div>${chev}</a>` : ''}
@@ -2874,8 +2934,12 @@ async function renderOverview(silent = false){
 
   const pair = (sel, data) => {
     const el = $(sel); if (!el || my !== token) return;
-    const block = (label, m, next) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true, comp:true, tv: next }) + (next ? nextBar(m) : '') : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
-    el.innerHTML = block(data.last?.state === 'in' ? 'Läuft gerade' : 'Letztes Spiel', data.last) + block('Nächstes Spiel', data.next, true);
+    // the big matchday card shows the running / next match – here: the last result
+    const lastDone = data.past.find(m => m.state === 'post');
+    el.innerHTML = `<div><div class="ov-label">Letztes Spiel</div>${lastDone ? matchCard(lastDone, { showDate:true, comp:true }) : `<div class="ov-none glass flat">Noch kein Spiel</div>`}</div>`;
+    const heroEl = $('#ovHero');
+    if (heroEl) heroEl.innerHTML = matchdayCard(data.past.find(m => m.state === 'in') || data.next || lastDone, C);
+    const liveM = data.past.find(m => m.state === 'in'); if (liveM) goalWatch(liveM);
   };
   let live = false;
   const jobs = [];
@@ -3264,6 +3328,78 @@ function tipDialog(kind, my){
   };
 }
 
+/* ---------- Matchday card (next / running match of the favourite club) ---------- */
+const RING_C = 2 * Math.PI * 48;
+function ringFor(iso){
+  const ms = new Date(iso) - Date.now(), week = 7 * 864e5;
+  const frac = Math.max(0.02, Math.min(1, 1 - ms / week));
+  const min = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(min / 60), d = Math.floor(h / 24);
+  const [big, small] = ms <= 0 ? ['Gleich', 'Anpfiff'] : d >= 1 ? [`${d} ${d === 1 ? 'Tag' : 'Tage'}`, `${h % 24} Std.`] : h >= 1 ? [`${h}:${String(min % 60).padStart(2, '0')}`, 'Stunden'] : [`${min}`, 'Minuten'];
+  return { off: RING_C * (1 - frac), big, small };
+}
+function matchdayCard(m, C){
+  if (!m) return `<div class="md-card glass"><div class="md-top"><span>Dein Verein</span></div><div class="ov-none" style="padding:30px 0">Kein Spiel geplant</div></div>`;
+  const tv = m.state !== 'post' ? tvGermany(m) : null;
+  const when = new Date(m.date).toLocaleDateString('de-DE', { weekday:'short', day:'numeric', month:'short' }) + ', ' + fmtTime(m.date) + ' Uhr';
+  const st = statusLabel(m), r = ringFor(m.date);
+  const center = m.state === 'pre'
+    ? `<div class="md-ring" data-t="${esc(m.date)}"><svg viewBox="0 0 112 112"><circle class="trk" cx="56" cy="56" r="48" fill="none" stroke-width="7"/>
+         <circle class="val" cx="56" cy="56" r="48" fill="none" stroke-width="7" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${r.off.toFixed(1)}"/></svg>
+         <div class="in"><b>${esc(r.big)}</b><small>${esc(r.small)}</small></div></div>`
+    : `<div class="md-ring"><svg viewBox="0 0 112 112"><circle class="trk" cx="56" cy="56" r="48" fill="none" stroke-width="7"/>${m.state === 'in'
+         ? `<circle class="val" cx="56" cy="56" r="48" fill="none" stroke-width="7" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - Math.min(1, (parseInt(m.clock) || 0) / 90))).toFixed(1)}" style="stroke:var(--live)"/>` : ''}</svg>
+         <div class="in"><b class="score">${esc(m.home.score ?? 0)}:${esc(m.away.score ?? 0)}</b><small style="${m.state === 'in' ? 'color:var(--live)' : ''}">${esc(st.txt)}</small></div></div>`;
+  calMatches.set(String(m.id), m);
+  return `<a class="md-card glass" href="#/match/${esc(m.slug)}/${esc(m.id)}">
+    <div class="md-top"><span>${esc(compName(m.slug) || 'Spiel')}</span>${m.state === 'in' ? '<span class="live"><span class="pulse"></span>Live</span>' : `<span>${esc(m.state === 'post' ? 'Ergebnis' : when)}</span>`}</div>
+    <div class="md-mid">
+      <div class="md-team">${img(m.home.logo, '', m.home.name)}<span>${esc(m.home.name)}</span></div>
+      ${center}
+      <div class="md-team">${img(m.away.logo, '', m.away.name)}<span>${esc(m.away.name)}</span></div>
+    </div>
+    <div class="md-bot">${tv ? `<span class="pill">📺 ${esc(tv.ch.join(' / '))}</span>` : ''}${m.venue ? `<span class="pill">🏟 ${esc(m.venue)}</span>` : ''}
+      ${m.state === 'pre' ? `<button class="cal" data-cal="${esc(m.id)}">📅 In Kalender</button>` : ''}</div>
+  </a>`;
+}
+setInterval(() => document.querySelectorAll('.md-ring[data-t]').forEach(el => {
+  const r = ringFor(el.dataset.t);
+  el.querySelector('.val')?.setAttribute('stroke-dashoffset', r.off.toFixed(1));
+  const b = el.querySelector('.in b'), sm = el.querySelector('.in small'); if (b) b.textContent = r.big; if (sm) sm.textContent = r.small;
+}), 20000);
+
+/* ---------- goal celebration while the app is open ---------- */
+const goalSeen = new Map();
+function goalWatch(m){
+  const cid = profile()?.club?.id; if (!cid || !m || m.state !== 'in') return;
+  const side = String(m.home.id) === String(cid) ? 'home' : String(m.away.id) === String(cid) ? 'away' : null; if (!side) return;
+  const sc = +m[side].score || 0, prev = goalSeen.get(m.id);
+  goalSeen.set(m.id, sc);
+  if (prev != null && sc > prev) celebrate(`${m.home.name} ${m.home.score}:${m.away.score} ${m.away.name}`);
+}
+function celebrate(line){
+  document.querySelector('.goal-burst')?.remove();
+  const wrap = document.createElement('div'); wrap.className = 'goal-burst';
+  wrap.innerHTML = `<canvas></canvas><div class="gb"><b>TOR!</b>${line ? `<span>${esc(line)}</span>` : ''}</div>`;
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 3100);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = wrap.querySelector('canvas'), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const cols = [currentTheme?.p || getComputedStyle(document.documentElement).getPropertyValue('--accent'), currentTheme?.s || '#ffffff', '#ffffff', '#ffd60a'];
+  const parts = Array.from({ length: 150 }, (_, i) => ({ x: innerWidth / 2 + (Math.random() - .5) * 60, y: innerHeight * .45, vx: (Math.random() - .5) * 13, vy: -Math.random() * 15 - 4,
+    w: 6 + Math.random() * 6, h: 9 + Math.random() * 8, rot: Math.random() * 6, vr: (Math.random() - .5) * .35, c: cols[i % cols.length] }));
+  const t0 = performance.now();
+  const tick = t => {
+    const k = (t - t0) / 1000; if (k > 2.9 || !wrap.isConnected) return;
+    g.clearRect(0, 0, innerWidth, innerHeight);
+    for (const q of parts){ q.vy += .38; q.vx *= .992; q.x += q.vx; q.y += q.vy; q.rot += q.vr;
+      g.save(); g.globalAlpha = Math.max(0, 1 - Math.max(0, k - 2.1) / .8); g.translate(q.x, q.y); g.rotate(q.rot); g.fillStyle = q.c; g.fillRect(-q.w / 2, -q.h / 2, q.w, q.h * Math.abs(Math.cos(q.rot * 2))); g.restore(); }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 /* ---------- Profile (incl. favourites) ---------- */
 function renderMe(){
   ++token;
@@ -3372,8 +3508,49 @@ function bindChrome(){
   const back = $('#back');
   if (back) back.onclick = () => { if (history.length > 1) history.back(); else location.hash = '#/'; };
 }
-window.addEventListener('hashchange', () => route());
-window.addEventListener('scroll', () => { $('#nav')?.classList.toggle('scrolled', scrollY > 30); }, { passive:true });
+/* ---------- iOS-like navigation: push/pop slides, crest flies into the team header ---------- */
+const DEPTH = { '':0, leagues:0, today:0, search:0, me:0, favs:0, tipp:1, league:1, team:2, gp:2, match:3, player:4 };
+let curDepth = DEPTH[(location.hash.replace(/^#\/?/, '').split('/')[0]) || ''] ?? 0;
+let pendingHero = null;
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/team/"]'); if (!a) return;
+  const im = a.querySelector('img');
+  if (im && im.complete && im.naturalWidth && !im.closest('.hero')){
+    im.style.viewTransitionName = 'hero-logo';
+    pendingHero = { href: a.getAttribute('href'), src: im.currentSrc || im.src };
+  }
+}, true);
+function navigate(){
+  const r = (location.hash.replace(/^#\/?/, '').split('/')[0]) || '';
+  const d = DEPTH[r] ?? 1;
+  const dir = d > curDepth ? 'forward' : d < curDepth ? 'back' : 'fade';
+  curDepth = d;
+  $('#tabbar')?.classList.remove('mini');
+  if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches){ route(); return; }
+  const root = document.documentElement;
+  root.dataset.dir = dir; root.classList.add('vt');
+  const t = document.startViewTransition(() => route());
+  t.finished.finally(() => {
+    root.classList.remove('vt');
+    document.querySelectorAll('img').forEach(i => { if (i.style.viewTransitionName) i.style.viewTransitionName = ''; });
+    pendingHero = null;
+  });
+}
+window.addEventListener('hashchange', navigate);
+
+/* ---------- tab bar shrinks to a pill while scrolling down (iOS 26) ---------- */
+let lastScrollY = 0;
+window.addEventListener('scroll', () => {
+  const y = scrollY, tb = $('#tabbar');
+  $('#nav')?.classList.toggle('scrolled', y > 30);
+  if (y > 140 && y > lastScrollY + 8) tb.classList.add('mini');
+  else if (y < lastScrollY - 8 || y < 80) tb.classList.remove('mini');
+  lastScrollY = y;
+}, { passive:true });
+$('#tabbar').addEventListener('click', e => {
+  const tb = $('#tabbar');
+  if (tb.classList.contains('mini')){ e.preventDefault(); tb.classList.remove('mini'); }
+}, true);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 /* =============================================================
    ONBOARDING
