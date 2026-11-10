@@ -22,7 +22,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 |---|---|
 | **Übersicht** | Start-Tab mit Lieblingsverein, Lieblingsliga und Nationalteam auf einen Blick: letztes und nächstes Spiel (inkl. Pokal und Europapokal) mit TV-Sender, Countdown bis zum Anpfiff und „In Kalender“ (Termin mit Erinnerung 30 Min. vorher), Tabellenplatz, Tabellenausschnitt der Liga, **Transfers** (Gerüchte und offizielle Wechsel, nur wenn es welche gibt) und aktuelle **News** |
 | **Ligen** | Bundesliga, 2. Bundesliga, DFB-Pokal, Premier League, LaLiga, Serie A, Ligue 1, Champions/Europa/Conference League, Eredivisie, Primeira Liga, Süper Lig, Österreich, Schweiz, Schottland, Belgien, MLS |
-| **Liga** | Tabelle mit Europapokal- und Abstiegszonen, Spieltage mit Datumsauswahl, alle Teams |
+| **Liga** | Tabelle mit Europapokal- und Abstiegszonen und **Formkurve** (letzte 5 Spiele), Spieltage mit Datumsauswahl, **Torjäger** (Tore und Vorlagen, mit Spielerfotos), alle Teams |
 | **Team** | Platzierung und Bilanz, nächste Spiele, Ergebnisse, Kader nach Positionen, Spielerprofil als Sheet |
 | **Spiel** | Ergebnis, Verlauf (Tore, Karten, Wechsel), Statistik-Balken, **Aufstellung auf dem Spielfeld**: beide Teams stehen sich in ihrer echten Formation gegenüber, mit Spielerfotos, Rückennummer, Toren, Karten und Auswechslungen, darunter die Bank; aktualisiert sich bei Live-Spielen alle 30 s |
 | **Spiele** | Alle Ligen für einen Tag (−4 bis +4 Tage), Live-Zähler, deine Favoriten zuerst |

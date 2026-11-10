@@ -430,8 +430,23 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
    STANDINGS TABLE
    ============================================================ */
 .table{ border-radius: var(--r-lg); overflow:hidden; padding: 6px 0; }
-.trow{ display:grid; grid-template-columns: 30px 1fr 30px 40px 40px; align-items:center; gap:6px; padding: 9px 14px 9px 10px; font-size:14px; position:relative; font-variant-numeric: tabular-nums; }
-.trow.wide{ grid-template-columns: 30px 1fr 30px 30px 30px 30px 54px 40px 40px; }
+.trow{ display:grid; grid-template-columns: 26px 1fr 24px 50px 36px 34px; align-items:center; gap:6px; padding: 9px 14px 9px 10px; font-size:14px; position:relative; font-variant-numeric: tabular-nums; }
+.trow.wide{ grid-template-columns: 30px 1fr 30px 30px 30px 30px 54px 62px 40px 40px; }
+.form{ display:flex; gap:3px; justify-content:center; align-items:center; }
+.form i{ width:8px; height:8px; border-radius:50%; background: var(--sep); flex:none; }
+.form i.S{ background:#30d158; } .form i.U{ background:#8e8e93; } .form i.N{ background:#ff453a; }
+.form i:last-child{ box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text) 55%, transparent); }
+.sc-row{ display:flex; align-items:center; gap:12px; padding: 10px 16px; min-height:60px; position:relative; }
+.sc-row + .sc-row::before{ content:''; position:absolute; top:0; left:94px; right:0; height:1px; background: var(--sep); }
+.sc-row:active{ background: var(--glass-press); }
+.sc-row .rk{ width:22px; text-align:center; font-weight:800; color: var(--text-2); font-variant-numeric: tabular-nums; flex:none; }
+.sc-row .av{ width:44px; height:44px; --tc:#8e8e93; --tn:#fff; }
+.sc-row .tl{ position:absolute; left:66px; bottom:6px; width:20px; height:20px; border-radius:50%; background:#fff; padding:2px; box-shadow: 0 2px 6px rgba(0,0,0,.35); object-fit:contain; }
+.sc-row .grow{ flex:1; min-width:0; }
+.sc-row .t1, .sc-row .t2{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sc-row .val{ font-size:22px; font-weight:800; font-variant-numeric: tabular-nums; min-width:34px; text-align:right; }
+.sc-row.top .val{ color: var(--accent); }
+
 .trow.head{ color: var(--text-3); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding-top:8px; padding-bottom:8px; }
 .trow .c{ text-align:center; }
 .trow .pts{ font-weight:800; text-align:center; }
@@ -700,7 +715,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T04:23';
+const APP_BUILD = '2026-11-10T04:33';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1350,7 +1365,7 @@ async function standings(slug){
 async function renderLeague(slug){
   const L = leagueBy(slug);
   const my = ++token;
-  const tabs = L.cup ? [['games','Spiele']] : [['table','Tabelle'], ['games','Spiele'], ['teams','Teams']];
+  const tabs = L.cup ? [['games','Spiele'], ['scorers','Torjäger']] : [['table','Tabelle'], ['games','Spiele'], ['scorers','Torjäger'], ['teams','Teams']];
   const tab = tabs.some(t => t[0] === state.leagueTab[slug]) ? state.leagueTab[slug] : tabs[0][0];
 
   view.innerHTML = `<div class="view">
@@ -1364,6 +1379,80 @@ async function renderLeague(slug){
   </div>`;
   bindSeg('lseg', k => { state.leagueTab[slug] = k; paneLeague(slug, k, my); });
   paneLeague(slug, tab, my);
+}
+
+/* ---------- form guide: last five league results per team ---------- */
+const formCache = new Map();
+async function leagueForm(slug){
+  if (formCache.has(slug)) return formCache.get(slug);
+  const job = (async () => {
+    const evs = new Map(), now = new Date();
+    for (let i = 0; i < 3; i++){                      // current month, then go back until every team has 5 games
+      const x = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mo = `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, '0')}`;
+      const d = await api(`site/v2/sports/soccer/${slug}/scoreboard?dates=${mo}&limit=500`, { ttl: 15 * 60_000 }).catch(() => null);
+      (d?.events || []).forEach(e => evs.set(e.id, normEvent(e, slug)));
+      const n = new Map();
+      [...evs.values()].filter(m => m.state === 'post').forEach(m => [m.home.id, m.away.id].forEach(id => n.set(id, (n.get(id) || 0) + 1)));
+      if (n.size && Math.min(...n.values()) >= 5) break;
+    }
+    const out = new Map(), r = (x, y) => x > y ? 'S' : x < y ? 'N' : 'U';
+    [...evs.values()].filter(m => m.state === 'post' && m.home.score != null && m.away.score != null)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .forEach(m => {
+        const h = +m.home.score, a = +m.away.score;
+        (out.get(m.home.id) || out.set(m.home.id, []).get(m.home.id)).push({ r: r(h, a), t: `${m.home.name} ${h}:${a} ${m.away.name}` });
+        (out.get(m.away.id) || out.set(m.away.id, []).get(m.away.id)).push({ r: r(a, h), t: `${m.home.name} ${h}:${a} ${m.away.name}` });
+      });
+    out.forEach((v, k) => out.set(k, v.slice(-5)));
+    return out;
+  })();
+  formCache.set(slug, job);
+  setTimeout(() => formCache.delete(slug), 15 * 60_000);
+  return job;
+}
+const formDots = f => (f || []).map(x => `<i class="${x.r}" title="${esc(x.t)}"></i>`).join('');
+const FORM_LABEL = { S:'Sieg', U:'Unentschieden', N:'Niederlage' };
+function fillForm(root, slug){
+  leagueForm(slug).then(map => root.querySelectorAll('.form[data-tid]').forEach(el => {
+    const f = map.get(String(el.dataset.tid));
+    el.innerHTML = formDots(f);
+    el.setAttribute('aria-label', 'Form: ' + (f || []).map(x => FORM_LABEL[x.r]).join(', '));
+  })).catch(() => {});
+}
+
+/* ---------- top scorers & assists ---------- */
+async function renderScorers(pane, slug, my){
+  const d = await api(`site/v2/sports/soccer/${slug}/statistics`, { ttl: 30 * 60_000 });
+  if (my !== token) return;
+  const cats = d.stats || [];
+  const goals = cats.find(c => /goal/i.test(c.name)), assists = cats.find(c => /assist/i.test(c.name));
+  if (!goals?.leaders?.length){ pane.innerHTML = emptyBox('⚽', 'Noch keine Torjäger-Statistik'); return; }
+  let which = state.scorerTab || 'g', shown = 15;
+  const list = () => {
+    const cat = which === 'a' && assists?.leaders?.length ? assists : goals;
+    let lastVal = null, rank = 0;
+    const rows = cat.leaders.slice(0, shown).map((l, i) => {
+      const a = l.athlete || {}, t = a.team || l.team || {};
+      if (l.value !== lastVal){ rank = i + 1; lastVal = l.value; }
+      const games = (String(l.displayValue).match(/Matches:\s*(\d+)/) || [])[1];
+      const logo = t.logos?.[0]?.href || (t.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${t.id}.png` : '');
+      return `<a class="sc-row ${rank <= 3 ? 'top' : ''}" href="${t.id ? `#/team/${esc(slug)}/${esc(t.id)}` : '#'}">
+        <span class="rk">${rank}</span>
+        <div class="av"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(t.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc((a.displayName || '?').split(' ').map(w => w[0]).join('').slice(0, 2))}</b></div>
+        ${logo ? `<img class="tl" src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        <div class="grow" style="min-width:0"><div class="t1" style="font-weight:650">${esc(a.displayName)}</div>
+          <div class="t2" style="color:var(--text-2);font-size:13px">${esc(tn(t.displayName || ''))}${games ? ` · ${games} Spiele` : ''}</div></div>
+        <span class="val">${esc(Math.round(l.value))}</span></a>`;
+    }).join('');
+    $('#sclist').innerHTML = `<div class="list glass">${rows}</div>
+      ${cat.leaders.length > shown ? `<button class="more glass flat press" id="scmore">Alle ${cat.leaders.length} anzeigen</button>` : ''}`;
+    $('#scmore')?.addEventListener('click', () => { shown = 50; list(); });
+    hydratePhotos($('#sclist'));
+  };
+  pane.innerHTML = `${assists?.leaders?.length ? seg('sseg', [['g','Tore'], ['a','Vorlagen']], which) : ''}<div id="sclist"></div>`;
+  bindSeg('sseg', k => { which = state.scorerTab = k; shown = 15; list(); });
+  list();
 }
 
 async function paneLeague(slug, tab, my){
@@ -1382,7 +1471,7 @@ async function paneLeague(slug, tab, my){
           <div class="trow head wide-able">
             <span class="c">#</span><span>Team</span><span class="c">Sp</span>
             <span class="c col-wide">S</span><span class="c col-wide">U</span><span class="c col-wide">N</span><span class="c col-wide">Tore</span>
-            <span class="c">TD</span><span class="c">Pkt</span>
+            <span class="c">Form</span><span class="c">TD</span><span class="c">Pkt</span>
           </div>
           ${g.entries.map(e => {
             if (e.note) notes.set(e.note.color, e.note.description);
@@ -1393,6 +1482,7 @@ async function paneLeague(slug, tab, my){
               <span class="c">${esc(e.s.gamesPlayed)}</span>
               <span class="c col-wide">${esc(e.s.wins)}</span><span class="c col-wide">${esc(e.s.ties)}</span><span class="c col-wide">${esc(e.s.losses)}</span>
               <span class="c col-wide">${esc(e.s.pointsFor)}:${esc(e.s.pointsAgainst)}</span>
+              <span class="form" data-tid="${esc(e.team.id)}"></span>
               <span class="c">${esc(e.s.pointDifferential)}</span>
               <span class="pts">${esc(e.s.points)}</span>
             </a>`;
@@ -1402,7 +1492,10 @@ async function paneLeague(slug, tab, my){
       // wide layout toggles grid columns
       const wide = matchMedia('(min-width:560px)').matches;
       pane.querySelectorAll('.wide-able').forEach(r => r.classList.toggle('wide', wide));
+      fillForm(pane, slug);
     }
+
+    if (tab === 'scorers'){ await renderScorers(pane, slug, my); return; }
 
     if (tab === 'teams'){
       const groups = await standings(slug);
@@ -2286,12 +2379,13 @@ async function renderOverview(silent = false){
     let i = all.findIndex(e => String(e.team.id) === String(C.id));
     const start = i < 0 ? 0 : Math.max(0, Math.min(i - 2, all.length - 5));
     el.innerHTML = `<div class="table glass">
-      <div class="trow head"><span class="c">#</span><span>Team</span><span class="c">Sp</span><span class="c">TD</span><span class="c">Pkt</span></div>
+      <div class="trow head"><span class="c">#</span><span>Team</span><span class="c">Sp</span><span class="c">Form</span><span class="c">TD</span><span class="c">Pkt</span></div>
       ${all.slice(start, start + 5).map(e => `<a class="trow ${String(e.team.id) === String(C.id) ? 'hl' : ''}" href="#/team/${esc(L.slug)}/${esc(e.team.id)}">
         ${e.note ? `<span class="zone" style="background:${esc(e.note.color)}"></span>` : ''}
         <span class="rk">${esc(e.s.rank)}</span><span class="team">${img(e.team.logo, 'logo xs', e.team.name)}<span>${esc(e.team.name)}</span></span>
-        <span class="c">${esc(e.s.gamesPlayed)}</span><span class="c">${esc(e.s.pointDifferential)}</span><span class="pts">${esc(e.s.points)}</span></a>`).join('')}
+        <span class="c">${esc(e.s.gamesPlayed)}</span><span class="form" data-tid="${esc(e.team.id)}"></span><span class="c">${esc(e.s.pointDifferential)}</span><span class="pts">${esc(e.s.points)}</span></a>`).join('')}
     </div>`;
+    fillForm(el, L.slug);
   }).catch(() => { const el = $('#ovLeague'); if (el && my === token) el.innerHTML = `<div class="ov-none glass flat">Tabelle konnte nicht geladen werden</div>`; }));
 
   // ---- news & transfers ----
