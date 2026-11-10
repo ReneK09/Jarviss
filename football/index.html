@@ -472,6 +472,11 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .scoreboard .res .stt.live{ color: var(--live); display:flex; align-items:center; gap:6px; }
 .hero .info{ margin-top:18px; font-size:13px; color: var(--text-2); display:flex; justify-content:center; gap: 6px 14px; flex-wrap:wrap; }
 
+.nb-bar{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; padding: 7px 7px 7px 14px; border-radius:999px; }
+.nb-bar .cd{ font-weight:700; font-size:14px; font-variant-numeric: tabular-nums; }
+.nb-bar .cal{ padding: 7px 13px; border-radius:999px; font-size:13px; font-weight:700; background: var(--accent); color: var(--on-accent);
+  box-shadow: 0 6px 16px -6px var(--accent), inset 0 1px 1px -0.5px rgba(255,255,255,.6); white-space:nowrap; transition: transform .3s var(--spring); }
+.nb-bar .cal:active{ transform: scale(.94); }
 .tv{ margin-top:16px; display:flex; flex-direction:column; align-items:center; gap:7px; }
 .tv .chs{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; align-items:center; }
 .tv .lbl{ font-size:12px; font-weight:700; color: var(--text-2); }
@@ -695,7 +700,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T04:09';
+const APP_BUILD = '2026-11-10T04:23';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1194,7 +1199,51 @@ function statusLabel(m){
   }
   return { txt: fmtDay(m.date) };
 }
-function matchCard(m, { showDate = false, comp = false } = {}){
+/* ---------- countdown & "add to calendar" for the next match ---------- */
+function countdownText(iso){
+  const ms = new Date(iso) - Date.now();
+  if (ms <= 0) return 'Anpfiff!';
+  const min = Math.floor(ms / 60000), h = Math.floor(min / 60), d = Math.floor(h / 24);
+  if (min < 60) return `in ${min} Min.`;
+  if (h < 24) return `in ${h} Std. ${min % 60} Min.`;
+  return `in ${d} ${d === 1 ? 'Tag' : 'Tagen'} ${h % 24} Std.`;
+}
+const calMatches = new Map();
+function nextBar(m){
+  if (!m || m.state !== 'pre') return '';
+  calMatches.set(String(m.id), m);
+  return `<div class="nb-bar glass flat"><span class="cd" data-t="${esc(m.date)}">⏱ ${esc(countdownText(m.date))}</span>
+    <button class="cal" data-cal="${esc(m.id)}" aria-label="In Kalender eintragen">📅 In Kalender</button></div>`;
+}
+setInterval(() => document.querySelectorAll('.cd[data-t]').forEach(el => { el.textContent = '⏱ ' + countdownText(el.dataset.t); }), 20000);
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-cal]'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const m = calMatches.get(b.dataset.cal); if (m) addToCalendar(m);
+});
+function addToCalendar(m){
+  const z = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const icsText = x => String(x || '').replace(/\\/g, '\\\\').replace(/([,;])/g, '\\$1').replace(/\n/g, '\\n');
+  const start = new Date(m.date), end = new Date(start.getTime() + 115 * 60000);
+  const tv = tvGermany(m);
+  const title = `${m.home.full || m.home.name} – ${m.away.full || m.away.name}`;
+  const desc = [compName(m.slug), tv ? 'Live bei ' + tv.ch.join(' / ') : '', location.origin + location.pathname + `#/match/${m.slug}/${m.id}`].filter(Boolean).join('\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Arenly//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT', `UID:arenly-${m.id}@arenly`, `DTSTAMP:${z(new Date())}`, `DTSTART:${z(start)}`, `DTEND:${z(end)}`,
+    `SUMMARY:⚽ ${icsText(title)}`, m.venue ? `LOCATION:${icsText(m.venue)}` : '', `DESCRIPTION:${icsText(desc)}`,
+    'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', `DESCRIPTION:${icsText('Anpfiff in 30 Minuten: ' + title)}`, 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+  // home-screen apps on iOS can't download files – a data URL opens the "add to calendar" sheet directly
+  if (navigator.standalone){ location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); return; }
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.setAttribute('download', `arenly-${norm(m.home.name + '-' + m.away.name).replace(/[^a-z0-9-]+/g, '-')}.ics`);
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  toast('Termin wird zum Kalender hinzugefügt');
+}
+
+function matchCard(m, { showDate = false, comp = false, tv = false } = {}){
   const st = statusLabel(m);
   const played = m.state !== 'pre' && m.home.score != null;
   const hl = played && m.state === 'post' && m.away.winner ? 'loser' : '';
@@ -1207,7 +1256,8 @@ function matchCard(m, { showDate = false, comp = false } = {}){
     <div class="side ${hl}">${img(m.home.logo, 'logo sm', m.home.name)}<span class="nm">${esc(m.home.name)}</span></div>
     <div class="mid">${mid}${stHtml}</div>
     <div class="side away ${al}">${img(m.away.logo, 'logo sm', m.away.name)}<span class="nm">${esc(m.away.name)}</span></div>
-    ${(() => { const meta = [comp && compName(m.slug), showDate && played && fmtDay(m.date)].filter(Boolean).join(' · ');
+    ${(() => { const t = tv && !played ? tvGermany(m) : null;
+      const meta = [comp && compName(m.slug), showDate && played && fmtDay(m.date), t && '📺 ' + t.ch.join(' / ')].filter(Boolean).join(' · ');
       return meta ? `<div class="meta">${esc(meta)}</div>` : ''; })()}
   </a>`;
 }
@@ -2195,8 +2245,8 @@ async function renderOverview(silent = false){
 
   const pair = (sel, data) => {
     const el = $(sel); if (!el || my !== token) return;
-    const block = (label, m) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true, comp:true }) : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
-    el.innerHTML = block(data.last?.state === 'in' ? 'Läuft gerade' : 'Letztes Spiel', data.last) + block('Nächstes Spiel', data.next);
+    const block = (label, m, next) => `<div><div class="ov-label">${label}</div>${m ? matchCard(m, { showDate:true, comp:true, tv: next }) + (next ? nextBar(m) : '') : `<div class="ov-none glass flat">Kein Spiel geplant</div>`}</div>`;
+    el.innerHTML = block(data.last?.state === 'in' ? 'Läuft gerade' : 'Letztes Spiel', data.last) + block('Nächstes Spiel', data.next, true);
   };
   let live = false;
   const jobs = [];
@@ -2221,7 +2271,7 @@ async function renderOverview(silent = false){
       el.innerHTML = `
         ${liveNow.length ? `<div class="ov-label">Läuft gerade</div><div class="matches" style="margin-bottom:14px">${liveNow.map(m => matchCard(m, o)).join('')}</div>` : ''}
         <div class="ov-label">Nächste Länderspiele</div>
-        ${d.upcoming.length ? `<div class="matches">${d.upcoming.slice(0, 3).map(m => matchCard(m, o)).join('')}</div>`
+        ${d.upcoming.length ? `<div class="matches">${d.upcoming.slice(0, 3).map((m, i) => matchCard(m, { ...o, tv:true }) + (i === 0 ? nextBar(m) : '')).join('')}</div>`
                             : `<div class="ov-none glass flat">Noch keine Länderspiele angesetzt</div>`}
         <div class="ov-label" style="margin-top:16px">Letzte Länderspiele</div>
         ${d.past.filter(m => m.state === 'post').length ? `<div class="matches">${d.past.filter(m => m.state === 'post').slice(0, 3).map(m => matchCard(m, o)).join('')}</div>`

@@ -20,7 +20,7 @@ Oder einfach über GitHub Pages bzw. jeden anderen statischen Host ausliefern. A
 
 | Bereich | Inhalt |
 |---|---|
-| **Übersicht** | Start-Tab mit Lieblingsverein, Lieblingsliga und Nationalteam auf einen Blick: letztes und nächstes Spiel (inkl. Pokal und Europapokal), Tabellenplatz, Tabellenausschnitt der Liga, **Transfers** (Gerüchte und offizielle Wechsel, nur wenn es welche gibt) und aktuelle **News** |
+| **Übersicht** | Start-Tab mit Lieblingsverein, Lieblingsliga und Nationalteam auf einen Blick: letztes und nächstes Spiel (inkl. Pokal und Europapokal) mit TV-Sender, Countdown bis zum Anpfiff und „In Kalender“ (Termin mit Erinnerung 30 Min. vorher), Tabellenplatz, Tabellenausschnitt der Liga, **Transfers** (Gerüchte und offizielle Wechsel, nur wenn es welche gibt) und aktuelle **News** |
 | **Ligen** | Bundesliga, 2. Bundesliga, DFB-Pokal, Premier League, LaLiga, Serie A, Ligue 1, Champions/Europa/Conference League, Eredivisie, Primeira Liga, Süper Lig, Österreich, Schweiz, Schottland, Belgien, MLS |
 | **Liga** | Tabelle mit Europapokal- und Abstiegszonen, Spieltage mit Datumsauswahl, alle Teams |
 | **Team** | Platzierung und Bilanz, nächste Spiele, Ergebnisse, Kader nach Positionen, Spielerprofil als Sheet |
