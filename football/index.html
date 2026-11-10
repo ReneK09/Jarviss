@@ -10,13 +10,17 @@
 <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)">
 <title>Arenly</title>
+<script>/* set light/dark before first paint (no flash) */
+try{ var L=JSON.parse(localStorage.getItem('fb.look')||'{}'), m=L.mode||'auto', d=matchMedia('(prefers-color-scheme: dark)').matches;
+  var light = m==='light' || (m==='auto' && !d); if(light) document.documentElement.classList.add('light'); else if(L.oled) document.documentElement.classList.add('oled'); }catch(e){}
+</script>
 <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    DESIGN TOKENS  —  "Liquid Glass"
@@ -64,24 +68,22 @@
   --safe-t: env(safe-area-inset-top, 0px);
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light){
-  :root{
-    --bg: #eef1f7;
-    --text: #0b0d12;
-    --text-2: rgba(20,25,40,.62);
-    --text-3: rgba(20,25,40,.40);
-    --sep: rgba(10,20,40,.08);
-    --glass: rgba(255,255,255,.48);
-    --glass-strong: rgba(255,255,255,.70);
-    --glass-press: rgba(255,255,255,.85);
-    --rim-a: rgba(255,255,255,.95);
-    --rim-b: rgba(255,255,255,.25);
-    --rim-c: rgba(255,255,255,.75);
-    --sheen: rgba(255,255,255,.55);
-    --shadow: 0 12px 40px -10px rgba(30,40,80,.28);
-    --shadow-sm: 0 6px 18px -6px rgba(30,40,80,.22);
-    color-scheme: light;
-  }
+html.light{
+  --bg: #eef1f7;
+  --text: #0b0d12;
+  --text-2: rgba(20,25,40,.62);
+  --text-3: rgba(20,25,40,.40);
+  --sep: rgba(10,20,40,.08);
+  --glass: rgba(255,255,255,.48);
+  --glass-strong: rgba(255,255,255,.70);
+  --glass-press: rgba(255,255,255,.85);
+  --rim-a: rgba(255,255,255,.95);
+  --rim-b: rgba(255,255,255,.25);
+  --rim-c: rgba(255,255,255,.75);
+  --sheen: rgba(255,255,255,.55);
+  --shadow: 0 12px 40px -10px rgba(30,40,80,.28);
+  --shadow-sm: 0 6px 18px -6px rgba(30,40,80,.22);
+  color-scheme: light;
 }
 
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -103,8 +105,10 @@ img{ display:block; }
 /* ============================================================
    LIVING BACKGROUND — colour blobs the glass refracts
    ============================================================ */
-.backdrop{ position:fixed; inset:-20vmax; z-index:0; pointer-events:none; filter: blur(70px) saturate(140%); opacity:.85; }
-@media (prefers-color-scheme: light){ .backdrop{ opacity:.55; } }
+.backdrop{ position:fixed; inset:-20vmax; z-index:0; pointer-events:none; filter: blur(70px) saturate(140%); opacity: var(--blob-op, .85); transition: opacity .4s; }
+html.light .backdrop{ opacity: calc(var(--blob-op, .85) * .65); }
+html.oled{ --bg:#000; }
+html.oled .backdrop{ opacity: calc(var(--blob-op, .85) * .45); }
 .blob{ position:absolute; border-radius:50%; mix-blend-mode:normal; transition: background 1.2s var(--ease); will-change: transform; }
 .blob.b1{ width:55vmax; height:55vmax; left:5%;  top:0%;  background: radial-gradient(circle at 50% 50%, var(--blob-1), transparent 65%); animation: drift1 26s ease-in-out infinite alternate; }
 .blob.b2{ width:50vmax; height:50vmax; right:0%; top:20%; background: radial-gradient(circle at 50% 50%, var(--blob-2), transparent 65%); animation: drift2 32s ease-in-out infinite alternate; }
@@ -134,7 +138,7 @@ img{ display:block; }
 /* specular rim (gradient border) */
 .glass::after{
   content:""; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none; z-index:2;
-  background: linear-gradient(155deg, var(--rim-a) 0%, var(--rim-b) 35%, var(--rim-b) 65%, var(--rim-c) 100%);
+  background: linear-gradient(calc(155deg + var(--tx, 0) * 28deg), var(--rim-a) 0%, var(--rim-b) 35%, var(--rim-b) 65%, var(--rim-c) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
 }
@@ -142,7 +146,7 @@ img{ display:block; }
 .glass::before{
   content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:-1;
   background:
-    radial-gradient(120% 60% at 15% 0%, var(--sheen), transparent 55%),
+    radial-gradient(120% 60% at calc(15% + var(--tx, 0) * 30%) calc(var(--ty, 0) * 25%), var(--sheen), transparent 55%),
     radial-gradient(80% 50% at 100% 100%, rgba(255,255,255,.06), transparent 60%);
 }
 .glass.strong{ background: var(--glass-strong); }
@@ -295,7 +299,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .divider{ display:flex; align-items:center; gap:12px; color: var(--text-3); font-size:13px; margin: 16px 0; }
 .divider::before, .divider::after{ content:""; flex:1; height:1px; background: var(--sep); }
 .btn.apple{ background:#000; color:#fff; box-shadow: inset 0 1px 1px -0.5px rgba(255,255,255,.4); }
-@media (prefers-color-scheme: dark){ .btn.apple{ background:#fff; color:#000; } }
+html:not(.light) .btn.apple{ background:#fff; color:#000; }
 .mail-icon{ font-size:64px; margin: 30px 0 10px; text-align:center; }
 
 /* ============================================================
@@ -334,7 +338,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .badge.rumor{ background: rgba(255,159,10,.2); color:#ff9f0a; }
 .badge.done{ background: rgba(48,209,88,.2); color:#30d158; }
 .badge.src{ background: var(--glass-strong); color: var(--text-2); }
-@media (prefers-color-scheme: light){ .badge.rumor{ color:#b25e00; } .badge.done{ color:#1a8a3c; } }
+html.light .badge.rumor{ color:#b25e00; } html.light .badge.done{ color:#1a8a3c; }
 .pick.lg .lgw{ width:48px; height:48px; border-radius:13px; background: rgba(255,255,255,.94); display:grid; place-items:center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
 .pick.lg .lgw img{ width:36px; height:36px; filter:none; }
 .pick small{ font-size:11px; color: var(--text-2); font-weight:550; margin-top:-4px; }
@@ -427,6 +431,41 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
   background: rgba(0,0,0,.35); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 @keyframes gbIn{ from{ transform: scale(.3) rotate(-8deg); opacity:0; } }
 @keyframes gbOut{ to{ transform: scale(1.15); opacity:0; } }
+
+/* rounded, sporty numerals for scores and stats */
+.match .score, .match .time, .scoreboard .res .num, .md-ring .in b, .trow .pts, .stat-tiles b, .tip-head b, .lb .pt, .sc-row .val,
+.glog .sc, .stepper b, .tipcard .res, .tipcard .lockedtip, .jersey, .pl .num, .countdown-num{
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", var(--font); }
+
+/* club-colour gradients on primary controls */
+.btn:not(.ghost):not(.apple), .chip.on, .md-bot .cal, .nb-bar .cal{
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 62%, var(--blob-2))); }
+
+/* team header: big blurred crest behind the glass */
+.hero .bgcrest{ position:absolute; inset:-35%; z-index:-2; background-repeat:no-repeat; background-position: center 35%; background-size: 55%;
+  filter: blur(36px) saturate(1.7); opacity:.5; pointer-events:none; }
+
+/* pull to refresh */
+.ptr{ position:fixed; z-index:60; left:50%; top: calc(var(--safe-t) + 6px); width:44px; height:44px; margin-left:-22px; border-radius:50%;
+  display:grid; place-items:center; font-size:22px; transform: translateY(-70px) scale(.6); opacity:0; pointer-events:none; }
+.ptr.spin span{ animation: ptrSpin .8s linear infinite; }
+@keyframes ptrSpin{ to{ transform: rotate(360deg); } }
+
+/* appearance settings */
+.rng{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px; margin: 14px 0 6px;
+  background: linear-gradient(90deg, var(--accent) var(--v, 85%), var(--glass-strong) var(--v, 85%)); }
+.rng::-webkit-slider-thumb{ -webkit-appearance:none; width:28px; height:28px; border-radius:50%; background:#fff; box-shadow: 0 3px 10px rgba(0,0,0,.3); }
+.rng::-moz-range-thumb{ width:28px; height:28px; border-radius:50%; background:#fff; border:0; }
+.look-block{ padding: 12px 16px 14px; }
+.look-block .t1{ font-weight:600; font-size:16px; }
+.look-block .t2{ color: var(--text-2); font-size:13px; }
+.look-block .seg{ margin: 10px 0 0; }
+
+/* empty-state illustrations */
+.empty .ill{ width:84px; height:84px; margin: 0 auto 14px; border-radius:50%; display:grid; place-items:center; color: var(--accent);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%), var(--glass-strong);
+  box-shadow: inset 0 1px 1px -0.5px var(--rim-a), 0 12px 30px -12px color-mix(in srgb, var(--accent) 70%, transparent); }
+.empty .ill svg{ width:44px; height:44px; }
 
 /* profile */
 .profile-card{ display:flex; align-items:center; gap:16px; padding:18px; border-radius: var(--r-xl); margin-bottom: 8px; }
@@ -861,6 +900,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
   </a>
 </nav>
 
+<div class="ptr glass strong" id="ptr"><span>⚽</span></div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet glass" id="sheet" role="dialog" aria-modal="true"></div>
 
@@ -868,7 +908,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T18:06';
+const APP_BUILD = '2026-11-10T19:12';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1137,6 +1177,49 @@ async function teamColors(team){
 }
 
 const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+/* appearance: mode, OLED black, colour intensity, text size, tilt reflections (per device) */
+const LOOK_KEY = 'fb.look';
+const look = () => ({ mode: 'auto', oled: false, intensity: 85, text: 'auto', tilt: false, ...store.get(LOOK_KEY, {}) });
+const isDark = () => !document.documentElement.classList.contains('light');
+let appZoom = 1;
+function systemTextScale(){
+  if (!(window.CSS && CSS.supports('font', '-apple-system-body'))) return 1;      // only Apple devices know the system text size
+  const el = document.createElement('div'); el.style.cssText = 'font: -apple-system-body; position:absolute; visibility:hidden';
+  document.body.appendChild(el); const px = parseFloat(getComputedStyle(el).fontSize) || 17; el.remove();
+  return Math.min(1.4, Math.max(.85, px / 17));
+}
+function applyLook(){
+  const L = look(), root = document.documentElement;
+  const light = L.mode === 'light' || (L.mode === 'auto' && !darkMQ.matches);
+  root.classList.toggle('light', light);
+  root.classList.toggle('oled', !light && !!L.oled);
+  root.style.colorScheme = light ? 'light' : 'dark';
+  root.style.setProperty('--blob-op', (0.15 + 0.85 * L.intensity / 100).toFixed(2));
+  appZoom = L.text === 'auto' ? (document.body ? systemTextScale() : 1) : ({ s: .9, m: 1, l: 1.12, xl: 1.25 }[L.text] || 1);
+  const app = document.getElementById('app'); if (app) app.style.zoom = appZoom === 1 ? '' : String(appZoom);
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.content = light ? '#eef1f7' : (L.oled ? '#000000' : '#07090e'); m.removeAttribute('media'); });
+  if (typeof currentTheme !== 'undefined') applyTheme(currentTheme);
+  tiltOn(!!L.tilt);
+}
+let tiltBound = false, tiltRaf = 0, tiltVals = [0, 0];
+function onTilt(e){
+  if (e.gamma == null && e.beta == null) return;
+  tiltVals = [Math.max(-1, Math.min(1, (e.gamma || 0) / 30)), Math.max(-1, Math.min(1, ((e.beta || 45) - 45) / 30))];
+  if (!tiltRaf) tiltRaf = requestAnimationFrame(() => { tiltRaf = 0; const r = document.documentElement.style;
+    r.setProperty('--tx', tiltVals[0].toFixed(3)); r.setProperty('--ty', tiltVals[1].toFixed(3)); });
+}
+function tiltOn(on){
+  if (on && !tiltBound){ addEventListener('deviceorientation', onTilt); tiltBound = true; }
+  if (!on && tiltBound){ removeEventListener('deviceorientation', onTilt); tiltBound = false; document.documentElement.style.setProperty('--tx', 0); document.documentElement.style.setProperty('--ty', 0); }
+}
+async function enableTilt(){
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    const res = await DeviceOrientationEvent.requestPermission().catch(() => 'denied');
+    if (res !== 'granted') throw new Error('Ohne Erlaubnis für Bewegungsdaten geht das nicht.');
+  }
+  store.set(LOOK_KEY, { ...look(), tilt: true }); applyLook();
+}
+darkMQ.addEventListener?.('change', applyLook);
 let currentTheme = null;
 function applyTheme(theme){
   currentTheme = theme || null;
@@ -1150,20 +1233,19 @@ function applyTheme(theme){
   const [h, sat, l] = rgbHsl(...hexRgb(p));
   // UI accent must stay readable on the current background
   let accent = p;
-  if (darkMQ.matches && l < .38) accent = hslHex(h, Math.max(sat, .5), .58);
-  if (!darkMQ.matches && l > .6) accent = hslHex(h, sat, .42);
-  if (sat < .15) accent = darkMQ.matches ? '#d1d1d6' : '#3a3a3c';
+  if (isDark() && l < .38) accent = hslHex(h, Math.max(sat, .5), .58);
+  if (!isDark() && l > .6) accent = hslHex(h, sat, .42);
+  if (sat < .15) accent = isDark() ? '#d1d1d6' : '#3a3a3c';
   r.setProperty('--accent', accent);
   r.setProperty('--on-accent', lumOf(accent) > .62 ? '#111' : '#fff');
   const [h2, s2, l2] = rgbHsl(...hexRgb(sec));
-  const secBlob = l2 < .12 ? (darkMQ.matches ? hslHex(h, Math.min(sat, .6), .22) : '#2a2a30') : sec;
+  const secBlob = l2 < .12 ? (isDark() ? hslHex(h, Math.min(sat, .6), .22) : '#2a2a30') : sec;
   r.setProperty('--blob-1', p);
   r.setProperty('--blob-2', secBlob);
   r.setProperty('--blob-3', hslHex(h, Math.min(1, sat + .1), Math.min(.7, l + .12)));
   r.setProperty('--blob-4', secBlob);
-  document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = darkMQ.matches ? '#07090e' : '#eef1f7');
 }
-darkMQ.addEventListener?.('change', () => applyTheme(currentTheme));
+applyLook();
 /* Pages no longer re-tint the whole app; only the hero of a viewed team takes its colour. */
 function setAccent(){}
 async function tintHero(el, team){
@@ -1486,7 +1568,26 @@ function errorBox(err, retry = true){
   return `<div class="empty glass"><div class="em">📡</div><b>Daten konnten nicht geladen werden</b>${esc(err?.message || '')}
     ${retry ? `<div><button class="btn" onclick="route(true)">Erneut versuchen</button></div>` : ''}</div>`;
 }
-const emptyBox = (emoji, title, text = '') => `<div class="empty glass"><div class="em">${emoji}</div><b>${esc(title)}</b>${esc(text)}</div>`;
+const ILL = {
+  '🗓️': '<rect x="7" y="10" width="34" height="31" rx="6"/><path d="M7 19h34M16 6v8M32 6v8"/><circle cx="17" cy="28" r="1.8" fill="currentColor"/><circle cx="24" cy="28" r="1.8" fill="currentColor"/><circle cx="31" cy="28" r="1.8" fill="currentColor"/><circle cx="17" cy="34.5" r="1.8" fill="currentColor"/>',
+  '🔍': '<circle cx="21" cy="21" r="12"/><path d="m30 30 10 10"/><path d="M15.5 17.5a7 7 0 0 1 6-4.5"/>',
+  '🏆': '<path d="M16 8h16v10a8 8 0 0 1-16 0V8Z"/><path d="M32 11h5a3 3 0 0 1 3 3v1a7 7 0 0 1-8 7M16 11h-5a3 3 0 0 0-3 3v1a7 7 0 0 0 8 7"/><path d="M24 26v7M17 40h14M19 40l1.5-7h7l1.5 7"/>',
+  '⭐': '<path d="m24 6 5.4 11 12.1 1.8-8.8 8.5 2.1 12L24 33.6l-10.8 5.7 2.1-12-8.8-8.5 12.1-1.8L24 6Z"/>',
+  '📋': '<rect x="10" y="9" width="28" height="33" rx="5"/><path d="M18 9V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M17 20h14M17 27h14M17 34h9"/>',
+  '⏳': '<path d="M13 6h22M13 42h22M15 6c0 9 9 12 9 18s-9 9-9 18M33 6c0 9-9 12-9 18s9 9 9 18"/><path d="M19 38h10l-5-5Z" fill="currentColor"/>',
+  '⚽': '<circle cx="24" cy="24" r="17"/><path d="m24 15 7 5-2.6 8.4h-8.8L17 20l7-5Z"/><path d="M24 7v8M41 21l-10-1M35 37l-6.6-8.6M13 37l6.6-8.6M7 21l10-1"/>',
+  '📡': '<path d="M10 38a20 20 0 0 1 0-28M38 10a20 20 0 0 1 0 28M16 32a12 12 0 0 1 0-16M32 16a12 12 0 0 1 0 16"/><circle cx="24" cy="24" r="3.5" fill="currentColor"/>',
+  '👥': '<circle cx="18" cy="17" r="6"/><path d="M7 38c1.5-7 6-10 11-10s9.5 3 11 10"/><circle cx="32" cy="15" r="5"/><path d="M30 25c5 0 9 2.5 11 9"/>',
+  '🛠️': '<path d="M30 7a8 8 0 0 0-8.5 10.8L8 31.3 16.7 40l13.5-13.5A8 8 0 0 0 41 18l-5 5-6-1-1-6 5-5c-1.2-.7-2.6-1-4-1Z"/>',
+  '🔐': '<rect x="11" y="21" width="26" height="20" rx="5"/><path d="M17 21v-6a7 7 0 0 1 14 0v6"/><circle cx="24" cy="31" r="2.5" fill="currentColor"/>',
+  '🏁': '<path d="M11 42V7M11 8h24l-4 7 4 7H11"/><path d="M17 8v14M23 8v14M29 8v14" stroke-dasharray="3 4"/>',
+  '📝': '<path d="M12 7h17l7 7v27H12Z"/><path d="M29 7v7h7M17 22h14M17 28h14M17 34h9"/>',
+  '⏱️': '<circle cx="24" cy="27" r="14"/><path d="M24 27v-7M20 6h8M24 6v7M35 15l3-3"/>',
+  '🎯': '<circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.5" fill="currentColor"/>',
+};
+const emptyBox = (emoji, title, text = '') => `<div class="empty glass">${ILL[emoji]
+  ? `<div class="ill"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${ILL[emoji]}</svg></div>`
+  : `<div class="em">${emoji}</div>`}<b>${esc(title)}</b>${esc(text)}</div>`;
 
 /* =============================================================
    VIEWS
@@ -1824,6 +1925,7 @@ async function renderTeam(slug, id){
     const L = leagueBy(slug);
     $('#tbody').innerHTML = `
       <section class="hero glass" id="thero">
+        ${fav.logo ? `<div class="bgcrest" style="background-image:url('${esc(fav.logo)}')"></div>` : ''}
         <div class="glow"></div>
         ${img(fav.logo, 'big-logo', T.displayName)}
         <h1>${esc(T.displayName)}</h1>
@@ -2480,7 +2582,7 @@ function lineups(rosters, keyEvents = [], m = null){
   const teamName = r => tn(r.team?.displayName || '');
   /* geometry in pixels so that circles and names can never overlap:
      row gap ≥ block height (photo + name), column gap ≥ name width, nothing leaves the pitch */
-  const W = Math.max(260, Math.min(innerWidth, 760) - 32 - 20), NAME_H = 15 + 4, MIN_PS = 28;
+  const W = Math.max(240, (Math.min(innerWidth, 760 * appZoom) / appZoom) - 32 - 20), NAME_H = 15 + 4, MIN_PS = 28;
   const fit = (n, H, minPs = MIN_PS) => {
     for (let ps = 42; ps >= minPs; ps--){
       const block = ps + NAME_H;
@@ -3400,6 +3502,32 @@ function celebrate(line){
   requestAnimationFrame(tick);
 }
 
+/* ---------- appearance settings ---------- */
+function lookSection(){
+  const L = look();
+  const sw = (id, on) => `<label class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}><i></i></label>`;
+  return `<div class="list glass">
+    <div class="look-block"><div class="t1">Erscheinungsbild</div>${seg('lkMode', [['auto','Automatisch'], ['light','Hell'], ['dark','Dunkel']], L.mode)}</div>
+    <div class="sw-row"><div class="grow"><div class="t1">Echtes Schwarz</div><div class="t2">Für OLED-Displays, spart Akku im Dunkelmodus</div></div>${sw('lkOled', L.oled)}</div>
+    <div class="look-block"><div class="t1">Farbintensität</div><div class="t2">Wie kräftig die Vereinsfarben im Hintergrund leuchten</div>
+      <input type="range" class="rng" id="lkInt" min="0" max="100" value="${L.intensity}" style="--v:${L.intensity}%"></div>
+    <div class="look-block"><div class="t1">Textgröße</div><div class="t2">„iPhone“ folgt der Einstellung unter Anzeige & Helligkeit</div>
+      ${seg('lkText', [['auto','iPhone'], ['s','S'], ['m','M'], ['l','L'], ['xl','XL']], L.text)}</div>
+    <div class="sw-row"><div class="grow"><div class="t1">Lichtreflexe beim Kippen</div><div class="t2" id="lkTiltNote">Der Glanz auf dem Glas folgt der Neigung des iPhones</div></div>${sw('lkTilt', L.tilt)}</div>
+  </div>`;
+}
+function bindLookSection(){
+  const set = patch => { store.set(LOOK_KEY, { ...look(), ...patch }); applyLook(); };
+  bindSeg('lkMode', k => set({ mode: k }));
+  bindSeg('lkText', k => set({ text: k }));
+  const o = $('#lkOled'); if (o) o.onchange = () => set({ oled: o.checked });
+  const r = $('#lkInt'); if (r) r.oninput = () => { r.style.setProperty('--v', r.value + '%'); set({ intensity: +r.value }); };
+  const t = $('#lkTilt'); if (t) t.onchange = async () => {
+    if (!t.checked) return set({ tilt: false });
+    try { await enableTilt(); } catch (err){ t.checked = false; $('#lkTiltNote').textContent = err.message; $('#lkTiltNote').style.color = 'var(--loss)'; }
+  };
+}
+
 /* ---------- Profile (incl. favourites) ---------- */
 function renderMe(){
   ++token;
@@ -3435,6 +3563,9 @@ function renderMe(){
         <div class="grow"><div class="t1">${esc(t.name)}</div><div class="t2">${esc(leagueBy(t.slug).name)}</div></div>${chev}</a>`).join('')}</div>`
       : `<div class="empty glass" style="padding:24px">Weitere Teams mit ★ auf ihrer Teamseite markieren.</div>`}
 
+    <div class="section-h"><h2>Darstellung</h2></div>
+    ${lookSection()}
+
     <div class="section-h"><h2>Benachrichtigungen</h2></div>
     ${pushSection()}
 
@@ -3448,6 +3579,7 @@ function renderMe(){
   $('#chgNation').onclick = () => startOnboarding(['nation'], { edit:true });
   $('#chgLeague').onclick = () => startOnboarding(['league'], { edit:true });
   bindPushSection();
+  bindLookSection();
   $('#logout').onclick = () => {
     if (!confirm(Auth.cloud ? 'Wirklich abmelden?' : 'Wirklich abmelden? Profil und Favoriten werden auf diesem Gerät gelöscht.')) return;
     Push.disable().catch(() => {}).then(() => Auth.signOut()).then(() => { applyTheme(null); location.hash = '#/'; startOnboarding(['register', 'club', 'league', 'nation', 'done']); });
@@ -3537,6 +3669,34 @@ function navigate(){
   });
 }
 window.addEventListener('hashchange', navigate);
+
+/* ---------- pull to refresh (home-screen apps have none) ---------- */
+(() => {
+  let y0 = null, pull = 0, busy = false;
+  const ptr = $('#ptr');
+  const blocked = () => document.body.classList.contains('locked') || $('#sheet').classList.contains('on');
+  addEventListener('touchstart', e => { y0 = scrollY <= 0 && !busy && !blocked() ? e.touches[0].clientY : null; pull = 0; }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    pull = Math.max(0, e.touches[0].clientY - y0);
+    if (scrollY > 0){ y0 = null; pull = 0; }
+    const k = Math.min(1, pull / 80);
+    ptr.style.transition = 'none';
+    ptr.style.opacity = k;
+    ptr.style.transform = `translateY(${-70 + Math.min(pull * .6, 64)}px) scale(${.6 + .4 * k})`;
+    ptr.firstElementChild.style.transform = `rotate(${pull * 3}deg)`;
+  }, { passive: true });
+  addEventListener('touchend', () => {
+    if (y0 == null) return; y0 = null;
+    ptr.style.transition = 'transform .45s var(--spring), opacity .3s';
+    if (pull > 80){
+      busy = true; ptr.classList.add('spin'); ptr.style.transform = 'translateY(-6px) scale(1)'; ptr.style.opacity = 1;
+      route(true);
+      setTimeout(() => { ptr.classList.remove('spin'); ptr.style.transform = 'translateY(-70px) scale(.6)'; ptr.style.opacity = 0; busy = false; }, 900);
+    } else { ptr.style.transform = 'translateY(-70px) scale(.6)'; ptr.style.opacity = 0; }
+    pull = 0;
+  });
+})();
 
 /* ---------- tab bar shrinks to a pill while scrolling down (iOS 26) ---------- */
 let lastScrollY = 0;
