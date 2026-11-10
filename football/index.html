@@ -472,6 +472,13 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .scoreboard .res .stt.live{ color: var(--live); display:flex; align-items:center; gap:6px; }
 .hero .info{ margin-top:18px; font-size:13px; color: var(--text-2); display:flex; justify-content:center; gap: 6px 14px; flex-wrap:wrap; }
 
+.tv{ margin-top:16px; display:flex; flex-direction:column; align-items:center; gap:7px; }
+.tv .chs{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; align-items:center; }
+.tv .lbl{ font-size:12px; font-weight:700; color: var(--text-2); }
+.tv .ch{ padding: 6px 12px; border-radius:999px; font-size:13px; font-weight:800; letter-spacing:-.01em; background: var(--glass-strong);
+  box-shadow: inset 0 1px 1px -0.5px var(--rim-a); }
+.tv .note{ font-size:11.5px; color: var(--text-3); max-width: 320px; text-align:center; line-height:1.35; }
+
 /* timeline */
 .timeline{ padding: 8px 0; border-radius: var(--r-lg); }
 .ev{ display:grid; grid-template-columns: 1fr 52px 1fr; align-items:center; padding: 10px 14px; gap:8px; font-size:14px; }
@@ -688,7 +695,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-09T23:47';
+const APP_BUILD = '2026-11-10T04:09';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1139,6 +1146,39 @@ function normEvent(e, slug){
     venue: c.venue?.fullName || e.venue?.displayName,
   };
 }
+/* ---------- Where is it on TV? (Germany, rights 2026/27) ----------
+   Derived from who owns which rights package, by competition, weekday and kick-off time (Berlin).
+   Only competitions with confirmed rights are listed – everything else shows nothing. */
+function tvGermany(m){
+  if (!m || m.state === 'post' || !m.date) return null;
+  const d = new Date(m.date);
+  const day = d.toLocaleDateString('en-GB', { weekday:'short', timeZone:'Europe/Berlin' });      // Mon … Sun
+  const hm  = d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/Berlin' });
+  const GER = '481', home = String(m.home?.id), away = String(m.away?.id);
+  switch (m.slug){
+    case 'ger.1':
+      if (day === 'Sun') return { ch:['DAZN'] };
+      if (day === 'Sat') return hm === '15:30' ? { ch:['Sky', 'DAZN'], note:'Einzelspiel bei Sky, Konferenz bei DAZN' } : { ch:['Sky'] };
+      if (day === 'Fri') return { ch:['Sky'] };
+      return { ch:['Sky', 'DAZN'], note:'Englische Woche: Einzelspiele bei Sky, Konferenz bei DAZN' };
+    case 'ger.2':
+      return day === 'Sat' && hm === '20:30' ? { ch:['RTL', 'Sky'], note:'Topspiel frei bei RTL' } : { ch:['Sky'] };
+    case 'ger.dfb_pokal':  return { ch:['Sky'], note:'Ausgewählte Spiele auch frei bei ARD, ZDF oder RTL' };
+    case 'uefa.champions': return day === 'Tue' ? { ch:['DAZN', 'Prime Video'], note:'Das Dienstags-Topspiel zeigt Prime Video, alle anderen Spiele DAZN' } : { ch:['DAZN'] };
+    case 'uefa.europa':
+    case 'uefa.europa.conf': return { ch:['RTL+'], note:'Ein ausgewähltes Spiel pro Spieltag frei bei RTL oder NITRO' };
+    case 'eng.1': return { ch:['Sky'] };
+    case 'esp.1': return { ch:['DAZN'] };
+    case 'ita.1': return { ch:['DAZN'] };
+  }
+  if (home === GER || away === GER){
+    if (['uefa.nations', 'fifa.worldq.uefa', 'uefa.euroq'].includes(m.slug))
+      return away === GER ? { ch:['RTL'] } : { ch:['ARD', 'ZDF'], note:'Heimspiele zeigen ARD oder ZDF im Wechsel' };
+    if (m.slug === 'fifa.friendly') return { ch:['ARD', 'ZDF', 'RTL'], note:'Testspiele laufen bei ARD, ZDF oder RTL' };
+  }
+  return null;
+}
+
 function statusLabel(m){
   if (m.name === 'STATUS_POSTPONED') return { txt:'Verlegt' };
   if (m.name === 'STATUS_CANCELED') return { txt:'Abgesagt' };
@@ -1538,7 +1578,7 @@ async function renderMatch(slug, id, fresh = false){
     const ref = gi.officials?.find(o => o.position?.name === 'Referee')?.displayName;
 
     const hasEvents = (d.keyEvents || []).length > 0;
-    const hasStats = (d.boxscore?.teams?.[0]?.statistics || []).length > 0;
+    const hasStats = m.state !== 'pre' && (d.boxscore?.teams || []).some(t => (t.statistics || []).some(x => parseFloat(x.displayValue) > 0));
     const hasLineups = (d.rosters || []).some(r => (r.roster || []).length);
     const tabs = [hasEvents && ['events','Verlauf'], hasStats && ['stats','Statistik'], hasLineups && ['lineups','Aufstellung']].filter(Boolean);
     if (!tabs.some(t => t[0] === state.matchTab) && tabs.length) state.matchTab = tabs[0][0];
@@ -1546,7 +1586,7 @@ async function renderMatch(slug, id, fresh = false){
     $('#mbody').innerHTML = `
       <section class="hero glass" id="mhero">
         <div class="glow"></div>
-        <div style="font-size:12px;font-weight:700;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px">${esc(L.name)}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px">${esc(L.logo ? L.name : (compName(slug) || L.name))}</div>
         <div class="scoreboard">
           <a class="tm" href="#/team/${esc(slug)}/${esc(m.home.id)}">${img(m.home.logo, '', m.home.name)}<span>${esc(m.home.full || m.home.name)}</span></a>
           <div class="res">
@@ -1561,6 +1601,10 @@ async function renderMatch(slug, id, fresh = false){
           ${gi.attendance ? `<span>👥 ${Number(gi.attendance).toLocaleString('de-DE')}</span>` : ''}
           ${ref ? `<span>🧑‍⚖️ ${esc(ref)}</span>` : ''}
         </div>
+        ${(() => { const tv = tvGermany(m); return tv ? `<div class="tv">
+          <div class="chs"><span class="lbl">📺 ${m.state === 'in' ? 'Läuft live bei' : 'Live bei'}</span>${tv.ch.map(c => `<span class="ch">${esc(c)}</span>`).join('')}</div>
+          <div class="note">${tv.note ? esc(tv.note) + ' · ' : ''}TV in Deutschland laut Rechtevergabe, ohne Gewähr</div>
+        </div>` : ''; })()}
       </section>
       ${tabs.length > 1 ? seg('mseg', tabs, state.matchTab) : ''}
       <div id="pane"></div>`;

@@ -78,6 +78,23 @@ Freigestellte Fotos von [TheSportsDB](https://www.thesportsdb.com) (kostenlose A
 
 Fotogröße, Namensbreite und Reihenabstände werden pro Formation berechnet: Der Reihenabstand ist immer größer als Foto plus Name, der Spaltenabstand größer als die Namensbreite. Reicht der Platz nicht, wird das Feld höher, statt die Fotos zu verkleinern. Geprüft automatisch für 9 Formationen (u. a. 4-2-3-1, 4-3-3, 3-5-2, 5-3-2, 4-1-2-1-2) auf 320, 390 und 430 px Breite.
 
+### TV-Sender (Deutschland)
+
+Auf der Spielseite steht bei anstehenden und laufenden Spielen, wo sie in Deutschland live laufen. Abgeleitet aus der Rechtevergabe 2026/27 nach Wettbewerb, Wochentag und Anstoßzeit:
+
+| Wettbewerb | Sender |
+|---|---|
+| Bundesliga | Freitag & Samstag Sky (Sa 15:30 zusätzlich DAZN-Konferenz), Sonntag DAZN |
+| 2. Bundesliga | Sky, Samstag 20:30 zusätzlich RTL |
+| DFB-Pokal | Sky, ausgewählte Spiele ARD/ZDF/RTL |
+| Champions League | DAZN, Dienstags-Topspiel Prime Video |
+| Europa & Conference League | RTL+, ein Spiel pro Spieltag frei bei RTL/NITRO |
+| Premier League | Sky |
+| LaLiga, Serie A | DAZN |
+| Deutschland (Nations League, Quali) | auswärts RTL, daheim ARD oder ZDF; Testspiele ARD/ZDF/RTL |
+
+Für andere Wettbewerbe wird nichts angezeigt. Die Regeln stehen in `tvGermany()` in `index.html` und müssen bei neuen Rechteperioden angepasst werden (z. B. Champions League ab 2027/28 bei Paramount+, Europa/Conference League bei DAZN).
+
 ## Updates
 
 Die App prüft beim Start und bei jeder Rückkehr, ob online eine neuere Version liegt (`APP_BUILD` in `index.html`), und lädt sich dann einmal selbst neu. So bleiben auch App-Icons auf dem Home-Bildschirm aktuell. Vor jedem Veröffentlichen `tools/release.sh` ausführen, das setzt eine neue Build-Kennung.
