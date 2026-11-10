@@ -531,6 +531,24 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 .card-y{ background:#ffd60a; } .card-r{ background:#ff3b30; }
 .sub-i{ color: var(--win); font-weight:900; } .sub-o{ color: var(--loss); font-weight:900; }
 
+/* live ticker */
+.ticker{ border-radius: var(--r-lg); overflow:hidden; }
+.tk{ display:flex; gap:12px; padding: 12px 16px; position:relative; align-items:flex-start; }
+.tk + .tk::before{ content:''; position:absolute; top:0; left:16px; right:16px; height:1px; background: var(--sep); }
+.tk .tm{ width:42px; flex:none; font-weight:800; font-size:13px; color: var(--text-2); font-variant-numeric: tabular-nums; padding-top:2px; }
+.tk .ic2{ width:22px; flex:none; text-align:center; font-size:15px; padding-top:1px; }
+.tk .tx{ flex:1; font-size:14.5px; line-height:1.4; }
+.tk.goal{ background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tk.goal .tx{ font-weight:700; }
+.tk.phase .tx{ font-weight:700; color: var(--text-2); }
+.tk .cardi{ display:inline-block; width:11px; height:15px; border-radius:2.5px; vertical-align:-2px; }
+.tk-head{ display:flex; align-items:center; justify-content:space-between; margin: 0 6px 10px; font-size:13px; color: var(--text-2); font-weight:600; }
+/* live table */
+.live-note{ display:flex; align-items:center; gap:8px; margin: 0 8px 10px; font-size:13px; font-weight:700; color: var(--live); }
+.trow .lv{ display:inline-flex; align-items:center; gap:4px; margin-left:6px; padding: 1px 6px; border-radius:999px; font-size:11px; font-weight:800;
+  color: var(--live); background: rgba(255,69,58,.14); flex:none; }
+.trow .mv{ font-size:9px; margin-left:2px; } .trow .mv.up{ color:#30d158; } .trow .mv.dn{ color:#ff453a; }
+
 /* stats bars */
 .stats{ padding: 8px 16px 14px; border-radius: var(--r-lg); }
 .stat{ padding: 12px 0 6px; }
@@ -757,7 +775,7 @@ body.locked #app, body.locked .tabbar{ visibility:hidden; }
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T06:00';
+const APP_BUILD = '2026-11-10T06:06';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -1502,13 +1520,19 @@ async function paneLeague(slug, tab, my){
   pane.innerHTML = skeleton(6, tab === 'teams' ? 110 : 52);
   try{
     if (tab === 'table'){
-      const groups = await standings(slug);
+      let groups = await standings(slug);
       if (my !== token) return;
       if (!groups.length){ pane.innerHTML = emptyBox('📋', 'Keine Tabelle verfügbar'); return; }
+      // running matches → live table
+      const today = await api(`site/v2/sports/soccer/${slug}/scoreboard`, { ttl: 25_000 }).catch(() => null);
+      const liveMs = (today?.events || []).map(e => normEvent(e, slug)).filter(m => m.state === 'in');
+      if (liveMs.length) groups = applyLive(groups, liveMs);
+      if (my !== token) return;
       const favIds = new Set(favs().map(f => f.id));
       const notes = new Map();
       pane.innerHTML = groups.map(g => `
         ${groups.length > 1 ? `<div class="group-title">${esc(g.name)}</div>` : ''}
+        ${g.live ? `<div class="live-note"><span class="pulse"></span>Live-Tabelle – ${liveMs.length} ${liveMs.length === 1 ? 'Spiel läuft' : 'Spiele laufen'}, Stand jetzt eingerechnet</div>` : ''}
         <div class="table glass">
           <div class="trow head wide-able">
             <span class="c">#</span><span>Team</span><span class="c">Sp</span>
@@ -1519,8 +1543,8 @@ async function paneLeague(slug, tab, my){
             if (e.note) notes.set(e.note.color, e.note.description);
             return `<a class="trow wide-able ${favIds.has(e.team.id) ? 'hl' : ''}" href="#/team/${esc(slug)}/${esc(e.team.id)}">
               ${e.note ? `<span class="zone" style="background:${esc(e.note.color)}"></span>` : ''}
-              <span class="rk">${esc(e.s.rank)}</span>
-              <span class="team">${img(e.team.logo, 'logo xs', e.team.name)}<span>${esc(e.team.name)}</span></span>
+              <span class="rk">${esc(e.s.rank)}${e.delta > 0 ? '<span class="mv up">▲</span>' : e.delta < 0 ? '<span class="mv dn">▼</span>' : ''}</span>
+              <span class="team">${img(e.team.logo, 'logo xs', e.team.name)}<span>${esc(e.team.name)}</span>${e.live ? `<span class="lv">${esc(e.live.score)}</span>` : ''}</span>
               <span class="c">${esc(e.s.gamesPlayed)}</span>
               <span class="c col-wide">${esc(e.s.wins)}</span><span class="c col-wide">${esc(e.s.ties)}</span><span class="c col-wide">${esc(e.s.losses)}</span>
               <span class="c col-wide">${esc(e.s.pointsFor)}:${esc(e.s.pointsAgainst)}</span>
@@ -1535,6 +1559,7 @@ async function paneLeague(slug, tab, my){
       const wide = matchMedia('(min-width:560px)').matches;
       pane.querySelectorAll('.wide-able').forEach(r => r.classList.toggle('wide', wide));
       fillForm(pane, slug);
+      scheduleRefresh(liveMs.length > 0);
     }
 
     if (tab === 'scorers'){ await renderScorers(pane, slug, my); return; }
@@ -1873,7 +1898,9 @@ async function renderMatch(slug, id, fresh = false){
     const hasEvents = (d.keyEvents || []).length > 0;
     const hasStats = m.state !== 'pre' && (d.boxscore?.teams || []).some(t => (t.statistics || []).some(x => parseFloat(x.displayValue) > 0));
     const hasLineups = (d.rosters || []).some(r => (r.roster || []).length);
-    const tabs = [hasEvents && ['events','Verlauf'], hasStats && ['stats','Statistik'], hasLineups && ['lineups','Aufstellung']].filter(Boolean);
+    const hasTicker = (d.commentary || []).length > 0;
+    const tabs = [hasTicker && ['ticker','Ticker'], hasEvents && ['events','Verlauf'], hasStats && ['stats','Statistik'], hasLineups && ['lineups','Aufstellung']].filter(Boolean);
+    if (m.state === 'in' && hasTicker && !state.matchTabChosen) state.matchTab = 'ticker';
     if (!tabs.some(t => t[0] === state.matchTab) && tabs.length) state.matchTab = tabs[0][0];
 
     $('#mbody').innerHTML = `
@@ -1908,6 +1935,7 @@ async function renderMatch(slug, id, fresh = false){
       state.matchTab = k;
       const p = $('#pane');
       if (!tabs.length){ p.innerHTML = emptyBox('⏳', played ? 'Keine Details verfügbar' : 'Das Spiel hat noch nicht begonnen', played ? '' : 'Aufstellungen erscheinen kurz vor Anpfiff.'); return; }
+      if (k === 'ticker') p.innerHTML = tickerView(d.commentary, m.state === 'in');
       if (k === 'events') p.innerHTML = timeline(d.keyEvents, homeId);
       if (k === 'stats') p.innerHTML = statsView(d.boxscore.teams, homeId, m);
       if (k === 'lineups'){
@@ -1928,12 +1956,150 @@ async function renderMatch(slug, id, fresh = false){
       }
       if (k === 'stats') requestAnimationFrame(() => p.querySelectorAll('.bars i').forEach(i => i.style.width = i.dataset.w));
     };
-    bindSeg('mseg', pane);
+    bindSeg('mseg', k => { state.matchTabChosen = true; pane(k); });
     pane(state.matchTab);
     scheduleRefresh(m.state === 'in');
   } catch(err){
     if (my === token) $('#mbody').innerHTML = errorBox(err);
   }
+}
+
+/* ---------- live ticker: ESPN/Opta commentary, common phrases in German ---------- */
+const TK_RULES = [
+  [/^Lineups are announced and players are warming up\.?$/, 'Die Aufstellungen sind da, die Spieler wärmen sich auf.'],
+  [/^First Half begins\.?/, 'Anpfiff der ersten Halbzeit.'],
+  [/^First Half ends, /, 'Halbzeit: '], [/^First Half Extra Time begins\.?/, 'Beginn der Verlängerung.'],
+  [/^Second Half begins /, 'Anpfiff der zweiten Halbzeit. '], [/^Second Half begins\.?$/, 'Anpfiff der zweiten Halbzeit.'],
+  [/^Second Half ends, /, 'Ende der zweiten Halbzeit: '], [/^Match ends, /, 'Spielende: '],
+  [/^Penalty Shootout begins/, 'Das Elfmeterschießen beginnt'],
+  [/^Goal! /, 'TOR! '], [/^Own Goal by (.+?), (.+?)\. /, 'Eigentor von $1 ($2). '],
+  [/^Attempt missed\. /, 'Chance vergeben. '], [/^Attempt saved\. /, 'Gehalten. '], [/^Attempt blocked\. /, 'Geblockt. '],
+  [/^Foul by (.+?)\.$/, 'Foul von $1.'], [/^Hand ball by (.+?)\.$/, 'Handspiel von $1.'], [/^Dangerous play by (.+?)\.$/, 'Gefährliches Spiel von $1.'],
+  [/ wins a free kick in the defensive half\./, ' holt einen Freistoß in der eigenen Hälfte heraus.'],
+  [/ wins a free kick in the attacking half\./, ' holt einen Freistoß in der gegnerischen Hälfte heraus.'],
+  [/ wins a free kick on the left wing\./, ' holt einen Freistoß auf dem linken Flügel heraus.'],
+  [/ wins a free kick on the right wing\./, ' holt einen Freistoß auf dem rechten Flügel heraus.'],
+  [/^Corner, (.+?)\. Conceded by (.+?)\.$/, 'Ecke für $1. Verursacht von $2.'],
+  [/^Offside, (.+?)\. (.+?) tries a through ball, but (.+?) is caught offside\./, 'Abseits, $1. $2 versucht einen Steilpass, aber $3 steht im Abseits.'],
+  [/^Offside, (.+?)\. (.+?) is caught offside\./, 'Abseits, $1. $2 steht im Abseits.'],
+  [/^Substitution, (.+?)\. (.+?) replaces (.+?) because of an injury\./, 'Wechsel bei $1: $2 kommt für den verletzten $3.'],
+  [/^Substitution, (.+?)\. (.+?) replaces (.+?)\./, 'Wechsel bei $1: $2 kommt für $3.'],
+  [/ is shown the yellow card for a bad foul\./, ' sieht Gelb nach einem groben Foul.'],
+  [/ is shown the yellow card for hand ball\./, ' sieht Gelb wegen Handspiels.'],
+  [/ is shown the yellow card for a dangerous foul\./, ' sieht Gelb nach einem gefährlichen Foul.'],
+  [/ is shown the yellow card for time wasting\./, ' sieht Gelb wegen Zeitspiels.'],
+  [/ is shown the yellow card for excessive celebration\./, ' sieht Gelb wegen übertriebenen Jubels.'],
+  [/ is shown the yellow card\./, ' sieht Gelb.'], [/ is shown the red card\./, ' sieht Rot.'],
+  [/ is shown the red card for violent conduct\./, ' sieht Rot wegen einer Tätlichkeit.'],
+  [/ is shown the second yellow card\./, ' sieht Gelb-Rot.'],
+  [/^Delay in match because of an injury (.+?)\.$/, 'Spielunterbrechung wegen einer Verletzung von $1.'],
+  [/^Delay in match\.?/, 'Spielunterbrechung.'], [/^Delay over\. They are ready to continue\./, 'Es geht weiter.'],
+  [/^Fourth official has announced (\d+) minutes? of added time\./, 'Der vierte Offizielle zeigt $1 Minute(n) Nachspielzeit an.'],
+  [/^VAR Decision: No Goal /, 'VAR-Entscheidung: Kein Tor. '], [/^VAR Decision: Goal /, 'VAR-Entscheidung: Tor! '],
+  [/^VAR Decision: Penalty /, 'VAR-Entscheidung: Elfmeter. '], [/^VAR Decision: No Penalty /, 'VAR-Entscheidung: Kein Elfmeter. '],
+  [/^GOAL OVERTURNED BY VAR: /, 'Tor vom VAR zurückgenommen: '],
+  [/^Penalty conceded by (.+?) after a foul in the penalty area\./, 'Elfmeter verursacht von $1 nach einem Foul im Strafraum.'],
+  [/^Penalty (.+?)\. (.+?) draws a foul in the penalty area\./, 'Elfmeter für $1. $2 wird im Strafraum gefoult.'],
+  [/^Penalty saved! /, 'Elfmeter gehalten! '], [/^Penalty missed! /, 'Elfmeter verschossen! '],
+  [/ hits the bar with /, ' trifft die Latte mit '], [/ hits the left post with /, ' trifft den linken Pfosten mit '],
+  [/ hits the right post with /, ' trifft den rechten Pfosten mit '],
+  // shot phrases (anywhere in the sentence)
+  [/right footed shot/g, 'Rechtsschuss'], [/left footed shot/g, 'Linksschuss'], [/\bheader\b/g, 'Kopfball'],
+  [/ from outside the box/g, ' von außerhalb des Strafraums'], [/ from the centre of the box/g, ' aus zentraler Position im Strafraum'],
+  [/ from the right side of the box/g, ' von der rechten Strafraumseite'], [/ from the left side of the box/g, ' von der linken Strafraumseite'],
+  [/ from the right side of the six yard box/g, ' von der rechten Seite des Fünfmeterraums'], [/ from the left side of the six yard box/g, ' von der linken Seite des Fünfmeterraums'],
+  [/ from very close range/g, ' aus kürzester Distanz'], [/ from a difficult angle on the right/g, ' aus spitzem Winkel von rechts'],
+  [/ from a difficult angle on the left/g, ' aus spitzem Winkel von links'], [/ from long range on the right/g, ' aus der Distanz von rechts'],
+  [/ from long range on the left/g, ' aus der Distanz von links'], [/ from more than 35 yards/g, ' aus über 30 Metern'],
+  [/ from the penalty spot/g, ' vom Elfmeterpunkt'], [/ from a direct free kick/g, ' per direktem Freistoß'],
+  [/ is close, but misses to the left\./g, ' – knapp links vorbei.'], [/ is close, but misses to the right\./g, ' – knapp rechts vorbei.'],
+  [/ is close, but misses the top left corner\./g, ' – knapp über das linke obere Eck.'], [/ is close, but misses the top right corner\./g, ' – knapp über das rechte obere Eck.'],
+  [/ is too high\./g, ' – zu hoch.'], [/ misses to the left\./g, ' – links vorbei.'], [/ misses to the right\./g, ' – rechts vorbei.'],
+  [/ is high and wide to the left\./g, ' – hoch und links vorbei.'], [/ is high and wide to the right\./g, ' – hoch und rechts vorbei.'],
+  [/ is saved in the (bottom left corner|bottom right corner|top left corner|top right corner|centre of the goal|top centre of the goal|bottom centre of the goal)(?: by (.+?))?\./g,
+    (m, where, gk) => ({ 'bottom left corner':' im linken unteren Eck', 'bottom right corner':' im rechten unteren Eck', 'top left corner':' im linken oberen Eck',
+      'top right corner':' im rechten oberen Eck', 'centre of the goal':' in der Mitte', 'top centre of the goal':' oben in der Mitte', 'bottom centre of the goal':' unten in der Mitte' }[where] ? ` wird${gk ? ' von ' + gk : ''}${({ 'bottom left corner':' im linken unteren Eck', 'bottom right corner':' im rechten unteren Eck', 'top left corner':' im linken oberen Eck', 'top right corner':' im rechten oberen Eck', 'centre of the goal':' in der Mitte', 'top centre of the goal':' oben in der Mitte', 'bottom centre of the goal':' unten in der Mitte' })[where]} pariert.` : m)],
+  [/ scores but the goal is ruled out after a VAR review\./g, ' trifft, aber das Tor wird nach VAR-Überprüfung aberkannt.'],
+  [/ scores but the goal is ruled out for offside after a VAR review\./g, ' trifft, aber das Tor wird nach VAR-Überprüfung wegen Abseits aberkannt.'],
+  [/ is blocked\./g, ' wird geblockt.'], [/ is saved in the bottom left corner\./g, ' wird im linken unteren Eck pariert.'],
+  [/ is saved in the bottom right corner\./g, ' wird im rechten unteren Eck pariert.'], [/ is saved in the top left corner\./g, ' wird im linken oberen Eck pariert.'],
+  [/ is saved in the top right corner\./g, ' wird im rechten oberen Eck pariert.'], [/ is saved in the centre of the goal\./g, ' wird in der Mitte gehalten.'],
+  [/ to the bottom left corner\./g, ' ins linke untere Eck.'], [/ to the bottom right corner\./g, ' ins rechte untere Eck.'],
+  [/ to the top left corner\./g, ' ins linke obere Eck.'], [/ to the top right corner\./g, ' ins rechte obere Eck.'],
+  [/ to the centre of the goal\./g, ' in die Mitte des Tores.'], [/ to the high centre of the goal\./g, ' hoch in die Mitte des Tores.'],
+  [/ Assisted by (.+?) with a cross following a corner\./g, ' Vorlage: $1 mit einer Flanke nach einer Ecke.'],
+  [/ Assisted by (.+?) with a cross\./g, ' Vorlage: $1 mit einer Flanke.'], [/ Assisted by (.+?) with a headed pass\./g, ' Vorlage: $1 per Kopf.'],
+  [/ Assisted by (.+?) with a through ball\./g, ' Vorlage: $1 mit einem Steilpass.'], [/ Assisted by (.+?) following a fast break\./g, ' Vorlage: $1 nach einem Konter.'],
+  [/ Assisted by (.+?) following a set piece situation\./g, ' Vorlage: $1 nach einer Standardsituation.'], [/ Assisted by (.+?)\./g, ' Vorlage: $1.'],
+  [/ following a corner\./g, ' nach einer Ecke.'], [/ following a set piece situation\./g, ' nach einer Standardsituation.'], [/ following a fast break\./g, ' nach einem Konter.'],
+  [/ with a cross\./g, ' mit einer Flanke.'],
+  // same phrases when something follows (", following a corner" etc.)
+  [/ is close, but misses to the left/g, ' – knapp links vorbei'], [/ is close, but misses to the right/g, ' – knapp rechts vorbei'],
+  [/ is close, but misses the top (left|right) corner/g, (m, lr) => ` – knapp über das ${lr === 'left' ? 'linke' : 'rechte'} obere Eck`],
+  [/ is just a bit too high/g, ' – knapp drüber'], [/ is too high/g, ' – zu hoch'],
+  [/ is high and wide to the (left|right)/g, (m, lr) => ` – hoch und ${lr === 'left' ? 'links' : 'rechts'} vorbei`],
+  [/ misses to the (left|right)/g, (m, lr) => ` – ${lr === 'left' ? 'links' : 'rechts'} vorbei`],
+  [/ with an attempt/g, ' mit einem Versuch'], [/ converts the penalty with a /g, ' verwandelt den Elfmeter per '],
+  [/ with a cross(?= |,|$)/g, ' mit einer Flanke'], [/ with a headed pass(?= |,|$)/g, ' per Kopf'], [/ with a through ball(?= |,|$)/g, ' mit einem Steilpass'],
+  [/ following a corner/g, ' nach einer Ecke'], [/ following a set piece situation/g, ' nach einer Standardsituation'], [/ following a fast break/g, ' nach einem Konter'],
+  [/ Assisted by (.+?)(?= nach | mit | per |$)/g, ' Vorlage: $1'],
+];
+function tickerDE(t){
+  let out = String(t || '');
+  for (const [re, to] of TK_RULES) out = out.replace(re, to);
+  // team names in the text
+  out = out.replace(/\(([^()]+)\)/g, (m, n) => `(${cn(tn(n))})`).replace(/Bayern Munich/g, 'Bayern München');
+  return out;
+}
+function tickerIcon(text, type){
+  const t = (type || '') + ' ' + text;
+  if (/^TOR!|Goal!|^Eigentor|Own Goal/.test(text)) return ['⚽', 'goal'];
+  if (/yellow card|sieht Gelb(?!-)/.test(t) && !/second yellow|Gelb-Rot/.test(t)) return ['<i class="cardi" style="background:#ffd60a"></i>', ''];
+  if (/red card|second yellow|sieht Rot|Gelb-Rot/.test(t)) return ['<i class="cardi" style="background:#ff3b30"></i>', ''];
+  if (/^Wechsel|Substitution/.test(text)) return ['⇄', ''];
+  if (/^Ecke|Corner/.test(text)) return ['🚩', ''];
+  if (/^VAR|VAR/.test(text)) return ['📺', ''];
+  if (/^(Chance vergeben|Gehalten|Geblockt)|Latte|Pfosten/.test(text)) return ['🎯', ''];
+  if (/^Abseits/.test(text)) return ['🏳️', ''];
+  if (/Anpfiff|Halbzeit|Spielende|Ende der|Verlängerung|Elfmeterschießen/.test(text)) return ['⏱', 'phase'];
+  if (/^Foul|Freistoß|Handspiel/.test(text)) return ['·', ''];
+  return ['·', ''];
+}
+function tickerView(commentary, live){
+  const items = (commentary || []).slice().sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0));
+  if (!items.length) return emptyBox('📝', 'Noch kein Ticker', 'Der Live-Ticker startet kurz vor Anpfiff.');
+  return `<div class="tk-head"><span>${live ? '<span class="pulse" style="display:inline-block;margin-right:6px"></span>Live – aktualisiert sich automatisch' : 'Spielverlauf Minute für Minute'}</span><span>${items.length} Einträge</span></div>
+    <div class="ticker glass">${items.map(x => {
+      const text = tickerDE(x.text), [ic, cls] = tickerIcon(text, x.play?.type);
+      return `<div class="tk ${cls}"><span class="tm">${esc(x.time?.displayValue || '')}</span><span class="ic2">${ic}</span><span class="tx">${esc(text)}</span></div>`;
+    }).join('')}</div>`;
+}
+
+/* ---------- live table: fold in the current score of running matches ---------- */
+function applyLive(groups, liveMatches){
+  const num = v => +String(v ?? 0).replace('+', '') || 0;
+  return groups.map(g => {
+    const entries = g.entries.map(e => ({ ...e, s: { ...e.s }, oldRank: num(e.s.rank) }));
+    const by = id => entries.find(e => String(e.team.id) === String(id));
+    let touched = false;
+    for (const m of liveMatches){
+      const H = by(m.home.id), A = by(m.away.id); if (!H || !A) continue;
+      touched = true;
+      const hs = +m.home.score || 0, as = +m.away.score || 0;
+      for (const [E, f, a] of [[H, hs, as], [A, as, hs]]){
+        E.s.gamesPlayed = num(E.s.gamesPlayed) + 1;
+        E.s.pointsFor = num(E.s.pointsFor) + f; E.s.pointsAgainst = num(E.s.pointsAgainst) + a;
+        E.s.points = num(E.s.points) + (f > a ? 3 : f === a ? 1 : 0);
+        if (f > a) E.s.wins = num(E.s.wins) + 1; else if (f === a) E.s.ties = num(E.s.ties) + 1; else E.s.losses = num(E.s.losses) + 1;
+        const d = E.s.pointsFor - E.s.pointsAgainst; E.s.pointDifferential = d > 0 ? '+' + d : String(d);
+        E.live = { score: E === H ? `${hs}:${as}` : `${as}:${hs}`, res: f > a ? 'S' : f === a ? 'U' : 'N' };
+      }
+    }
+    if (!touched) return g;
+    entries.sort((x, y) => num(y.s.points) - num(x.s.points) || num(y.s.pointDifferential) - num(x.s.pointDifferential) || num(y.s.pointsFor) - num(x.s.pointsFor));
+    entries.forEach((e, i) => { e.s.rank = i + 1; e.delta = e.oldRank - (i + 1); });
+    return { ...g, entries, live: true };
+  });
 }
 
 function timeline(events, homeId){
