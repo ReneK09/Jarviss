@@ -135,3 +135,14 @@ Auf der Ligen-Seite oben die Sportart wählen: ⚽ Fußball · 🏀 Basketball (
 ## Daten
 
 Die Daten kommen von der öffentlichen ESPN-Fußball-API (`site.api.espn.com`). Sie braucht keinen Key und erlaubt CORS. Es ist eine inoffizielle Schnittstelle, Endpunkte können sich also ohne Ankündigung ändern.
+
+### 3. Liga und Regionalligen
+
+ESPN führt weder die 3. Liga noch die Regionalligen. Für diese Ligen nutzt Arenly [OpenLigaDB](https://www.openligadb.de), eine kostenlose, von der Community gepflegte API ohne Key mit CORS:
+
+- 3. Liga (`bl3`), Regionalliga Nord (`rln`) und Regionalliga Nordost (`rlno`).
+- Ein Adapter in `api()` übersetzt die Daten in das ESPN-Format. Tabelle, Spiele, Form, Torjäger, Teamseiten, Übersicht, Suche und Tippspiel funktionieren deshalb unverändert.
+- Team- und Spiel-IDs bekommen ein `o` vorangestellt, damit sie nicht mit ESPN-IDs kollidieren.
+- Es gibt keine Aufstellungen, keinen Kader und keine Live-Spielminute, nur Tore. Ergebnisse tragen Freiwillige ein, sie können sich daher um einige Minuten verzögern.
+- Regionalliga West, Südwest und Bayern sind bei OpenLigaDB aktuell nicht gepflegt und fehlen deshalb.
+- News kommen aus den kicker-Feeds `news/3-liga` und `news/regionalliga`, gefiltert nach der jeweiligen Staffel.

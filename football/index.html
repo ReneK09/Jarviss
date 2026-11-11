@@ -908,7 +908,7 @@ html.light .badge.rumor{ color:#b25e00; } html.light .badge.done{ color:#1a8a3c;
 <script>
 'use strict';
 /* Bump on every release (tools/release.sh does it) – running apps compare it with the live page and reload. */
-const APP_BUILD = '2026-11-10T19:12';
+const APP_BUILD = '2026-11-11T08:27';
 /* =============================================================
    DATA SOURCE: ESPN public soccer API (no key, CORS enabled)
    ============================================================= */
@@ -925,9 +925,14 @@ const SPORTS = [
 ];
 const LG = n => `https://a.espncdn.com/i/teamlogos/leagues/500/${n}.png`;
 
+/* simple league badges for leagues without an ESPN logo */
+const BADGE = (big, small = '') => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a4a63"/><stop offset="1" stop-color="#151c2a"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/><text x="32" y="${small ? 36 : 43}" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-weight="800" font-size="${big.length > 1 ? 24 : 32}" fill="#fff">${big}</text>${small ? `<text x="32" y="52" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-weight="700" font-size="11" fill="#9fb3d1" letter-spacing="1">${small}</text>` : ''}</svg>`);
 const LEAGUES = [
   { slug:'ger.1',            name:'Bundesliga',        country:'Deutschland', logo:10,    group:'de' },
   { slug:'ger.2',            name:'2. Bundesliga',     country:'Deutschland', logo:97,    group:'de' },
+  { slug:'olg.bl3',          name:'3. Liga',           country:'Deutschland', logo:BADGE('3.', 'LIGA'),  group:'de', olg:'bl3' },
+  { slug:'olg.rln',          name:'Regionalliga Nord', country:'Deutschland', logo:BADGE('RL', 'NORD'),  group:'de', olg:'rln' },
+  { slug:'olg.rlno',         name:'Regionalliga Nordost', country:'Deutschland', logo:BADGE('RL', 'NORDOST'), group:'de', olg:'rlno' },
   { slug:'ger.dfb_pokal',    name:'DFB-Pokal',         country:'Deutschland', logo:2061,  group:'de', cup:true },
   { slug:'eng.1',            name:'Premier League',    country:'England',     logo:23,    group:'top' },
   { slug:'esp.1',            name:'LaLiga',            country:'Spanien',     logo:15,    group:'top' },
@@ -988,6 +993,8 @@ const POPULAR_NATIONS = ['Germany', 'Austria', 'Switzerland', 'Turkey', 'Türkiy
 /* ---------- fetch with small in-memory cache ---------- */
 const cache = new Map();
 async function api(path, { ttl = 60_000, fresh = false } = {}){
+  const olg = path.match(/^(?:site\/)?v2\/sports\/soccer\/(olg\.[\w-]+)\/(.*)$/);
+  if (olg) return olgApi(olg[1], olg[2], fresh);
   const hit = cache.get(path);
   if (!fresh && hit && Date.now() - hit.t < ttl) return hit.data;
   const res = await fetch(`${API}/${path}`);
@@ -995,6 +1002,112 @@ async function api(path, { ttl = 60_000, fresh = false } = {}){
   const data = await res.json();
   cache.set(path, { t: Date.now(), data });
   return data;
+}
+
+/* ---------- OpenLigaDB: 3. Liga & Regionalligen (not covered by ESPN) ----------
+   Free community API with CORS. Its data is translated into the ESPN shapes the rest of the app reads,
+   so tables, games, team pages, form, overview and Tippspiel work unchanged.
+   Team ids are prefixed with "o" and match ids with "o" so they never clash with ESPN ids. */
+const OLG_API = 'https://api.openligadb.de';
+const olgSeason = () => { const d = new Date(); return d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1; };
+const olgPending = new Map();
+async function olgGet(path, ttl, fresh){
+  const key = 'olg:' + path, hit = cache.get(key);
+  if (!fresh && hit && Date.now() - hit.t < ttl) return hit.data;
+  if (olgPending.has(key)) return olgPending.get(key);
+  const job = fetch(`${OLG_API}/${path}`).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(data => { cache.set(key, { t: Date.now(), data }); return data; })
+    .finally(() => olgPending.delete(key));
+  olgPending.set(key, job);
+  return job;
+}
+const berlinDay = d => new Date(d).toLocaleDateString('sv-SE', { timeZone:'Europe/Berlin' });         // YYYY-MM-DD
+const olgIcon = u => String(u || '').replace(/\?.*$/, '').replace(/\/\d+px-/, '/250px-');   // smaller standard Wikimedia thumbnail
+const olgTeam = t => ({ id: 'o' + t.teamId, displayName: t.teamName, shortDisplayName: t.shortName || t.teamName,
+  logo: olgIcon(t.teamIconUrl), logos: t.teamIconUrl ? [{ href: olgIcon(t.teamIconUrl) }] : [] });
+function olgScore(m){
+  const fin = (m.matchResults || []).find(r => r.resultTypeID === 2);
+  if (fin) return [fin.pointsTeam1, fin.pointsTeam2];
+  const g = (m.goals || []).at(-1);
+  return g ? [g.scoreTeam1, g.scoreTeam2] : [0, 0];
+}
+function olgStatus(m){
+  const mins = (Date.now() - new Date(m.matchDateTimeUTC)) / 60000;
+  const state = m.matchIsFinished || mins > 135 ? 'post' : mins >= 0 ? 'in' : 'pre';
+  const halftime = state === 'in' && mins > 46 && mins < 62 && (m.matchResults || []).some(r => r.resultTypeID === 1);
+  return { type: { state, completed: state === 'post', name: state === 'post' ? 'STATUS_FULL_TIME' : halftime ? 'STATUS_HALFTIME' : state === 'in' ? 'STATUS_IN_PROGRESS' : 'STATUS_SCHEDULED',
+    shortDetail: state === 'post' ? 'FT' : '', detail: m.group?.groupName || '' } };
+}
+function olgEvent(m){
+  const status = olgStatus(m), [h, a] = olgScore(m), played = status.type.state !== 'pre';
+  const loc = m.location ? [m.location.locationStadium, m.location.locationCity].filter(Boolean).join(', ') : '';
+  const side = (t, homeAway, s, o) => ({ homeAway, team: olgTeam(t), score: played ? String(s) : undefined,
+    winner: status.type.state === 'post' ? s > o : undefined });
+  const comp = { date: m.matchDateTimeUTC, status, venue: loc ? { fullName: loc } : undefined,
+    competitors: [side(m.team1, 'home', h, a), side(m.team2, 'away', a, h)] };
+  return { id: 'o' + m.matchID, date: m.matchDateTimeUTC, competitions: [comp], status, __round: m.group?.groupName };
+}
+const olgMatches = (lg, fresh) => olgGet(`getmatchdata/${lg}/${olgSeason()}`, 60_000, fresh);
+const OLG_ZONES = {                                  // table zones (only where the rules are clear)
+  bl3: [[1, 2, '#2fb553', 'Aufstieg in die 2. Bundesliga'], [3, 3, '#7fd36b', 'Relegation zur 2. Bundesliga'], [17, 20, '#e5484d', 'Abstieg in die Regionalliga']],
+};
+async function olgApi(slug, rest, fresh){
+  const L = leagueBy(slug), lg = L.olg;
+  const [path, qs = ''] = rest.split('?'), q = new URLSearchParams(qs);
+  if (path === 'standings'){
+    const rows = await olgGet(`getbltable/${lg}/${olgSeason()}`, 5 * 60_000, fresh);
+    const zone = r => (OLG_ZONES[lg] || []).find(z => r >= z[0] && r <= z[1]);
+    return { children: [{ name: L.name, standings: { entries: rows.map((t, i) => {
+      const z = zone(i + 1);
+      const s = { rank: i + 1, gamesPlayed: t.matches, wins: t.won, ties: t.draw, losses: t.lost, pointsFor: t.goals, pointsAgainst: t.opponentGoals,
+        pointDifferential: (t.goalDiff > 0 ? '+' : '') + t.goalDiff, points: t.points };
+      return { team: { ...olgTeam({ teamId: t.teamInfoId, teamName: t.teamName, shortName: t.shortName, teamIconUrl: t.teamIconUrl }) },
+        stats: Object.entries(s).map(([name, value]) => ({ name, value, displayValue: String(value) })),
+        note: z ? { color: z[2], description: z[3] } : undefined };
+    }) } }] };
+  }
+  if (path === 'scoreboard'){
+    const all = await olgMatches(lg, fresh);
+    const days = [...new Set(all.map(m => berlinDay(m.matchDateTimeUTC)))].sort();
+    const d = q.get('dates') || '', key = d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d.length === 6 ? `${d.slice(0, 4)}-${d.slice(4)}` : berlinDay(Date.now());
+    return { leagues: [{ calendar: days.map(x => x + 'T12:00Z') }],
+      events: all.filter(m => berlinDay(m.matchDateTimeUTC).startsWith(key)).map(olgEvent) };
+  }
+  let t = path.match(/^teams\/o(\d+)\/(schedule|roster)$/);
+  if (t){
+    if (t[2] === 'roster') return { athletes: [] };
+    const [all, table] = await Promise.all([olgMatches(lg, fresh), olgGet(`getbltable/${lg}/${olgSeason()}`, 5 * 60_000).catch(() => [])]);
+    const mine = all.filter(m => String(m.team1.teamId) === t[1] || String(m.team2.teamId) === t[1]).sort((a, b) => new Date(a.matchDateTimeUTC) - new Date(b.matchDateTimeUTC));
+    const any = mine[0] && (String(mine[0].team1.teamId) === t[1] ? mine[0].team1 : mine[0].team2);
+    const rank = table.findIndex(x => String(x.teamInfoId) === t[1]), row = table[rank];
+    const team = { ...(any ? olgTeam(any) : { id: 'o' + t[1] }),
+      standingSummary: row ? `${rank + 1}. Platz · ${L.name}` : '', recordSummary: row ? `${row.won}-${row.draw}-${row.lost}` : '' };
+    return { team, events: mine.map(olgEvent) };
+  }
+  if (path === 'summary'){
+    const id = String(q.get('event') || '').replace(/^o/, '');
+    const all = await olgMatches(lg, fresh);
+    const m = all.find(x => String(x.matchID) === id);
+    if (!m) throw new Error('Spiel nicht gefunden');
+    const ev = olgEvent(m), comp = ev.competitions[0];
+    let prev = [0, 0];
+    const keyEvents = (m.goals || []).map(g => {
+      const homeScored = g.scoreTeam1 > prev[0]; prev = [g.scoreTeam1, g.scoreTeam2];
+      return { type: { type: g.isOwnGoal ? 'own-goal' : g.isPenalty ? 'penalty---scored' : 'goal' }, scoringPlay: true,
+        clock: { displayValue: g.matchMinute ? g.matchMinute + "'" : '' },
+        team: { id: 'o' + (homeScored ? m.team1.teamId : m.team2.teamId) },
+        participants: [{ athlete: { displayName: g.goalGetterName || `${g.scoreTeam1}:${g.scoreTeam2}` } }] };
+    });
+    return { header: { competitions: [comp] }, keyEvents, rosters: [], commentary: [], boxscore: { teams: [] },
+      gameInfo: comp.venue ? { venue: comp.venue } : {} };
+  }
+  if (path === 'statistics'){
+    const list = await olgGet(`getgoalgetters/${lg}/${olgSeason()}`, 30 * 60_000, fresh);
+    return { stats: [{ name: 'goals', leaders: list.filter(x => x.goalCount > 0 && x.goalGetterName)
+      .sort((a, b) => b.goalCount - a.goalCount).map(x => ({ value: x.goalCount, displayValue: String(x.goalCount), athlete: { displayName: x.goalGetterName } })) }] };
+  }
+  if (path === 'news') return { articles: [] };
+  return {};
 }
 
 /* ---------- helpers ---------- */
@@ -1444,6 +1557,7 @@ function tvGermany(m){
       return { ch:['Sky', 'DAZN'], note:'Englische Woche: Einzelspiele bei Sky, Konferenz bei DAZN' };
     case 'ger.2':
       return day === 'Sat' && hm === '20:30' ? { ch:['RTL', 'Sky'], note:'Topspiel frei bei RTL' } : { ch:['Sky'] };
+    case 'olg.bl3':        return { ch:['MagentaSport'], note:'Ausgewählte Spiele auch frei in den Dritten Programmen der ARD' };
     case 'ger.dfb_pokal':  return { ch:['Sky'], note:'Ausgewählte Spiele auch frei bei ARD, ZDF oder RTL' };
     case 'uefa.champions': return day === 'Tue' ? { ch:['DAZN', 'Prime Video'], note:'Das Dienstags-Topspiel zeigt Prime Video, alle anderen Spiele DAZN' } : { ch:['DAZN'] };
     case 'uefa.europa':
@@ -1749,7 +1863,7 @@ async function renderScorers(pane, slug, my){
       if (l.value !== lastVal){ rank = i + 1; lastVal = l.value; }
       const games = (String(l.displayValue).match(/Matches:\s*(\d+)/) || [])[1];
       const logo = t.logos?.[0]?.href || (t.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${t.id}.png` : '');
-      return `<a class="sc-row ${rank <= 3 ? 'top' : ''}" href="#/player/${esc(a.id)}">
+      return `<a class="sc-row ${rank <= 3 ? 'top' : ''}" ${a.id ? `href="#/player/${esc(a.id)}"` : ''}>
         <span class="rk">${rank}</span>
         <div class="av"><img alt="" data-pid="${esc(a.id)}" data-pname="${esc(a.displayName)}" data-pteam="${esc(t.displayName || '')}" data-pfb="${esc(a.headshot?.href || '')}"><b>${esc((a.displayName || '?').split(' ').map(w => w[0]).join('').slice(0, 2))}</b></div>
         ${logo ? `<img class="tl" src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
@@ -2906,10 +3020,10 @@ function renderSearch(){
 /* ---------- Overview: club · league · national team + news & transfers ---------- */
 /* kicker.de news feeds (German) for every 1. and 2. Bundesliga club, keyed by ESPN team id */
 const KICKER_TEAM = { '132':'fc-bayern-muenchen', '124':'borussia-dortmund', '126':'sc-freiburg', '11420':'rb-leipzig', '131':'bayer-04-leverkusen', '137':'werder-bremen', '10388':'sv-elversberg', '134':'vfb-stuttgart', '7911':'tsg-hoffenheim', '125':'eintracht-frankfurt', '127':'hamburger-sv', '2950':'1-fsv-mainz-05', '3307':'sc-paderborn-07', '3841':'fc-augsburg', '122':'1-fc-koeln', '598':'1-fc-union-berlin', '133':'fc-schalke-04', '268':'bor-moenchengladbach', '129':'hertha-bsc', '269':'1-fc-nuernberg', '130':'1-fc-kaiserslautern', '10382':'1-fc-magdeburg', '138':'vfl-wolfsburg', '2506':'arminia-bielefeld', '6418':'1-fc-heidenheim', '121':'vfl-bochum', '270':'fc-st-pauli', '3070':'spvgg-greuther-fuerth', '2428':'hannover-96', '123':'energie-cottbus', '3067':'eintracht-braunschweig', '7013':'vfl-osnabrueck', '7017':'dynamo-dresden', '4471':'karlsruher-sc', '3812':'sv-darmstadt-98', '7884':'holstein-kiel' };
-const KICKER_LEAGUE = { 'ger.1':'bundesliga', 'ger.2':'2-bundesliga', 'ger.dfb_pokal':'dfb-pokal', 'uefa.champions':'champions-league', 'uefa.europa':'europa-league' };
+const KICKER_LEAGUE = { 'olg.bl3':'3-liga', 'olg.rln':'regionalliga', 'olg.rlno':'regionalliga', 'ger.1':'bundesliga', 'ger.2':'2-bundesliga', 'ger.dfb_pokal':'dfb-pokal', 'uefa.champions':'champions-league', 'uefa.europa':'europa-league' };
 const KICKER_NATION = { '481':'nationalmannschaft' };
 /* kicker league feeds also carry general items; keep only those kicker files under the league */
-const KICKER_LEAGUE_CAT = { 'ger.1':'Bundesliga', 'ger.2':'2. Bundesliga', 'ger.dfb_pokal':'DFB-Pokal', 'uefa.champions':'Champions League', 'uefa.europa':'Europa League' };          // Germany
+const KICKER_LEAGUE_CAT = { 'olg.bl3':'3. Liga', 'olg.rln':'Regionalliga Nord', 'olg.rlno':'Regionalliga Nordost', 'ger.1':'Bundesliga', 'ger.2':'2. Bundesliga', 'ger.dfb_pokal':'DFB-Pokal', 'uefa.champions':'Champions League', 'uefa.europa':'Europa League' };          // Germany
 /* domestic cups per league, so "last / next match" also covers cup games */
 const CUPS = { 'ger.1':['ger.dfb_pokal'], 'ger.2':['ger.dfb_pokal'], 'eng.1':['eng.fa','eng.league_cup'], 'eng.2':['eng.fa','eng.league_cup'],
   'esp.1':['esp.copa_del_rey'], 'ita.1':['ita.coppa_italia'], 'fra.1':['fra.coupe_de_france'], 'ned.1':['ned.cup'], 'por.1':['por.taca.portugal'],
@@ -3101,7 +3215,7 @@ async function renderOverview(silent = false){
   }
   else {
     src.push(espnNews(C.slug, C.id).then(tag(C.name)));
-    src.push(kicker('news/internationaler-fussball').then(l => l.filter(n => mentions(n, cWords))).then(tag(C.name)));
+    src.push(kicker('news/' + (leagueBy(C.slug).olg ? KICKER_LEAGUE[C.slug] : 'internationaler-fussball')).then(l => l.filter(n => mentions(n, cWords))).then(tag(C.name)));
   }
   src.push(transfermarkt().then(l => l.filter(n => mentions(n, cWords))).then(tag(C.name)));
   if (N){
@@ -3109,7 +3223,7 @@ async function renderOverview(silent = false){
     else src.push(espnNews('fifa.world', N.id).then(tag(N.name)));
   }
   if (L) src.push((KICKER_LEAGUE[L.slug]
-      ? kicker('news/' + KICKER_LEAGUE[L.slug]).then(l => l.filter(n => n.cats.some(c => norm(c) === norm(KICKER_LEAGUE_CAT[L.slug]))))
+      ? kicker('news/' + KICKER_LEAGUE[L.slug]).then(l => KICKER_LEAGUE_CAT[L.slug] ? l.filter(n => n.cats.some(c => norm(c) === norm(KICKER_LEAGUE_CAT[L.slug]))) : l)
       : espnNews(L.slug)).then(tag(L.name)));
 
   jobs.push(Promise.allSettled(src).then(res => {
